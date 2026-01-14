@@ -1,0 +1,240 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { collection, getDocs, doc } from "firebase/firestore";
+import { db, auth } from "../../firebase";
+import { useAuth } from "../../contexts/AuthContext";
+
+import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+import { Calendar, Users, BarChart3 } from "lucide-react";
+
+const FormSubmissions = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchAllSubmissions();
+    }
+  }, [user]);
+
+  const fetchAllSubmissions = async () => {
+    if (!user) {
+      setError("User not authenticated");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setError(null);
+      console.log("Fetching submissions for user:", user.uid);
+
+      const activitiesSnapshot = await getDocs(collection(db, "upcomingActivities"));
+      console.log("Activities found:", activitiesSnapshot.size);
+
+      const activitiesData = await Promise.all(
+        activitiesSnapshot.docs.map(async (doc) => {
+          const activity = { id: doc.id, ...doc.data() };
+
+          let registrations = [];
+          try {
+            const registrationsSnapshot = await getDocs(
+              collection(db, "upcomingActivities", doc.id, "registrations")
+            );
+            registrations = registrationsSnapshot.docs.map(regDoc => ({
+              id: regDoc.id,
+              activityId: doc.id,
+              ...regDoc.data()
+            }));
+            console.log(`Registrations for ${activity.title}:`, registrations.length);
+          } catch (regError) {
+            console.warn(`Error fetching registrations for ${activity.title}:`, regError);
+            // Continue with empty registrations array
+          }
+
+          return { ...activity, registrations, type: "activity" };
+        })
+      );
+
+      setActivities(activitiesData);
+      console.log("Total activities loaded:", activitiesData.length);
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+      setError(error.message);
+
+      // Fallback: try to load from allRegistrations collection
+      try {
+        console.log("Trying fallback method...");
+        const allRegsSnapshot = await getDocs(collection(db, "allRegistrations"));
+        const groupedRegistrations = {};
+
+        allRegsSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          const activityId = data.activityId;
+          if (!groupedRegistrations[activityId]) {
+            groupedRegistrations[activityId] = {
+              id: activityId,
+              title: data.activityTitle || "Unknown Activity",
+              registrations: [],
+              type: "activity"
+            };
+          }
+          groupedRegistrations[activityId].registrations.push({
+            id: doc.id,
+            ...data
+          });
+        });
+
+        setActivities(Object.values(groupedRegistrations));
+        setError(null);
+        console.log("Fallback method successful");
+      } catch (fallbackError) {
+        console.error("Fallback method also failed:", fallbackError);
+        setError("Unable to load submissions. Please check your permissions.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-16">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl h-48"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error && activities.length === 0) {
+    return (
+      <div className="min-h-screen pt-16">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-12"
+          >
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md mx-auto">
+              <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+                Access Error
+              </h3>
+              <p className="text-red-600 dark:text-red-300 mb-4">
+                {error}
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pt-16">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Form Submissions
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            View and manage all event and activity registrations
+          </p>
+        </motion.div>
+
+        {error && (
+          <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+              ⚠️ Some data may be incomplete due to permission issues. Showing available data.
+            </p>
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {activities.map((item, index) => (
+            <Card key={item.id} delay={index * 0.1}>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {item.title}
+                  </h3>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    Activity
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
+                  <div className="flex items-center">
+                    <Users className="w-4 h-4 mr-2" />
+                    <span>Submissions: {item.registrations?.length || 0}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    <span>
+                      {item.eventDate
+                        ? new Date(item.eventDate).toLocaleDateString()
+                        : "Date not set"
+                      }
+                    </span>
+                  </div>
+                  {item.isPaid && (
+                    <div className="flex items-center">
+                      <span className="text-green-600 dark:text-green-400 font-medium">
+                        Fee: ₹{item.fee}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4">
+                  <Button
+                    variant="default"
+                    className="w-full"
+                    onClick={() => navigate(`/admin/form-analytics/${item.id}`)}
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    View Responses & Analytics
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {activities.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">
+              No form submissions found. Create activities to start receiving submissions.
+            </p>
+          </div>
+        )}
+      </div>
+
+    </div>
+
+  );
+};
+
+export default FormSubmissions;
