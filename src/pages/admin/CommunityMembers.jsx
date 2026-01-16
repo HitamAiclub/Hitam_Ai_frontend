@@ -1,339 +1,192 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { collection, getDocs, deleteDoc, doc, updateDoc, addDoc, onSnapshot, getDoc, setDoc } from "firebase/firestore";
-import { db, auth } from "../../firebase";
-import { useAuth } from "../../contexts/AuthContext";
+import { collection, getDocs, deleteDoc, doc, addDoc, updateDoc } from "firebase/firestore";
+import { db } from "../../firebase";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
 import Modal from "../../components/ui/Modal";
-import { Download, Users, Calendar, Mail, Phone, GraduationCap, Settings, Trash2, UserPlus } from "lucide-react";
+import { Plus, Trash2, Edit, ExternalLink, Globe, MessageCircle, Github, Linkedin, Twitter, Facebook, Instagram, Youtube } from "lucide-react";
+
+// Helper to get icon based on platform name
+const getPlatformIcon = (platform) => {
+  const p = platform.toLowerCase();
+  if (p.includes("github")) return <Github className="w-5 h-5" />;
+  if (p.includes("linkedin")) return <Linkedin className="w-5 h-5" />;
+  if (p.includes("twitter") || p.includes("x")) return <Twitter className="w-5 h-5" />;
+  if (p.includes("facebook")) return <Facebook className="w-5 h-5" />;
+  if (p.includes("instagram")) return <Instagram className="w-5 h-5" />;
+  if (p.includes("youtube")) return <Youtube className="w-5 h-5" />;
+  if (p.includes("whatsapp")) return <MessageCircle className="w-5 h-5" />;
+  if (p.includes("discord")) return <MessageCircle className="w-5 h-5" />;
+  if (p.includes("telegram")) return <MessageCircle className="w-5 h-5" />;
+  return <Globe className="w-5 h-5" />;
+};
 
 const CommunityMembers = () => {
-  const { user } = useAuth();
-  const [members, setMembers] = useState([]);
+  const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [acceptingSubmissions, setAcceptingSubmissions] = useState(true);
-  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLink, setEditingLink] = useState(null);
+  const [formData, setFormData] = useState({ platform: "", url: "" });
 
   useEffect(() => {
-    if (user) {
-      fetchMembers();
-      loadSettings();
-    }
-  }, [user]);
+    fetchLinks();
+  }, []);
 
-  const fetchMembers = async () => {
-    if (!user) {
-      setError("User not authenticated");
-      setLoading(false);
-      return;
-    }
-
+  const fetchLinks = async () => {
     try {
-      setError(null);
-      console.log("Fetching community members for user:", user.uid);
-      
-      const snapshot = await getDocs(collection(db, "clubJoins"));
-      const membersData = snapshot.docs.map(doc => ({
+      const querySnapshot = await getDocs(collection(db, "communityLinks"));
+      const linksData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      setMembers(membersData);
-      console.log("Community members loaded:", membersData.length);
+      setLinks(linksData);
     } catch (error) {
-      console.error("Error fetching members:", error);
-      setError(error.message);
+      console.error("Error fetching community links:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadSettings = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      const settingsDoc = await getDoc(doc(db, "settings", "clubJoinStatus"));
-      if (settingsDoc.exists()) {
-        setAcceptingSubmissions(settingsDoc.data().enabled || false);
+      if (editingLink) {
+        await updateDoc(doc(db, "communityLinks", editingLink.id), formData);
+      } else {
+        await addDoc(collection(db, "communityLinks"), {
+          ...formData,
+          createdAt: new Date().toISOString()
+        });
       }
+      setIsModalOpen(false);
+      setEditingLink(null);
+      setFormData({ platform: "", url: "" });
+      fetchLinks();
     } catch (error) {
-      console.warn("Could not load settings:", error.message);
+      console.error("Error saving link:", error);
     }
   };
 
-  const deleteMember = async (memberId) => {
-    if (!user) {
-      alert("User not authenticated");
-      return;
-    }
-
-    if (window.confirm("Are you sure you want to delete this member?")) {
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this link?")) {
       try {
-        console.log("Deleting member:", memberId);
-        await deleteDoc(doc(db, "clubJoins", memberId));
-        await fetchMembers();
-        alert("Member deleted successfully");
+        await deleteDoc(doc(db, "communityLinks", id));
+        fetchLinks();
       } catch (error) {
-        console.error("Error deleting member:", error);
-        alert("Failed to delete member");
+        console.error("Error deleting link:", error);
       }
     }
   };
 
-  const exportMembers = () => {
-    if (members.length === 0) {
-      alert("No members to export");
-      return;
+  const openModal = (link = null) => {
+    if (link) {
+      setEditingLink(link);
+      setFormData({ platform: link.platform, url: link.url });
+    } else {
+      setEditingLink(null);
+      setFormData({ platform: "", url: "" });
     }
-
-    const csvContent = members.map(member => {
-      return [
-        member.name || "",
-        member.rollNo || "",
-        member.branch || "",
-        member.year || "",
-        member.section || "",
-        member.email || "",
-        member.phone || "",
-        member.joinedAt || "",
-        
-      ].join(",");
-    }).join("\n");
-
-    const headers = "Name,Roll No,Branch,Year,Section,Email,Phone,Joined At";
-    const fullContent = headers + "\n" + csvContent;
-
-    const blob = new Blob([fullContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "community_members.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
+    setIsModalOpen(true);
   };
-
-  const updateSubmissionSettings = async () => {
-    if (!user) {
-      alert("User not authenticated");
-      return;
-    }
-
-    setSettingsLoading(true);
-    try {
-      console.log("Updating submission settings:", acceptingSubmissions);
-      
-      // Save settings to Firestore
-      await setDoc(doc(db, "settings", "clubJoinStatus"), {
-        enabled: acceptingSubmissions,
-        updatedAt: new Date().toISOString(),
-        updatedBy: user.uid
-      });
-      
-      setShowSettingsModal(false);
-      alert("Settings updated successfully");
-    } catch (error) {
-      console.error("Error updating settings:", error);
-      alert(`Failed to update settings: ${error.message}`);
-    } finally {
-      setSettingsLoading(false);
-    }
-  };
-
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-16">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl h-48"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error && members.length === 0) {
-    return (
-      <div className="min-h-screen pt-16">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-12"
-          >
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md mx-auto">
-              <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-                Access Error
-              </h3>
-              <p className="text-red-600 dark:text-red-300 mb-4">
-                {error}
-              </p>
-              <Button onClick={() => window.location.reload()}>
-                Retry
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen pt-16">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center mb-8"
-        >
+    <div className="min-h-screen pt-16 px-4 py-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Community Members
+              Community Management
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-2">
-              Manage students who have joined the AI club
+              Manage social media and community platform links
             </p>
           </div>
-          <div className="flex gap-4">
-            <Button
-              onClick={() => setShowSettingsModal(true)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Settings className="w-4 h-4" />
-              Settings
-            </Button>
-            <Button
-              onClick={exportMembers}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </Button>
-          </div>
-        </motion.div>
-
-        {error && (
-          <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-            <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-              ⚠️ Some data may be incomplete due to permission issues. Showing available data.
-            </p>
-          </div>
-        )}
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {members.map((member, index) => (
-            <Card key={member.id} delay={index * 0.1}>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {member.name}
-                    <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">
-                      {member.rollNo}
-                    </span>
-               
-                  </h3>
-                  
-                </div>
-                
-                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
-                  <div className="flex items-center">
-                    <Mail className="w-4 h-4 mr-2" />
-                    <span className="truncate">{member.email}</span>
-
-                  </div>
-                  <div className="flex items-center">
-                    <Phone className="w-4 h-4 mr-2" />
-                    <span className="truncate">{member.phone || "Not provided"}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <GraduationCap className="w-4 h-4 mr-2" />
-                    <span>{member.branch} - {member.year}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span>
-                      {member.joinedAt 
-                        ? new Date(member.joinedAt).toLocaleDateString()
-                        : "Date not available"
-                      }
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => deleteMember(member.id)}
-                    className="flex-1"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
+          <Button onClick={() => openModal()} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Add Link
+          </Button>
         </div>
 
-        {members.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">
-              No community members found. Students can join the club through the "Join the Club" page.
-            </p>
+        {loading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse bg-gray-200 dark:bg-gray-700 h-32 rounded-xl"></div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {links.map((link) => (
+              <Card key={link.id} className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                      {getPlatformIcon(link.platform)}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{link.platform}</h3>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 flex items-center gap-1 mt-1 truncate max-w-[150px]"
+                      >
+                        View Link <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => openModal(link)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(link.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         )}
+
+        {links.length === 0 && !loading && (
+          <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
+            <Globe className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No community links added yet.</p>
+          </div>
+        )}
+
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title={editingLink ? "Edit Link" : "Add New Link"}
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="Platform Name"
+              placeholder="e.g. WhatsApp, Discord, Instagram"
+              value={formData.platform}
+              onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
+              required
+            />
+            <Input
+              label="URL"
+              placeholder="https://..."
+              value={formData.url}
+              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+              required
+            />
+            <div className="flex justify-end gap-3 mt-6">
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                {editingLink ? "Update Link" : "Add Link"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       </div>
-
-      {/* Settings Modal */}
-      <Modal
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-        title="Community Settings"
-        size="md"
-      >
-        <div className="space-y-6">
-          <div>
-            <label className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={acceptingSubmissions}
-                onChange={(e) => setAcceptingSubmissions(e.target.checked)}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                Accept new member submissions
-              </span>
-            </label>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              When disabled, students won"t be able to submit new join requests
-            </p>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowSettingsModal(false)}
-              disabled={settingsLoading}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={updateSubmissionSettings}
-              loading={settingsLoading}
-            >
-              Save Settings
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };
