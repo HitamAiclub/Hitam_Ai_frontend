@@ -425,13 +425,13 @@ const MediaManagement = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex items-center gap-2 md:gap-3 ml-auto">
+          <div className="relative hidden sm:block">
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search in folder..."
-              className="pl-9 pr-4 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Search..."
+              className="pl-9 pr-4 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none w-32 md:w-48 lg:w-64 transition-all"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
@@ -455,11 +455,13 @@ const MediaManagement = () => {
           <Button variant="outline" size="sm" onClick={() => { fetchContent(currentPath); }}>
             <FiRefreshCw className={loadingFiles ? 'animate-spin' : ''} />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => { setCreatingInPath(currentPath); setShowCreateFolderModal(true); }}>
-            <FiFolderPlus className="mr-2" /> New Folder
+          <Button variant="outline" size="sm" onClick={() => { setCreatingInPath(currentPath); setShowCreateFolderModal(true); }} className="px-2 md:px-3">
+            <FiFolderPlus className="md:mr-2 w-5 h-5 md:w-4 md:h-4" />
+            <span className="hidden md:inline">New Folder</span>
           </Button>
-          <Button size="sm" onClick={() => setShowUploadModal(true)}>
-            <FiPlus className="mr-2" /> Upload
+          <Button size="sm" onClick={() => setShowUploadModal(true)} className="px-2 md:px-3">
+            <FiPlus className="md:mr-2 w-5 h-5 md:w-4 md:h-4" />
+            <span className="hidden md:inline">Upload</span>
           </Button>
         </div>
       </div>
