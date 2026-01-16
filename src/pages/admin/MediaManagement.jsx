@@ -4,7 +4,7 @@ import {
   FiImage, FiTrash2, FiEdit3, FiPlus, FiFolder, FiFolderPlus,
   FiSearch, FiGrid, FiList, FiRefreshCw, FiChevronRight, FiChevronDown,
   FiMoreVertical, FiDownload, FiLink, FiFile, FiX, FiFileText, FiVideo,
-  FiChevronRight as FiChevronRightIcon, FiArrowLeft
+  FiChevronRight as FiChevronRightIcon, FiArrowLeft, FiMenu
 } from 'react-icons/fi';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -35,6 +35,9 @@ const MediaManagement = () => {
   // Folder Action Modals
   const [showDeleteFolderModal, setShowDeleteFolderModal] = useState(false);
   const [showRenameFolderModal, setShowRenameFolderModal] = useState(false);
+
+  // Mobile Sidebar State
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Selection
   const [selectedFile, setSelectedFile] = useState(null);
@@ -394,9 +397,18 @@ const MediaManagement = () => {
               <FiArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </Button>
           )}
+          {/* Mobile Sidebar Toggle */}
+          <button
+            className="md:hidden p-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+          >
+            <FiMenu className="w-6 h-6" />
+          </button>
+
           <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <FiImage className="text-blue-500" />
-            Media Manager
+            <span className="hidden sm:inline">Media Manager</span>
+            <span className="sm:hidden">Media</span>
           </h1>
           <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2 hidden sm:block"></div>
           {/* Breadcrumbs */}
@@ -463,17 +475,40 @@ const MediaManagement = () => {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
 
+        {/* Mobile Sidebar Overlay */}
+        {isMobileSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-20 md:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar - Folder Tree */}
-        <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col shrink-0">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+        <div className={`
+            fixed md:relative z-30 h-[calc(100vh-64px)] md:h-auto
+            w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 
+            flex flex-col shrink-0 transition-transform duration-300 ease-in-out
+            top-16 md:top-0 left-0
+            ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Folders</h3>
+            <button
+              className="md:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              onClick={() => setIsMobileSidebarOpen(false)}
+            >
+              <FiX className="w-4 h-4" />
+            </button>
           </div>
           <div className="flex-1 overflow-y-auto py-2">
             <RecursiveSidebarItem
               name="Home"
               path=""
               level={0}
-              onSelect={setCurrentPath}
+              onSelect={(p) => {
+                setCurrentPath(p);
+                setIsMobileSidebarOpen(false); // Close sidebar on selection (mobile)
+              }}
               currentPath={currentPath}
               startExpanded={true}
             />
@@ -594,10 +629,11 @@ const MediaManagement = () => {
         <AnimatePresence>
           {selectedFile && (
             <motion.div
-              initial={{ x: 300, opacity: 0 }}
+              initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 300, opacity: 0 }}
-              className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 overflow-y-auto shrink-0 z-20 shadow-lg"
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="w-full md:w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 overflow-y-auto shrink-0 z-40 shadow-xl fixed inset-0 md:static h-full md:h-auto"
             >
               <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Details</h3>
