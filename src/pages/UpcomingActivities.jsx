@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../firebase";
-import { uploadFormFile , } from "../utils/cloudinary";
+import { uploadFormFile, } from "../utils/cloudinary";
 import { useAuth } from "../contexts/AuthContext";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
@@ -15,7 +15,7 @@ import { Calendar, Users, Plus, Edit, Trash2, Download, Eye, ExternalLink, FileT
 const UpcomingActivities = () => {
   console.log("🚀 UpcomingActivities component is loading...");
   const navigate = useNavigate();
-  
+
   // Add error handling for useAuth
   let user = null;
   try {
@@ -26,7 +26,7 @@ const UpcomingActivities = () => {
     console.error("❌ useAuth hook failed:", authError);
     user = null;
   }
-  
+
   const [activities, setActivities] = useState([]);
   const [registrations, setRegistrations] = useState({});
   const [loading, setLoading] = useState(true);
@@ -56,6 +56,8 @@ const UpcomingActivities = () => {
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  // State for tracking unique field validation errors
+  const [uniqueErrors, setUniqueErrors] = useState({});
   const [optimisticActivities, setOptimisticActivities] = useState([]);
 
   // Test Firebase connectivity and permissions
@@ -64,11 +66,11 @@ const UpcomingActivities = () => {
       console.log("Testing Firebase connection...");
       console.log("User authentication status:", !!user);
       console.log("User details:", user);
-      
+
       // Test basic read access
       const testRead = await getDocs(collection(db, "upcomingActivities"));
       console.log("✅ Read access to upcomingActivities: OK");
-      
+
       // Test write access to allRegistrations (this is where registrations should be saved)
       const testWrite = await addDoc(collection(db, "allRegistrations"), {
         test: true,
@@ -76,11 +78,11 @@ const UpcomingActivities = () => {
         message: "Testing write permissions"
       });
       console.log("✅ Write access to allRegistrations: OK", testWrite.id);
-      
+
       // Clean up test document
       await deleteDoc(doc(db, "allRegistrations", testWrite.id));
       console.log("✅ Delete access to allRegistrations: OK");
-      
+
       return true;
     } catch (error) {
       console.error("❌ Firebase connection test failed:", error);
@@ -94,25 +96,25 @@ const UpcomingActivities = () => {
   const testFormFunctionality = async () => {
     try {
       console.log("=== TESTING FORM FUNCTIONALITY ===");
-      
+
       // Test 1: Check form data structure
       console.log("1. Testing form data structure...");
       console.log("Current formData:", formData);
       console.log("FormSchema:", formData.formSchema);
       console.log("FormSchema is array:", Array.isArray(formData.formSchema));
-      
+
       // Test 2: Check default schema
       console.log("2. Testing default schema...");
       const defaultSchema = getDefaultFormSchema();
       console.log("Default schema:", defaultSchema);
       console.log("Default schema length:", defaultSchema.length);
       console.log("Content elements in default:", defaultSchema.filter(f => ["label", "image", "link"].includes(f.type)));
-      
+
       // Test 3: Check Firebase connection
       console.log("3. Testing Firebase connection...");
       const testResult = await testFirebaseConnection();
       console.log("Firebase test result:", testResult);
-      
+
       // Test 4: Check form validation
       console.log("4. Testing form validation...");
       const testFormData = {
@@ -124,15 +126,15 @@ const UpcomingActivities = () => {
         formSchema: defaultSchema
       };
       console.log("Test form data:", testFormData);
-      
+
       // Test 5: Check maxParticipants handling
       console.log("5. Testing maxParticipants handling...");
       const testMaxParticipants = "50";
-      const parsedMaxParticipants = testMaxParticipants && testMaxParticipants !== "" 
-        ? parseInt(testMaxParticipants, 10) 
+      const parsedMaxParticipants = testMaxParticipants && testMaxParticipants !== ""
+        ? parseInt(testMaxParticipants, 10)
         : undefined;
       console.log("Original:", testMaxParticipants, "Parsed:", parsedMaxParticipants, "Type:", typeof parsedMaxParticipants);
-      
+
       console.log("=== FORM FUNCTIONALITY TEST COMPLETE ===");
       return true;
     } catch (error) {
@@ -144,7 +146,7 @@ const UpcomingActivities = () => {
   // Debug information display
   const DebugInfo = () => {
     if (!user) return null;
-    
+
     const testRegistration = async () => {
       try {
         console.log("Testing basic registration...");
@@ -161,24 +163,24 @@ const UpcomingActivities = () => {
           status: "confirmed",
           test: true
         };
-        
+
         console.log("Test data:", testData);
-        
+
         // Try to save to allRegistrations first
         const result = await addDoc(collection(db, "allRegistrations"), testData);
         console.log("✅ Test registration saved successfully:", result.id);
-        
+
         // Clean up test data
         await deleteDoc(doc(db, "allRegistrations", result.id));
         console.log("✅ Test registration cleaned up");
-        
+
         alert("✅ Test registration successful! Firebase write permissions are working.");
       } catch (error) {
         console.error("❌ Test registration failed:", error);
         alert(`❌ Test registration failed: ${error.message}\n\nError code: ${error.code}`);
       }
     };
-    
+
     return (
       <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
         <h4 className="font-medium text-yellow-900 dark:text-yellow-100 mb-2">
@@ -193,19 +195,19 @@ const UpcomingActivities = () => {
           <p><strong>Total Registrations:</strong> {Object.values(registrations).flat().length}</p>
         </div>
         <div className="flex gap-2 mt-2">
-          <button 
+          <button
             onClick={testFirebaseConnection}
             className="px-3 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700"
           >
             Test Connection
           </button>
-          <button 
+          <button
             onClick={testRegistration}
             className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
           >
             Test Registration
           </button>
-          <button 
+          <button
             onClick={testFormFunctionality}
             className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
           >
@@ -222,13 +224,13 @@ const UpcomingActivities = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         console.log("🔥 Testing Firebase connection...");
         // Test Firebase connection
         await testFirebaseConnection();
         console.log("✅ Firebase connection test completed");
-        
-    // Initialize formSchema with default schema
+
+        // Initialize formSchema with default schema
         try {
           console.log("📋 Getting default schema...");
           // Don't call getDefaultFormSchema here - it's not defined yet
@@ -243,7 +245,7 @@ const UpcomingActivities = () => {
           console.error("❌ Error initializing default schema:", schemaError);
           setError("Failed to initialize form schema");
         }
-        
+
         setLoading(false);
         console.log("✅ Component initialization completed successfully");
       } catch (error) {
@@ -252,7 +254,7 @@ const UpcomingActivities = () => {
         setLoading(false);
       }
     };
-    
+
     console.log("🚀 Calling initializeComponent...");
     initializeComponent();
   }, []);
@@ -261,12 +263,12 @@ const UpcomingActivities = () => {
   useEffect(() => {
     try {
       console.log("📋 Setting default form schema after mount...");
-    const defaultSchema = getDefaultFormSchema();
+      const defaultSchema = getDefaultFormSchema();
       console.log("📋 Default schema set:", defaultSchema.length, "items");
-    setFormData(prev => ({
-      ...prev,
-      formSchema: defaultSchema
-    }));
+      setFormData(prev => ({
+        ...prev,
+        formSchema: defaultSchema
+      }));
     } catch (error) {
       console.error("❌ Error setting default schema:", error);
     }
@@ -275,40 +277,42 @@ const UpcomingActivities = () => {
   useEffect(() => {
     console.log("🔄 Second useEffect triggered - setting up Firebase listener");
     const unsubscribe = onSnapshot(
-      collection(db, "upcomingActivities"), 
+      collection(db, "upcomingActivities"),
       async (snapshot) => {
         console.log("📊 Firebase snapshot received:", snapshot.docs.length, "documents");
         try {
-        const activitiesData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-          console.log("📋 Activities data processed:", activitiesData.length, "activities");
-        setActivities(activitiesData);
-        setOptimisticActivities(activitiesData);
-
-        const registrationsData = {};
-        for (const activity of activitiesData) {
-          try {
-            const registrationsSnapshot = await getDocs(collection(db, "upcomingActivities", activity.id, "registrations"));
-            registrationsData[activity.id] = registrationsSnapshot.docs.map(doc => ({
+          const activitiesData = snapshot.docs
+            .map(doc => ({
               id: doc.id,
               ...doc.data()
-            }));
-          } catch (error) {
-            console.warn(`Could not fetch registrations for ${activity.id}:`, error.message);
-            registrationsData[activity.id] = [];
+            }))
+            .filter(activity => !activity.isDeleted); // Filter out soft-deleted activities
+          console.log("📋 Activities data processed:", activitiesData.length, "activities");
+          setActivities(activitiesData);
+          setOptimisticActivities(activitiesData);
+
+          const registrationsData = {};
+          for (const activity of activitiesData) {
+            try {
+              const registrationsSnapshot = await getDocs(collection(db, "upcomingActivities", activity.id, "registrations"));
+              registrationsData[activity.id] = registrationsSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              }));
+            } catch (error) {
+              console.warn(`Could not fetch registrations for ${activity.id}:`, error.message);
+              registrationsData[activity.id] = [];
+            }
           }
-        }
-        setRegistrations(registrationsData);
-        setLoading(false);
+          setRegistrations(registrationsData);
+          setLoading(false);
           console.log("✅ Firebase listener setup completed");
         } catch (error) {
           console.error("❌ Error processing activities data:", error);
           setError("Failed to load activities data");
           setLoading(false);
         }
-      }, 
+      },
       (error) => {
         console.error("❌ Activities listener error:", error);
         setError("Failed to connect to database");
@@ -333,12 +337,12 @@ const UpcomingActivities = () => {
         id: doc.id,
         ...doc.data()
       }));
-      
+
       setRegistrations(prev => ({
         ...prev,
         [activityId]: registrationsData
       }));
-      
+
       console.log(`Fetched ${registrationsData.length} registrations for activity ${activityId}`);
     } catch (error) {
       console.error(`Error fetching registrations for activity ${activityId}:`, error);
@@ -348,12 +352,12 @@ const UpcomingActivities = () => {
         const filteredRegs = allRegsSnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
           .filter(reg => reg.activityId === activityId);
-        
+
         setRegistrations(prev => ({
           ...prev,
           [activityId]: filteredRegs
         }));
-        
+
         console.log(`Fetched ${filteredRegs.length} registrations from fallback collection for activity ${activityId}`);
       } catch (fallbackError) {
         console.error(`Fallback fetch also failed for activity ${activityId}:`, fallbackError);
@@ -363,7 +367,7 @@ const UpcomingActivities = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     console.log("=== FORM SUBMISSION DEBUG ===");
     console.log("Starting activity submission...", formData);
     console.log("User authentication status:", !!user);
@@ -379,15 +383,15 @@ const UpcomingActivities = () => {
       formSchemaType: typeof formData.formSchema,
       formSchemaIsArray: Array.isArray(formData.formSchema)
     });
-    
+
     // Additional validation
-    if (!formData.title || !formData.description || !formData.registrationStart || 
-        !formData.registrationEnd || !formData.eventDate) {
+    if (!formData.title || !formData.description || !formData.registrationStart ||
+      !formData.registrationEnd || !formData.eventDate) {
       alert("Please fill in all required fields: Title, Description, Registration Start, Registration End, and Event Date.");
       setSubmitting(false);
       return;
     }
-    
+
     if (!formData.formSchema || !Array.isArray(formData.formSchema) || formData.formSchema.length === 0) {
       console.warn("FormSchema is invalid, using default schema");
       formData.formSchema = getDefaultFormSchema();
@@ -407,8 +411,8 @@ const UpcomingActivities = () => {
     const optimisticActivity = {
       id: editingActivity?.id || tempId,
       ...formData,
-      formSchema: formData.formSchema && formData.formSchema.length > 0 
-        ? formData.formSchema 
+      formSchema: formData.formSchema && formData.formSchema.length > 0
+        ? formData.formSchema
         : getDefaultFormSchema(),
       createdAt: editingActivity?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -416,8 +420,8 @@ const UpcomingActivities = () => {
     };
 
     if (editingActivity) {
-      setOptimisticActivities(prev => 
-        prev.map(activity => 
+      setOptimisticActivities(prev =>
+        prev.map(activity =>
           activity.id === editingActivity.id ? optimisticActivity : activity
         )
       );
@@ -460,12 +464,12 @@ const UpcomingActivities = () => {
       // Clean up form data to prevent undefined values in Firestore
       const cleanedFormData = {
         ...formData,
-        maxParticipants: formData.maxParticipants && formData.maxParticipants !== "" 
-          ? parseInt(formData.maxParticipants, 10) 
+        maxParticipants: formData.maxParticipants && formData.maxParticipants !== ""
+          ? parseInt(formData.maxParticipants, 10)
           : undefined,
         formSchema: finalFormSchema
       };
-      
+
       console.log("Cleaned form data:", cleanedFormData);
 
       // Clean the form schema to remove undefined values
@@ -488,52 +492,52 @@ const UpcomingActivities = () => {
         formSchema: typeof finalActivityData.formSchema,
         formSchemaIsArray: Array.isArray(finalActivityData.formSchema)
       });
-      
-              try {
-          console.log("Attempting to save to Firebase with data:", finalActivityData);
-          console.log("Firebase db object:", db);
-          console.log("Collection reference:", collection(db, "upcomingActivities"));
-          
-          if (editingActivity) {
-            console.log("Updating existing activity:", editingActivity.id);
-            const docRef = doc(db, "upcomingActivities", editingActivity.id);
-            console.log("Document reference:", docRef);
-            const result = await updateDoc(docRef, finalActivityData);
-            console.log("Activity updated successfully:", result);
-          } else {
-            console.log("Creating new activity");
-            const colRef = collection(db, "upcomingActivities");
-            console.log("Collection reference:", colRef);
-            const result = await addDoc(colRef, finalActivityData);
-            console.log("Activity added successfully:", result);
-            console.log("New document ID:", result.id);
-            // Navigate to form edit page after creating
-            setShowModal(false);
-            navigate(`/upcoming/activities/${result.id}/form`);
-          }
-        } catch (firebaseError) {
-          console.error("Firebase error details:", firebaseError);
-          console.error("Firebase error code:", firebaseError.code);
-          console.error("Firebase error message:", firebaseError.message);
-          console.error("Firebase error stack:", firebaseError.stack);
-          throw firebaseError;
+
+      try {
+        console.log("Attempting to save to Firebase with data:", finalActivityData);
+        console.log("Firebase db object:", db);
+        console.log("Collection reference:", collection(db, "upcomingActivities"));
+
+        if (editingActivity) {
+          console.log("Updating existing activity:", editingActivity.id);
+          const docRef = doc(db, "upcomingActivities", editingActivity.id);
+          console.log("Document reference:", docRef);
+          const result = await updateDoc(docRef, finalActivityData);
+          console.log("Activity updated successfully:", result);
+        } else {
+          console.log("Creating new activity");
+          const colRef = collection(db, "upcomingActivities");
+          console.log("Collection reference:", colRef);
+          const result = await addDoc(colRef, finalActivityData);
+          console.log("Activity added successfully:", result);
+          console.log("New document ID:", result.id);
+          // Navigate to form edit page after creating
+          setShowModal(false);
+          navigate(`/upcoming/activities/${result.id}/form`);
         }
+      } catch (firebaseError) {
+        console.error("Firebase error details:", firebaseError);
+        console.error("Firebase error code:", firebaseError.code);
+        console.error("Firebase error message:", firebaseError.message);
+        console.error("Firebase error stack:", firebaseError.stack);
+        throw firebaseError;
+      }
 
     } catch (error) {
       console.error("Error saving activity:", error);
       console.error("Error stack:", error.stack);
-      
+
       // Revert optimistic updates
       if (editingActivity) {
-        setOptimisticActivities(prev => 
-          prev.map(activity => 
+        setOptimisticActivities(prev =>
+          prev.map(activity =>
             activity.id === editingActivity.id ? editingActivity : activity
           )
         );
       } else {
         setOptimisticActivities(prev => prev.filter(activity => activity.id !== tempId));
       }
-      
+
       // Show more specific error message
       let errorMessage = "Failed to save activity. Please try again.";
       if (error.code === 'permission-denied') {
@@ -543,7 +547,7 @@ const UpcomingActivities = () => {
       } else if (error.message) {
         errorMessage = `Error: ${error.message}`;
       }
-      
+
       alert(errorMessage);
     } finally {
       setSubmitting(false);
@@ -553,6 +557,7 @@ const UpcomingActivities = () => {
   const handleRegistrationSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setUniqueErrors({}); // Clear previous unique errors
 
     try {
       console.log("=== REGISTRATION SUBMISSION DEBUG ===");
@@ -562,19 +567,19 @@ const UpcomingActivities = () => {
       console.log("Registration data keys:", Object.keys(registrationData));
       console.log("Payment proof type:", typeof registrationData.paymentProof);
       console.log("Payment proof instanceof File:", registrationData.paymentProof instanceof File);
-      
+
       const formSchema = selectedActivity?.formSchema || getDefaultFormSchema();
       console.log("Form schema:", formSchema);
       console.log("Form schema length:", formSchema?.length);
       console.log("Content elements:", formSchema?.filter(f => ["label", "image", "link"].includes(f.type)));
-      
+
       const missingFields = [];
-      
+
       formSchema.forEach(field => {
         if (field.required && field.type !== "label" && field.type !== "image" && field.type !== "link") {
           const value = registrationData[field.id];
           console.log(`Field ${field.id} (${field.label}):`, value, "Required:", field.required);
-          
+
           // Handle different field types
           if (field.type === "checkbox") {
             // For checkboxes, check if array exists and has at least one item
@@ -618,7 +623,7 @@ const UpcomingActivities = () => {
 
       console.log("All required fields are filled, processing data...");
       const processedData = { ...registrationData };
-      
+
       // Process file uploads from form schema
       for (const field of formSchema) {
         if (field.type === "file" && registrationData[field.id]) {
@@ -653,7 +658,7 @@ const UpcomingActivities = () => {
           }
         }
       }
-      
+
       // Process payment proof file specifically (not part of form schema)
       if (registrationData.paymentProof && registrationData.paymentProof instanceof File) {
         try {
@@ -698,7 +703,7 @@ const UpcomingActivities = () => {
             cleaned[key] = cleanDataForFirebase(value);
           } else if (Array.isArray(value)) {
             // Clean arrays
-            cleaned[key] = value.map(item => 
+            cleaned[key] = value.map(item =>
               item instanceof File ? null : (item && typeof item === 'object' ? cleanDataForFirebase(item) : item)
             ).filter(item => item !== null);
           } else {
@@ -708,9 +713,36 @@ const UpcomingActivities = () => {
         });
         return cleaned;
       };
-      
+
       const finalProcessedData = cleanDataForFirebase(processedData);
       console.log("Final cleaned data for Firebase:", finalProcessedData);
+
+      // Final validation of unique fields before submission
+      if (selectedActivity.formSchema) {
+        const uniqueFields = selectedActivity.formSchema.filter(f => f.isUnique);
+        const newUniqueErrors = {};
+
+        for (const field of uniqueFields) {
+          const value = finalProcessedData[field.id]; // Use finalProcessedData for validation
+          if (value) {
+            const q = query(
+              collection(db, "upcomingActivities", selectedActivity.id, "registrations"),
+              where(field.id, "==", value)
+            );
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+              newUniqueErrors[field.id] = `This ${field.label} is already registered.`;
+            }
+          }
+        }
+
+        if (Object.keys(newUniqueErrors).length > 0) {
+          setUniqueErrors(newUniqueErrors);
+          alert("Please correct the errors in the form before submitting.");
+          setSubmitting(false);
+          return;
+        }
+      }
 
       const registrationDoc = {
         ...finalProcessedData,
@@ -728,7 +760,7 @@ const UpcomingActivities = () => {
       try {
         console.log("Saving to upcomingActivities subcollection...");
         const subcollectionRef = await addDoc(
-          collection(db, "upcomingActivities", selectedActivity.id, "registrations"), 
+          collection(db, "upcomingActivities", selectedActivity.id, "registrations"),
           registrationDoc
         );
         console.log("Saved to subcollection with ID:", subcollectionRef.id);
@@ -745,17 +777,17 @@ const UpcomingActivities = () => {
         console.error("Failed to save to main collection:", mainCollectionError);
         throw new Error(`Failed to save registration: ${mainCollectionError.message}`);
       }
-      
+
       console.log("Registration saved successfully!");
       setShowRegistrationForm(false);
       setRegistrationData({});
       alert("Registration submitted successfully!");
-      
+
       // Refresh the registrations data
       if (selectedActivity) {
         fetchRegistrations(selectedActivity.id);
       }
-      
+
     } catch (error) {
       console.error("Error submitting registration:", error);
       console.error("Error details:", {
@@ -763,7 +795,7 @@ const UpcomingActivities = () => {
         code: error.code,
         stack: error.stack
       });
-      
+
       // Provide more specific error messages
       let errorMessage = "Failed to submit registration. Please try again.";
       if (error.code === 'permission-denied') {
@@ -773,7 +805,7 @@ const UpcomingActivities = () => {
       } else if (error.message) {
         errorMessage = `Error: ${error.message}`;
       }
-      
+
       alert(errorMessage);
     } finally {
       setSubmitting(false);
@@ -807,41 +839,27 @@ const UpcomingActivities = () => {
   const confirmDelete = async () => {
     const activityId = deleteConfirm;
     setDeleteConfirm(null);
-    
+
+    // Optimistically remove from UI
     const activityToDelete = optimisticActivities.find(a => a.id === activityId);
     setOptimisticActivities(prev => prev.filter(activity => activity.id !== activityId));
 
     try {
-      // Delete all registrations for this activity in subcollection
-      const registrationsRef = collection(db, "upcomingActivities", activityId, "registrations");
-      const registrationsSnap = await getDocs(registrationsRef);
-      const batchOps = [];
-      registrationsSnap.forEach((docSnap) => {
-        batchOps.push(deleteDoc(docSnap.ref));
-      });
-      await Promise.all(batchOps);
+      // PERMANENT DELETION LOGIC REMOVED
+      // We now perform a "Soft Delete" by marking the activity as deleted
+      // This preserves the form configuration and all registration data
 
-
-      // Delete all documents in allRegistrations where activityId field matches
-      const allRegistrationsRef = collection(db, "allRegistrations");
-      const allRegistrationsSnap = await getDocs(allRegistrationsRef);
-      const deleteAllRegOps = [];
-      allRegistrationsSnap.forEach((docSnap) => {
-        if (docSnap.data().activityId === activityId) {
-          deleteAllRegOps.push(deleteDoc(docSnap.ref));
-        }
-      });
-      await Promise.all(deleteAllRegOps);
-
-      // Delete only the document in upcomingActivities with id = activityId
       const activityDocRef = doc(db, "upcomingActivities", activityId);
-      try {
-        await deleteDoc(activityDocRef);
-      } catch (e) {
-        // If not found, ignore
-      }
+      await updateDoc(activityDocRef, {
+        isDeleted: true,
+        deletedAt: new Date().toISOString()
+      });
+
+      console.log("Activity soft-deleted (archived) successfully");
+
     } catch (error) {
-      console.error("Error deleting activity and registrations:", error);
+      console.error("Error archiving activity:", error);
+      // Revert optimistic update on error
       if (activityToDelete) {
         setOptimisticActivities(prev => [...prev, activityToDelete]);
       }
@@ -885,11 +903,11 @@ const UpcomingActivities = () => {
 
     // Get the activity to access form schema
     const activity = activities.find(a => a.id === activityId);
-    
+
     // Build field mapping: sanitized key -> original label
     const keyToLabelMap = {};
     const allFields = [];
-    
+
     if (activity?.formSections && activity.formSections.length > 0) {
       activity.formSections.forEach(section => {
         section.fields?.forEach(field => {
@@ -956,16 +974,16 @@ const UpcomingActivities = () => {
       const row = [];
       Array.from(allKeys).forEach(key => {
         let value = '';
-        
+
         // Check top-level first (for new format)
         if (reg[key] !== undefined) {
           value = reg[key];
-        } 
+        }
         // Check in data object (for old format)
         else if (reg.data && reg.data[key] !== undefined) {
           value = reg.data[key];
         }
-        
+
         // Format the value
         if (value === null || value === undefined) {
           value = '';
@@ -978,13 +996,13 @@ const UpcomingActivities = () => {
             value = JSON.stringify(value);
           }
         }
-        
+
         // Escape commas and quotes in CSV
         const stringValue = String(value);
         if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
           value = `"${stringValue.replace(/"/g, '""')}"`;
         }
-        
+
         row.push(value);
       });
       return row.join(",");
@@ -1010,7 +1028,7 @@ const UpcomingActivities = () => {
     const start = new Date(activity.registrationStart);
     const end = new Date(activity.registrationEnd);
     const isOpen = now >= start && now <= end;
-    const hasSpace = !activity.maxParticipants || 
+    const hasSpace = !activity.maxParticipants ||
       (registrations[activity.id]?.length || 0) < parseInt(activity.maxParticipants);
     return isOpen && hasSpace;
   };
@@ -1020,11 +1038,39 @@ const UpcomingActivities = () => {
     setShowViewModal(true);
   };
 
+  const checkUniqueValue = async (fieldId, value, label) => {
+    if (!value || !selectedActivity) return;
+
+    // Clear error when user starts typing/changes value (or checking empty)
+    setUniqueErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldId];
+      return newErrors;
+    });
+
+    try {
+      const q = query(
+        collection(db, "upcomingActivities", selectedActivity.id, "registrations"),
+        where(fieldId, "==", value)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        setUniqueErrors(prev => ({
+          ...prev,
+          [fieldId]: `This ${label} is already registered.`
+        }));
+      }
+    } catch (error) {
+      console.error("Error checking unique value:", error);
+    }
+  };
+
   const getDefaultFormSchema = () => [
     // Content Elements
-    { 
-      id: "welcome_label", 
-      type: "label", 
+    {
+      id: "welcome_label",
+      type: "label",
       label: "Welcome Message",
       content: "Welcome to our event! Please fill out the registration form below.",
       contentType: "text",
@@ -1035,64 +1081,64 @@ const UpcomingActivities = () => {
       italic: false,
       underline: false
     },
-    
+
     // Basic Form Fields
-    { 
-      id: "name", 
-      type: "text", 
-      label: "Full Name", 
-      required: true, 
-      placeholder: "Enter your full name" 
+    {
+      id: "name",
+      type: "text",
+      label: "Full Name",
+      required: true,
+      placeholder: "Enter your full name"
     },
-    { 
-      id: "rollNo", 
-      type: "text", 
-      label: "Roll Number", 
-      required: true, 
-      placeholder: "Enter your roll number" 
+    {
+      id: "rollNo",
+      type: "text",
+      label: "Roll Number",
+      required: true,
+      placeholder: "Enter your roll number"
     },
-    { 
-      id: "email", 
-      type: "email", 
-      label: "Email Address", 
-      required: true, 
-      placeholder: "your.email@hitam.org" 
+    {
+      id: "email",
+      type: "email",
+      label: "Email Address",
+      required: true,
+      placeholder: "your.email@hitam.org"
     },
-    { 
-      id: "phone", 
-      type: "phone", 
-      label: "Phone Number", 
-      required: true, 
-      placeholder: "+91 XXXXXXXXXX" 
+    {
+      id: "phone",
+      type: "phone",
+      label: "Phone Number",
+      required: true,
+      placeholder: "+91 XXXXXXXXXX"
     },
-    { 
-      id: "year", 
-      type: "select", 
-      label: "Academic Year", 
-      required: true, 
-      options: ["1st Year", "2nd Year", "3rd Year", "4th Year"] 
+    {
+      id: "year",
+      type: "select",
+      label: "Academic Year",
+      required: true,
+      options: ["1st Year", "2nd Year", "3rd Year", "4th Year"]
     },
-    { 
-      id: "branch", 
-      type: "select", 
-      label: "Branch", 
-      required: true, 
+    {
+      id: "branch",
+      type: "select",
+      label: "Branch",
+      required: true,
       options: [
-         "Computer Science Engineering",
-  "Computer Science Engineering (AI & ML)",
-  "Computer Science Engineering (Data Science)",
-  "Computer Science Engineering (Cyber Security)",
-  "Computer Science Engineering (IoT)",
-  "Electronics and Communication Engineering",
-  "Electrical and Electronics Engineering",
-  "Mechanical Engineering"
+        "Computer Science Engineering",
+        "Computer Science Engineering (AI & ML)",
+        "Computer Science Engineering (Data Science)",
+        "Computer Science Engineering (Cyber Security)",
+        "Computer Science Engineering (IoT)",
+        "Electronics and Communication Engineering",
+        "Electrical and Electronics Engineering",
+        "Mechanical Engineering"
       ]
     },
-    
+
     // Closing Content Element
-    { 
-      id: "terms_label", 
-      type: "label", 
+    {
+      id: "terms_label",
+      type: "label",
       label: "Terms and Conditions",
       content: "By submitting this form, you agree to our terms and conditions. For questions, contact us at [admin@hitam.org](mailto:admin@hitam.org).",
       contentType: "markdown",
@@ -1114,7 +1160,18 @@ const UpcomingActivities = () => {
       key: field.id,
       label: field.label + (field.required ? " *" : ""),
       value: registrationData[field.id] || "",
-      onChange: (e) => setRegistrationData({...registrationData, [field.id]: e.target.value}),
+      onChange: (e) => {
+        setRegistrationData({ ...registrationData, [field.id]: e.target.value });
+        if (uniqueErrors[field.id]) {
+          setUniqueErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors[field.id];
+            return newErrors;
+          });
+        }
+      },
+      onBlur: field.isUnique ? (e) => checkUniqueValue(field.id, e.target.value, field.label) : undefined,
+      error: uniqueErrors[field.id], // Pass error message to Input component
       placeholder: field.placeholder,
       required: field.required
     };
@@ -1128,12 +1185,15 @@ const UpcomingActivities = () => {
             </label>
             <textarea
               value={registrationData[field.id] || ""}
-              onChange={(e) => setRegistrationData({...registrationData, [field.id]: e.target.value})}
+              onChange={(e) => setRegistrationData({ ...registrationData, [field.id]: e.target.value })}
               placeholder={field.placeholder}
               required={field.required}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border ${uniqueErrors[field.id] ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500`}
             />
+            {uniqueErrors[field.id] && (
+              <p className="text-xs text-red-500 mt-1">{uniqueErrors[field.id]}</p>
+            )}
           </div>
         );
 
@@ -1145,7 +1205,7 @@ const UpcomingActivities = () => {
             </label>
             <select
               value={registrationData[field.id] || ""}
-              onChange={(e) => setRegistrationData({...registrationData, [field.id]: e.target.value})}
+              onChange={(e) => setRegistrationData({ ...registrationData, [field.id]: e.target.value })}
               required={field.required}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -1174,7 +1234,7 @@ const UpcomingActivities = () => {
                     name={field.id}
                     value={option}
                     checked={registrationData[field.id] === option}
-                    onChange={(e) => setRegistrationData({...registrationData, [field.id]: e.target.value})}
+                    onChange={(e) => setRegistrationData({ ...registrationData, [field.id]: e.target.value })}
                     required={field.required}
                     className="text-blue-600"
                   />
@@ -1206,7 +1266,7 @@ const UpcomingActivities = () => {
                       const newValues = e.target.checked
                         ? [...currentValues, option]
                         : currentValues.filter(v => v !== option);
-                      setRegistrationData({...registrationData, [field.id]: newValues});
+                      setRegistrationData({ ...registrationData, [field.id]: newValues });
                     }}
                     className="rounded border-gray-300 dark:border-gray-600"
                   />
@@ -1227,11 +1287,14 @@ const UpcomingActivities = () => {
             </label>
             <input
               type="file"
-              onChange={(e) => setRegistrationData({...registrationData, [field.id]: e.target.files[0]})}
+              onChange={(e) => setRegistrationData({ ...registrationData, [field.id]: e.target.files[0] })}
               required={field.required}
               accept={field.acceptedFileTypes || "*"}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {uniqueErrors[field.id] && (
+              <p className="text-xs text-red-500 mt-1">{uniqueErrors[field.id]}</p>
+            )}
             {field.helpText && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {field.helpText}
@@ -1369,10 +1432,10 @@ const UpcomingActivities = () => {
       case "label":
         return (
           <div key={field.id} className={`${getAlignmentClass(field.alignment)} mb-4`}>
-            <div 
+            <div
               className={`${getFontSizeClass(field.fontSize)} ${getTextColorClass(field.textColor)} ${field.fontWeight === "bold" ? "font-bold" : field.fontWeight === "semibold" ? "font-semibold" : field.fontWeight === "medium" ? "font-medium" : ""} ${field.italic ? "italic" : ""} ${field.underline ? "underline" : ""}`}
-              dangerouslySetInnerHTML={{ 
-                __html: field.contentType === "markdown" ? renderMarkdownLinks(field.content || "") : field.content || "" 
+              dangerouslySetInnerHTML={{
+                __html: field.contentType === "markdown" ? renderMarkdownLinks(field.content || "") : field.content || ""
               }}
             />
           </div>
@@ -1383,13 +1446,13 @@ const UpcomingActivities = () => {
           <div key={field.id} className={`${getAlignmentClass(field.alignment)} mb-4`}>
             {field.imageUrl && (
               <div className="relative">
-              <img 
-                src={field.imageUrl} 
-                alt={field.altText || "Form image"} 
+                <img
+                  src={field.imageUrl}
+                  alt={field.altText || "Form image"}
                   className={`${getImageSizeClass(field.imageSize)} ${getBorderStyleClass(field.borderStyle)} ${getShadowClass(field.shadow)} border border-gray-300 dark:border-gray-600 ${field.clickable ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
-                onError={(e) => {
-                  e.target.style.display = "none";
-                }}
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
                   onClick={() => {
                     if (field.clickable) {
                       const url = field.clickUrl || field.imageUrl;
@@ -1435,7 +1498,7 @@ const UpcomingActivities = () => {
   return (
     <>
       {/* Emergency Fallback UI - Removed Debug Message */}
-      
+
       {/* Error Display */}
       {componentError && (
         <div style={{
@@ -1451,7 +1514,7 @@ const UpcomingActivities = () => {
         }}>
           <h3>🚨 Component Error:</h3>
           <p>{componentError.message}</p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             style={{
               background: 'white',
@@ -1467,494 +1530,492 @@ const UpcomingActivities = () => {
           </button>
         </div>
       )}
-      
-      
-      
+
+
+
       {/* Main Component */}
-    <div className="min-h-screen pt-16">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Upcoming Activities
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Register for our upcoming events and workshops
-          </p>
-        </motion.div>
-
-
-        {user && (
-          <div className="flex justify-end mb-8">
-            <Button
-              onClick={() => {
-                resetForm();
-                setShowModal(true);
-              }}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Activity
-            </Button>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl h-64"></div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {optimisticActivities.map((activity, index) => (
-              <Card key={activity.id} delay={index * 0.1}>
-                <div className={`p-6 ${activity.isOptimistic ? "opacity-75" : ""}`}>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    {activity.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
-                    {activity.description}
-                  </p>
-                  
-                  <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span>Event: {new Date(activity.eventDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-2" />
-                      <span>
-                        Registered: {registrations[activity.id]?.length || 0}
-                        {activity.maxParticipants && ` / ${activity.maxParticipants}`}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        canRegister(activity) 
-                          ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                          : !isRegistrationOpen(activity)
-                          ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                          : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
-                      }`}>
-                        {!isRegistrationOpen(activity) 
-                          ? "Registration Closed" 
-                          : !canRegister(activity)
-                          ? "Registration Full"
-                          : "Registration Open"
-                        }
-                      </span>
-                    </div>
-                    {activity.isPaid && (
-                      <div className="flex items-center">
-                        <span className="text-green-600 dark:text-green-400 font-medium">
-                          Fee: ₹{activity.fee}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {!user && canRegister(activity) && (
-                      <Button
-                        size="sm"
-                        onClick={() => openRegistrationForm(activity)}
-                        className="w-full sm:w-auto"
-                      >
-                        Register
-                      </Button>
-                    )}
-                    
-                    {!user && !canRegister(activity) && isRegistrationOpen(activity) && (
-                      <Button
-                        size="sm"
-                        disabled
-                        className="w-full sm:w-auto"
-                      >
-                        Registration Full
-                      </Button>
-                    )}
-                    
-                    {!user && !isRegistrationOpen(activity) && (
-                      <Button
-                        size="sm"
-                        disabled
-                        className="w-full sm:w-auto"
-                      >
-                        Registration Closed
-                      </Button>
-                    )}
-                    
-                    {user && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(activity)}
-                          disabled={activity.isOptimistic}
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => viewRegistrations(activity)}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => exportRegistrations(activity.id)}
-                        >
-                          <Download className="w-4 h-4 mr-1" />
-                          Export
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(activity.id)}
-                          disabled={activity.isOptimistic}
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {optimisticActivities.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">
-              No upcoming activities found.
+      <div className="min-h-screen pt-16">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Upcoming Activities
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Register for our upcoming events and workshops
             </p>
-          </div>
-        )}
-      </div>
+          </motion.div>
 
-      {/* Add/Edit Activity Modal */}
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={editingActivity ? "Edit Activity" : "Add Activity"}
-        size="lg"
-      >
-        <div className="space-y-6">
-          <form onSubmit={handleSubmit}>
-            {/* Basic Info Form */}
-            <div className="space-y-6">
-              <Input
-                label="Activity Title"
-                value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
-                required
-              />
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <Input
-                  label="Registration Start"
-                  type="datetime-local"
-                  value={formData.registrationStart}
-                  onChange={(e) => setFormData({...formData, registrationStart: e.target.value})}
-                  required
-                />
-                <Input
-                  label="Registration End"
-                  type="datetime-local"
-                  value={formData.registrationEnd}
-                  onChange={(e) => setFormData({...formData, registrationEnd: e.target.value})}
-                  required
-                />
-              </div>
-
-              <Input
-                label="Event Date"
-                type="datetime-local"
-                value={formData.eventDate}
-                onChange={(e) => setFormData({...formData, eventDate: e.target.value})}
-                required
-              />
-
-              <Input
-                label="Max Participants"
-                type="number"
-                value={formData.maxParticipants}
-                onChange={(e) => setFormData({...formData, maxParticipants: e.target.value})}
-                placeholder="Leave empty for unlimited"
-              />
-            </div>
-
-            {/* Navigation to Form and Payment Pages */}
-            {editingActivity && (
-              <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  Additional Settings:
-                </p>
-                <div className="grid grid-cols-1 gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowModal(false);
-                      navigate(`/upcoming/activities/${editingActivity.id}/form`);
-                    }}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <FileText size={18} />
-                    Edit Registration & Payment
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <Button type="submit" loading={submitting} className="flex-1">
-                {editingActivity ? "Update" : "Create"} Activity
-              </Button>
+          {user && (
+            <div className="flex justify-end mb-8">
               <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  resetForm();
+                  setShowModal(true);
+                }}
+                className="flex items-center gap-2"
               >
-                Cancel
+                <Plus className="w-4 h-4" />
+                Add Activity
               </Button>
-            </div>
-          </form>
-        </div>
-      </Modal>
-
-      {/* Registration Form Modal */}
-      <Modal
-        isOpen={showRegistrationForm}
-        onClose={() => setShowRegistrationForm(false)}
-        title={`Register for ${selectedActivity?.title}`}
-        size="lg"
-      >
-        <div className="space-y-6">
-          {selectedActivity?.description && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
-              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                About this Activity
-              </h4>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                {selectedActivity.description}
-              </p>
-              <div className="mt-3 text-xs text-blue-600 dark:text-blue-400">
-                <p><strong>Event Date:</strong> {new Date(selectedActivity.eventDate).toLocaleDateString()}</p>
-                <p><strong>Registration Deadline:</strong> {new Date(selectedActivity.registrationEnd).toLocaleDateString()}</p>
-                {selectedActivity.maxParticipants && (
-                  <p><strong>Max Participants:</strong> {selectedActivity.maxParticipants}</p>
-                )}
-              </div>
             </div>
           )}
 
-          <form onSubmit={handleRegistrationSubmit} className="space-y-6">
-            {(selectedActivity?.formSchema || getDefaultFormSchema()).map((field) => {
-              if (field.type === "label" || field.type === "image" || field.type === "link") {
-                return renderContentField(field);
-              }
-              return renderFormField(field);
-            })}
+          {loading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl h-64"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {optimisticActivities.map((activity, index) => (
+                <Card key={activity.id} delay={index * 0.1}>
+                  <div className={`p-6 ${activity.isOptimistic ? "opacity-75" : ""}`}>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                      {activity.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
+                      {activity.description}
+                    </p>
 
-            {/* Payment Section at Bottom of Form */}
-            {selectedActivity?.isPaid && (
-              <div className="mt-6 pt-6 border-t-2 border-dashed border-yellow-300 dark:border-yellow-700">
-                <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-2xl">💳</span>
-                    <h4 className="font-semibold text-yellow-900 dark:text-yellow-100">
-                      Payment Required: ₹{selectedActivity.fee}
-                    </h4>
+                    <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>Event: {new Date(activity.eventDate).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Users className="w-4 h-4 mr-2" />
+                        <span>
+                          Registered: {registrations[activity.id]?.length || 0}
+                          {activity.maxParticipants && ` / ${activity.maxParticipants}`}
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className={`px-2 py-1 rounded-full text-xs ${canRegister(activity)
+                          ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                          : !isRegistrationOpen(activity)
+                            ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                            : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                          }`}>
+                          {!isRegistrationOpen(activity)
+                            ? "Registration Closed"
+                            : !canRegister(activity)
+                              ? "Registration Full"
+                              : "Registration Open"
+                          }
+                        </span>
+                      </div>
+                      {activity.isPaid && (
+                        <div className="flex items-center">
+                          <span className="text-green-600 dark:text-green-400 font-medium">
+                            Fee: ₹{activity.fee}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {!user && canRegister(activity) && (
+                        <Button
+                          size="sm"
+                          onClick={() => openRegistrationForm(activity)}
+                          className="w-full sm:w-auto"
+                        >
+                          Fill Form
+                        </Button>
+                      )}
+
+                      {!user && !canRegister(activity) && isRegistrationOpen(activity) && (
+                        <Button
+                          size="sm"
+                          disabled
+                          className="w-full sm:w-auto"
+                        >
+                          Registration Full
+                        </Button>
+                      )}
+
+                      {!user && !isRegistrationOpen(activity) && (
+                        <Button
+                          size="sm"
+                          disabled
+                          className="w-full sm:w-auto"
+                        >
+                          Registration Closed
+                        </Button>
+                      )}
+
+                      {user && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(activity)}
+                            disabled={activity.isOptimistic}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => viewRegistrations(activity)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => exportRegistrations(activity.id)}
+                          >
+                            <Download className="w-4 h-4 mr-1" />
+                            Export
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleDelete(activity.id)}
+                            disabled={activity.isOptimistic}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                
-                {selectedActivity.paymentDetails?.paymentUrl && (
-                  <div className="mb-3">
-                    <a
-                      href={selectedActivity.paymentDetails.paymentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {optimisticActivities.length === 0 && !loading && (
+            <div className="text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400">
+                No upcoming activities found.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Add/Edit Activity Modal */}
+        <Modal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          title={editingActivity ? "Edit Activity" : "Add Activity"}
+          size="lg"
+        >
+          <div className="space-y-6">
+            <form onSubmit={handleSubmit}>
+              {/* Basic Info Form */}
+              <div className="space-y-6">
+                <Input
+                  label="Activity Title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  required
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Input
+                    label="Registration Start"
+                    type="datetime-local"
+                    value={formData.registrationStart}
+                    onChange={(e) => setFormData({ ...formData, registrationStart: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Registration End"
+                    type="datetime-local"
+                    value={formData.registrationEnd}
+                    onChange={(e) => setFormData({ ...formData, registrationEnd: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <Input
+                  label="Event Date"
+                  type="datetime-local"
+                  value={formData.eventDate}
+                  onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
+                  required
+                />
+
+                <Input
+                  label="Max Participants"
+                  type="number"
+                  value={formData.maxParticipants}
+                  onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
+                  placeholder="Leave empty for unlimited"
+                />
+              </div>
+
+              {/* Navigation to Form and Payment Pages */}
+              {editingActivity && (
+                <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Additional Settings:
+                  </p>
+                  <div className="grid grid-cols-1 gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowModal(false);
+                        navigate(`/upcoming/activities/${editingActivity.id}/form`);
+                      }}
+                      className="flex items-center justify-center gap-2"
                     >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Open Payment Link
-                    </a>
-                  </div>
-                )}
-                
-                {selectedActivity.paymentDetails?.instructions && (
-                  <div className="mb-3">
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-1">
-                      <strong>Instructions:</strong>
-                    </p>
-                    <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                      {selectedActivity.paymentDetails.instructions}
-                    </p>
-                  </div>
-                )}
-                
-                <div className="grid md:grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">
-                      Payment Screenshot *
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => setRegistrationData({...registrationData, paymentProof: e.target.files[0]})}
-                      required
-                      className="w-full px-3 py-2 border border-yellow-300 dark:border-yellow-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">
-                      UPI Transaction ID *
-                    </label>
-                    <input
-                      type="text"
-                      value={registrationData.upiTransactionId || ""}
-                      onChange={(e) => setRegistrationData({...registrationData, upiTransactionId: e.target.value})}
-                      placeholder="Enter UPI transaction ID"
-                      required
-                      className="w-full px-3 py-2 border border-yellow-300 dark:border-yellow-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                    />
+                      <FileText size={18} />
+                      Edit Registration & Payment
+                    </Button>
                   </div>
                 </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <Button type="submit" loading={submitting} className="flex-1">
+                  {editingActivity ? "Update" : "Create"} Activity
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </Modal>
+
+        {/* Registration Form Modal */}
+        <Modal
+          isOpen={showRegistrationForm}
+          onClose={() => setShowRegistrationForm(false)}
+          title={`Register for ${selectedActivity?.title}`}
+          size="lg"
+        >
+          <div className="space-y-6">
+            {selectedActivity?.description && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                  About this Activity
+                </h4>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  {selectedActivity.description}
+                </p>
+                <div className="mt-3 text-xs text-blue-600 dark:text-blue-400">
+                  <p><strong>Event Date:</strong> {new Date(selectedActivity.eventDate).toLocaleDateString()}</p>
+                  <p><strong>Registration Deadline:</strong> {new Date(selectedActivity.registrationEnd).toLocaleDateString()}</p>
+                  {selectedActivity.maxParticipants && (
+                    <p><strong>Max Participants:</strong> {selectedActivity.maxParticipants}</p>
+                  )}
                 </div>
               </div>
             )}
 
-            <div className="flex gap-4">
-              <Button type="submit" loading={submitting} className="flex-1">
-                Submit Registration
-              </Button>
+            <form onSubmit={handleRegistrationSubmit} className="space-y-6">
+              {(selectedActivity?.formSchema || getDefaultFormSchema()).map((field) => {
+                if (field.type === "label" || field.type === "image" || field.type === "link") {
+                  return renderContentField(field);
+                }
+                return renderFormField(field);
+              })}
+
+              {/* Payment Section at Bottom of Form */}
+              {selectedActivity?.isPaid && (
+                <div className="mt-6 pt-6 border-t-2 border-dashed border-yellow-300 dark:border-yellow-700">
+                  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-2xl">💳</span>
+                      <h4 className="font-semibold text-yellow-900 dark:text-yellow-100">
+                        Payment Required: ₹{selectedActivity.fee}
+                      </h4>
+                    </div>
+
+                    {selectedActivity.paymentDetails?.paymentUrl && (
+                      <div className="mb-3">
+                        <a
+                          href={selectedActivity.paymentDetails.paymentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Open Payment Link
+                        </a>
+                      </div>
+                    )}
+
+                    {selectedActivity.paymentDetails?.instructions && (
+                      <div className="mb-3">
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-1">
+                          <strong>Instructions:</strong>
+                        </p>
+                        <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                          {selectedActivity.paymentDetails.instructions}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="grid md:grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">
+                          Payment Screenshot *
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => setRegistrationData({ ...registrationData, paymentProof: e.target.files[0] })}
+                          required
+                          className="w-full px-3 py-2 border border-yellow-300 dark:border-yellow-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">
+                          UPI Transaction ID *
+                        </label>
+                        <input
+                          type="text"
+                          value={registrationData.upiTransactionId || ""}
+                          onChange={(e) => setRegistrationData({ ...registrationData, upiTransactionId: e.target.value })}
+                          placeholder="Enter UPI transaction ID"
+                          required
+                          className="w-full px-3 py-2 border border-yellow-300 dark:border-yellow-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <Button type="submit" loading={submitting} className="flex-1">
+                  Submit Registration
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowRegistrationForm(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </Modal>
+
+        {/* View Registrations Modal */}
+        <Modal
+          isOpen={showViewModal}
+          onClose={() => setShowViewModal(false)}
+          title={`Registrations for ${selectedActivity?.title}`}
+          size="xl"
+        >
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Total Registrations: {registrations[selectedActivity?.id]?.length || 0}
+              </p>
               <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowRegistrationForm(false)}
+                size="sm"
+                onClick={() => exportRegistrations(selectedActivity?.id)}
+              >
+                <Download className="w-4 h-4 mr-1" />
+                Export CSV
+              </Button>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-800">
+                  <tr>
+                    <th className="px-4 py-2 text-left">Name</th>
+                    <th className="px-4 py-2 text-left">Email</th>
+                    <th className="px-4 py-2 text-left">Phone</th>
+                    <th className="px-4 py-2 text-left">Status</th>
+                    <th className="px-4 py-2 text-left">Submitted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {registrations[selectedActivity?.id]?.map((registration) => (
+                    <tr key={registration.id} className="border-b border-gray-200 dark:border-gray-700">
+                      <td className="px-4 py-2">{registration.name}</td>
+                      <td className="px-4 py-2">{registration.email}</td>
+                      <td className="px-4 py-2">{registration.phone}</td>
+                      <td className="px-4 py-2">
+                        <span className={`px-2 py-1 rounded-full text-xs ${registration.status === "confirmed"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                          : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                          }`}>
+                          {registration.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2">
+                        {new Date(registration.submittedAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={!!deleteConfirm}
+          onClose={() => setDeleteConfirm(null)}
+          title="Archive Activity"
+        >
+          <div className="space-y-4">
+            <p className="text-gray-600 dark:text-gray-300">
+              Are you sure you want to delete this activity?
+              <br /><br />
+              <strong>Note:</strong> This will <strong>NOT</strong> delete the registration data.
+              The activity will be hidden from the upcoming list but data will be preserved in the database.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => setDeleteConfirm(null)}
               >
                 Cancel
               </Button>
+              <Button
+                variant="danger"
+                onClick={confirmDelete}
+              >
+                Delete (Archive)
+              </Button>
             </div>
-          </form>
-        </div>
-      </Modal>
-
-      {/* View Registrations Modal */}
-      <Modal
-        isOpen={showViewModal}
-        onClose={() => setShowViewModal(false)}
-        title={`Registrations for ${selectedActivity?.title}`}
-        size="xl"
-      >
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Total Registrations: {registrations[selectedActivity?.id]?.length || 0}
-            </p>
-            <Button
-              size="sm"
-              onClick={() => exportRegistrations(selectedActivity?.id)}
-            >
-              <Download className="w-4 h-4 mr-1" />
-              Export CSV
-            </Button>
           </div>
-
-          <div className="max-h-96 overflow-y-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-4 py-2 text-left">Name</th>
-                  <th className="px-4 py-2 text-left">Email</th>
-                  <th className="px-4 py-2 text-left">Phone</th>
-                  <th className="px-4 py-2 text-left">Status</th>
-                  <th className="px-4 py-2 text-left">Submitted</th>
-                </tr>
-              </thead>
-              <tbody>
-                {registrations[selectedActivity?.id]?.map((registration) => (
-                  <tr key={registration.id} className="border-b border-gray-200 dark:border-gray-700">
-                    <td className="px-4 py-2">{registration.name}</td>
-                    <td className="px-4 py-2">{registration.email}</td>
-                    <td className="px-4 py-2">{registration.phone}</td>
-                    <td className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        registration.status === "confirmed" 
-                          ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                          : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
-                      }`}>
-                        {registration.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">
-                      {new Date(registration.submittedAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        title="Confirm Delete"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-300">
-            Are you sure you want to delete this activity? This will also delete all registrations. This action cannot be undone.
-          </p>
-          <div className="flex gap-4">
-            <Button
-              variant="danger"
-              onClick={confirmDelete}
-              className="flex-1"
-            >
-              Delete
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteConfirm(null)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    </div>
+        </Modal>
+      </div>
     </>
   );
 };

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { Download, ArrowLeft, Filter, Table, Save, Search, Eye } from 'lucide-react';
+import { Download, ArrowLeft, Filter, Table, Save, Search, Eye, ChevronDown } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Modal from '../../components/ui/Modal';
@@ -167,6 +167,27 @@ const FormResponseAnalytics = () => {
     // Filter State
     const [filters, setFilters] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Export State
+    const [showExportMenu, setShowExportMenu] = useState(false);
+    const [selectedExportColumns, setSelectedExportColumns] = useState([]);
+
+    // Initialize export columns when fields change
+    useEffect(() => {
+        if (baseAnalytics.formFields.length > 0) {
+            setSelectedExportColumns(baseAnalytics.formFields.map(f => f.id));
+        }
+    }, [baseAnalytics.formFields]);
+
+    const toggleExportColumn = (fieldId) => {
+        setSelectedExportColumns(prev => {
+            if (prev.includes(fieldId)) {
+                return prev.filter(id => id !== fieldId);
+            } else {
+                return [...prev, fieldId];
+            }
+        });
+    };
 
     // Helper: Normalize keys in submissions to match schema
     const normalizeSubmissions = (data, formSections) => {
@@ -337,14 +358,17 @@ const FormResponseAnalytics = () => {
         const dataToExport = getFilteredSubmissions;
         if (!dataToExport.length) return alert("No data to export");
 
-        const headers = ['ID', 'Date', ...baseAnalytics.formFields.map(f => f.label), 'Admin Note', 'Status'];
+        // Filter fields based on selection
+        const fieldsToExport = baseAnalytics.formFields.filter(f => selectedExportColumns.includes(f.id));
+
+        const headers = ['ID', 'Date', ...fieldsToExport.map(f => f.label), 'Admin Note', 'Status'];
         const csvRows = [headers.join(',')];
 
         dataToExport.forEach(sub => {
             const row = [
                 sub.id,
                 sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : '',
-                ...baseAnalytics.formFields.map(f => {
+                ...fieldsToExport.map(f => {
                     const val = sub[f.id];
                     return `"${String(Array.isArray(val) ? val.join('; ') : (val || '')).replace(/"/g, '""')}"`;
                 }),
@@ -540,7 +564,16 @@ const FormResponseAnalytics = () => {
                                                 return (
                                                     <th key={field.id} className="px-6 py-3 min-w-[150px]">
                                                         <div className="flex flex-col gap-1">
-                                                            <span>{field.label}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                                                                    checked={selectedExportColumns.includes(field.id)}
+                                                                    onChange={() => toggleExportColumn(field.id)}
+                                                                    title="Include in CSV Export"
+                                                                />
+                                                                <span>{field.label}</span>
+                                                            </div>
                                                             {isCategorical && stats ? (
                                                                 <select
                                                                     className="w-full px-2 py-1 text-xs font-normal rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:border-blue-500"

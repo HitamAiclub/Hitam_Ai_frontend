@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, GripVertical, Eye, Settings, Link, Image as ImageIcon, Type, Copy, ArrowUp, ArrowDown, ArrowRight, Download, Play, CheckCircle, Info } from "lucide-react";
-import { uploadFormBuilderImage,uploadFormFiles} from "../../utils/cloudinary";
+import { uploadFormBuilderImage, uploadFormFiles } from "../../utils/cloudinary";
 
 import Button from "../ui/Button";
 import Input from "../ui/Input";
@@ -165,10 +165,10 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
   const moveSection = (sectionId, direction) => {
     const currentIndex = sections.findIndex(s => s.id === sectionId);
     if (currentIndex === -1) return;
-    
+
     const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
     if (newIndex < 0 || newIndex >= sections.length) return;
-    
+
     const updatedSections = [...sections];
     const [movedSection] = updatedSections.splice(currentIndex, 1);
     updatedSections.splice(newIndex, 0, movedSection);
@@ -220,13 +220,13 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
       clickUrl: type === "image" ? "" : undefined,
       useFileUpload: type === "image" ? false : undefined
     };
-    
+
     const currentSection = getCurrentSection();
     const updatedFields = [...(currentSection?.fields || []), newField];
     updateSection(targetSectionId, { fields: updatedFields });
-    
+
     setShowAddField(false);
-    
+
     // Auto-open settings for content fields
     if (["label", "image", "link"].includes(type)) {
       setTimeout(() => setEditingField(newField), 100);
@@ -236,7 +236,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
   const updateField = (fieldId, updates) => {
     const updatedSections = sections.map(section => ({
       ...section,
-      fields: section.fields.map(field => 
+      fields: section.fields.map(field =>
         field.id === fieldId ? { ...field, ...updates } : field
       )
     }));
@@ -271,13 +271,13 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
   const moveField = (fieldId, direction) => {
     const section = sections.find(s => s.fields.some(f => f.id === fieldId));
     if (!section) return;
-    
+
     const currentIndex = section.fields.findIndex(f => f.id === fieldId);
     if (currentIndex === -1) return;
-    
+
     const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
     if (newIndex < 0 || newIndex >= section.fields.length) return;
-    
+
     const updatedFields = [...section.fields];
     const [movedField] = updatedFields.splice(currentIndex, 1);
     updatedFields.splice(newIndex, 0, movedField);
@@ -288,7 +288,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
     const fieldType = fieldTypes.find(f => f.type === field.type);
     const section = sections.find(s => s.id === sectionId);
     const fieldIndex = section?.fields.findIndex(f => f.id === field.id) || index;
-    
+
     // Only update fields array, not modal draft
     const addOption = () => {
       const newOptions = [...(field.options || []), `Option ${(field.options?.length || 0) + 1}`];
@@ -308,7 +308,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
     const getPreviousFields = () => {
       const currentSectionIndex = sections.findIndex(s => s.id === sectionId);
       const previousSections = sections.slice(0, currentSectionIndex);
-      return previousSections.flatMap(s => s.fields.filter(f => 
+      return previousSections.flatMap(s => s.fields.filter(f =>
         ["select", "radio", "checkbox"].includes(f.type) && f.options && f.options.length > 0
       ));
     };
@@ -318,10 +318,10 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
         case "label":
           return (
             <div className={`${getAlignmentClass(field.alignment)} mb-4`}>
-              <div 
+              <div
                 className={`${getFontSizeClass(field.fontSize)} ${getTextColorClass(field.textColor)} ${field.fontWeight === "bold" ? "font-bold" : field.fontWeight === "semibold" ? "font-semibold" : field.fontWeight === "medium" ? "font-medium" : ""} ${field.italic ? "italic" : ""} ${field.underline ? "underline" : ""}`}
-                dangerouslySetInnerHTML={{ 
-                  __html: field.contentType === "markdown" ? renderMarkdownLinks(field.content || "Add your description here...") : field.content || "Add your description here..." 
+                dangerouslySetInnerHTML={{
+                  __html: field.contentType === "markdown" ? renderMarkdownLinks(field.content || "Add your description here...") : field.content || "Add your description here..."
                 }}
               />
             </div>
@@ -331,9 +331,9 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
           return (
             <div className={`${getAlignmentClass(field.alignment)} mb-4`}>
               {field.imageUrl ? (
-                <img 
-                  src={field.imageUrl} 
-                  alt={field.altText || "Form image"} 
+                <img
+                  src={field.imageUrl}
+                  alt={field.altText || "Form image"}
                   className={`${getImageSizeClass(field.imageSize)} ${getBorderStyleClass(field.borderStyle)} ${getShadowClass(field.shadow)} border border-gray-300 dark:border-gray-600`}
                   onError={(e) => {
                     e.target.src = "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=400";
@@ -485,7 +485,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
               </span>
             )}
           </div>
-          
+
           <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               type="button"
@@ -601,10 +601,10 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
       if (field.type === "label") {
         return (
           <div key={field.id} className={`${getAlignmentClass(field.alignment)} mb-6`}>
-            <div 
+            <div
               className={`${getFontSizeClass(field.fontSize)} ${getTextColorClass(field.textColor)} ${field.fontWeight === "bold" ? "font-bold" : field.fontWeight === "semibold" ? "font-semibold" : field.fontWeight === "medium" ? "font-medium" : ""} ${field.italic ? "italic" : ""} ${field.underline ? "underline" : ""}`}
-              dangerouslySetInnerHTML={{ 
-                __html: field.contentType === "markdown" ? renderMarkdownLinks(field.content || "") : field.content || "" 
+              dangerouslySetInnerHTML={{
+                __html: field.contentType === "markdown" ? renderMarkdownLinks(field.content || "") : field.content || ""
               }}
             />
           </div>
@@ -616,9 +616,9 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
           <div key={field.id} className={`${getAlignmentClass(field.alignment)} mb-6`}>
             {field.imageUrl && (
               <div className="relative">
-                <img 
-                  src={field.imageUrl} 
-                  alt={field.altText || "Form image"} 
+                <img
+                  src={field.imageUrl}
+                  alt={field.altText || "Form image"}
                   className={`${getImageSizeClass(field.imageSize)} ${getBorderStyleClass(field.borderStyle)} ${getShadowClass(field.shadow)} border border-gray-300 dark:border-gray-600 ${field.clickable ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
                   onError={(e) => {
                     e.target.src = "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=400";
@@ -835,10 +835,10 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
               This is how your form will appear to users
             </p>
           </div>
-          
+
           <form className="space-y-6">
             {fields.map(renderField)}
-            
+
             {/* Payment Section at Bottom (only show if event is paid AND no payment fields exist in sections) */}
             {isPaid && !hasPaymentFields && (
               <div className="mt-6 pt-6 border-t-2 border-dashed border-yellow-300 dark:border-yellow-700">
@@ -849,7 +849,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                       Payment Required: ₹{fee || 'Not set'}
                     </h4>
                   </div>
-                  
+
                   {paymentUrl && (
                     <div className="mb-3">
                       <a
@@ -863,7 +863,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                       </a>
                     </div>
                   )}
-                  
+
                   {paymentInstructions && (
                     <div className="mb-3">
                       <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-1">
@@ -874,7 +874,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                       </p>
                     </div>
                   )}
-                  
+
                   <div className="grid md:grid-cols-2 gap-4 mt-4">
                     <div>
                       <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">
@@ -887,7 +887,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                         className="w-full px-3 py-2 border border-yellow-300 dark:border-yellow-600 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">
                         UPI Transaction ID *
@@ -903,7 +903,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                 </div>
               </div>
             )}
-            
+
             <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
               <Button type="submit" className="w-full" disabled>
                 Submit Registration (Preview Mode)
@@ -1041,7 +1041,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
         </h3>
         <div className="flex items-center space-x-3">
           <Button
-            
+
             variant="outline"
             onClick={() => setPreviewMode(!previewMode)}
             className="flex items-center">
@@ -1049,7 +1049,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
             {previewMode ? "Edit Form" : "Preview Form"}
           </Button>
           {!previewMode && (
-            <Button 
+            <Button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
@@ -1067,8 +1067,8 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
       </div>
 
       {previewMode ? (
-        <FormPreview 
-          fields={sections.flatMap(s => s.fields || [])} 
+        <FormPreview
+          fields={sections.flatMap(s => s.fields || [])}
           isPaid={isPaid}
           fee={fee}
           paymentUrl={paymentUrl}
@@ -1086,111 +1086,129 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white dark:bg-gray-800 border-l-4 border-l-blue-500 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6"
                 >
-                {/* Section Header */}
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex-1">
-                    {editingSection === section.id ? (
-                      <div className="space-y-2">
-                        <Input
-                          value={section.title}
-                          onChange={(e) => updateSection(section.id, { title: e.target.value })}
-                          placeholder="Section Title"
-                          className="font-semibold text-lg"
+                  {/* Section Header */}
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex-1">
+                      {editingSection === section.id ? (
+                        <div className="space-y-2">
+                          <Input
+                            value={section.title}
+                            onChange={(e) => updateSection(section.id, { title: e.target.value })}
+                            placeholder="Section Title"
+                            className="font-semibold text-lg"
+                          />
+                          <Input
+                            value={section.description}
+                            onChange={(e) => updateSection(section.id, { description: e.target.value })}
+                            placeholder="Section Description (optional)"
+                            className="text-sm text-gray-600 dark:text-gray-400"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => setEditingSection(null)}
+                          >
+                            Done
+                          </Button>
+                        </div>
+                      ) : (
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            Section {sectionIndex + 1}{section.title ? `: ${section.title}` : ''}
+                          </h4>
+                          {section.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {section.description}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2 ml-4">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingSection(editingSection === section.id ? null : section.id)}
+                      >
+                        <Settings className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => insertSectionAfter(sectionIndex)}
+                        title="Insert section after"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Insert
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => moveSection(section.id, "up")}
+                        disabled={sectionIndex === 0}
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => moveSection(section.id, "down")}
+                        disabled={sectionIndex === sections.length - 1}
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteSection(section.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Section Fields */}
+                  <div className="space-y-4">
+                    <AnimatePresence>
+                      {section.fields?.map((field, fieldIndex) => (
+                        <FieldEditor
+                          key={field.id}
+                          field={field}
+                          index={fieldIndex}
+                          sectionId={section.id}
                         />
-                        <Input
-                          value={section.description}
-                          onChange={(e) => updateSection(section.id, { description: e.target.value })}
-                          placeholder="Section Description (optional)"
-                          className="text-sm text-gray-600 dark:text-gray-400"
-                        />
+                      ))}
+                    </AnimatePresence>
+
+                    {(!section.fields || section.fields.length === 0) && (
+                      <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                          No fields in this section
+                        </p>
                         <Button
                           size="sm"
-                          onClick={() => setEditingSection(null)}
+                          onClick={() => {
+                            setCurrentSectionId(section.id);
+                            setShowAddField(true);
+                          }}
                         >
-                          Done
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Field to This Section
                         </Button>
-                      </div>
-                    ) : (
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          Section {sectionIndex + 1}{section.title ? `: ${section.title}` : ''}
-                        </h4>
-                        {section.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {section.description}
-                          </p>
-                        )}
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center space-x-2 ml-4">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingSection(editingSection === section.id ? null : section.id)}
-                    >
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertSectionAfter(sectionIndex)}
-                      title="Insert section after"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Insert
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => moveSection(section.id, "up")}
-                      disabled={sectionIndex === 0}
-                    >
-                      <ArrowUp className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => moveSection(section.id, "down")}
-                      disabled={sectionIndex === sections.length - 1}
-                    >
-                      <ArrowDown className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteSection(section.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
 
-                {/* Section Fields */}
-                <div className="space-y-4">
-                  <AnimatePresence>
-                    {section.fields?.map((field, fieldIndex) => (
-                      <FieldEditor
-                        key={field.id}
-                        field={field}
-                        index={fieldIndex}
-                        sectionId={section.id}
-                      />
-                    ))}
-                  </AnimatePresence>
-
-                  {(!section.fields || section.fields.length === 0) && (
-                    <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                        No fields in this section
-                      </p>
+                  {/* Add Field Button */}
+                  {section.fields && section.fields.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           setCurrentSectionId(section.id);
@@ -1198,83 +1216,65 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                         }}
                       >
                         <Plus className="w-4 h-4 mr-2" />
-                        Add Field to This Section
+                        Add Field
                       </Button>
                     </div>
                   )}
-                </div>
 
-                {/* Add Field Button */}
-                {section.fields && section.fields.length > 0 && (
+                  {/* Section Navigation/Flow Control */}
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        After section {sectionIndex + 1}:
+                      </label>
+                    </div>
+                    <select
+                      value={section.navigation?.type === "section" ? section.navigation.sectionId : (section.navigation?.type || "next")}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "next" || value === "submit") {
+                          updateSection(section.id, { navigation: { type: value } });
+                        } else {
+                          // It's a section ID
+                          updateSection(section.id, { navigation: { type: "section", sectionId: value } });
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                      <option value="next">Continue to next section</option>
+                      {sections.map((s, idx) => {
+                        if (s.id === section.id) return null; // Don't show current section
+                        return (
+                          <option key={s.id} value={s.id}>
+                            Go to section {idx + 1} ({s.title || `Untitled Section`})
+                          </option>
+                        );
+                      })}
+                      <option value="submit">Submit form</option>
+                    </select>
+                    {sectionIndex === sections.length - 1 && section.navigation?.type !== "submit" && (
+                      <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                        ⚠️ This is the last section. Consider setting to "Submit form"
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* Insert Section Button - between sections */}
+                {sectionIndex < sections.length - 1 && (
+                  <div className="flex items-center justify-center py-1">
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        setCurrentSectionId(section.id);
-                        setShowAddField(true);
-                      }}
+                      onClick={() => insertSectionAfter(sectionIndex)}
+                      className="w-full flex items-center justify-center gap-2 py-2 text-blue-600 dark:text-blue-400 border-2 border-dashed border-blue-400 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Field
+                      <Plus className="w-4 h-4" />
+                      Add New Section
                     </Button>
                   </div>
                 )}
-
-                {/* Section Navigation/Flow Control */}
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      After section {sectionIndex + 1}:
-                    </label>
-                  </div>
-                  <select
-                    value={section.navigation?.type === "section" ? section.navigation.sectionId : (section.navigation?.type || "next")}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "next" || value === "submit") {
-                        updateSection(section.id, { navigation: { type: value } });
-                      } else {
-                        // It's a section ID
-                        updateSection(section.id, { navigation: { type: "section", sectionId: value } });
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  >
-                    <option value="next">Continue to next section</option>
-                    {sections.map((s, idx) => {
-                      if (s.id === section.id) return null; // Don't show current section
-                      return (
-                        <option key={s.id} value={s.id}>
-                          Go to section {idx + 1} ({s.title || `Untitled Section`})
-                        </option>
-                      );
-                    })}
-                    <option value="submit">Submit form</option>
-                  </select>
-                  {sectionIndex === sections.length - 1 && section.navigation?.type !== "submit" && (
-                    <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                      ⚠️ This is the last section. Consider setting to "Submit form"
-                    </p>
-                  )}
-                </div>
-              </motion.div>
-              
-              {/* Insert Section Button - between sections */}
-              {sectionIndex < sections.length - 1 && (
-                <div className="flex items-center justify-center py-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => insertSectionAfter(sectionIndex)}
-                    className="w-full flex items-center justify-center gap-2 py-2 text-blue-600 dark:text-blue-400 border-2 border-dashed border-blue-400 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add New Section
-                  </Button>
-                </div>
-              )}
               </div>
             ))}
           </div>
@@ -1420,7 +1420,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <option value="html">HTML</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Content Text
@@ -1444,19 +1444,19 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Font Size
                     </label>
-                      <select
-                        value={editingFieldDraft.fontSize || "medium"}
-                        onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, fontSize: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="xs">Extra Small</option>
-                        <option value="sm">Small</option>
-                        <option value="medium">Medium</option>
-                        <option value="lg">Large</option>
-                        <option value="xl">Extra Large</option>
-                        <option value="2xl">2XL</option>
-                        <option value="3xl">3XL</option>
-                      </select>
+                    <select
+                      value={editingFieldDraft.fontSize || "medium"}
+                      onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, fontSize: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="xs">Extra Small</option>
+                      <option value="sm">Small</option>
+                      <option value="medium">Medium</option>
+                      <option value="lg">Large</option>
+                      <option value="xl">Extra Large</option>
+                      <option value="2xl">2XL</option>
+                      <option value="3xl">3XL</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1539,10 +1539,10 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                 {/* Preview */}
                 <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview:</p>
-                  <div 
+                  <div
                     className={`${getFontSizeClass(editingFieldDraft.fontSize || "medium")} ${getAlignmentClass(editingFieldDraft.alignment || "left")} ${getTextColorClass(editingFieldDraft.textColor || "default")} ${editingFieldDraft.fontWeight === "bold" ? "font-bold" : editingFieldDraft.fontWeight === "semibold" ? "font-semibold" : editingFieldDraft.fontWeight === "medium" ? "font-medium" : ""} ${editingFieldDraft.italic ? "italic" : ""} ${editingFieldDraft.underline ? "underline" : ""}`}
-                    dangerouslySetInnerHTML={{ 
-                      __html: editingFieldDraft.contentType === "markdown" ? renderMarkdownLinks(editingFieldDraft.content || "") : editingFieldDraft.content || "Preview text will appear here" 
+                    dangerouslySetInnerHTML={{
+                      __html: editingFieldDraft.contentType === "markdown" ? renderMarkdownLinks(editingFieldDraft.content || "") : editingFieldDraft.content || "Preview text will appear here"
                     }}
                   />
                 </div>
@@ -1557,30 +1557,30 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                   </label>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id={`imageUrl-${editingFieldDraft.id}`}
-                      name={`imageSource-${editingFieldDraft.id}`}
-                      value="url"
-                      checked={!editingFieldDraft.useFileUpload}
-                      onChange={() => setEditingFieldDraft({ ...editingFieldDraft, useFileUpload: false })}
-                      className="text-blue-600"
-                    />
+                      <input
+                        type="radio"
+                        id={`imageUrl-${editingFieldDraft.id}`}
+                        name={`imageSource-${editingFieldDraft.id}`}
+                        value="url"
+                        checked={!editingFieldDraft.useFileUpload}
+                        onChange={() => setEditingFieldDraft({ ...editingFieldDraft, useFileUpload: false })}
+                        className="text-blue-600"
+                      />
                       <label htmlFor={`imageUrl-${editingFieldDraft.id}`} className="text-sm text-gray-700 dark:text-gray-300">
                         Use Image URL/Link
                       </label>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id={`imageUpload-${editingFieldDraft.id}`}
-                      name={`imageSource-${editingFieldDraft.id}`}
-                      value="upload"
-                      checked={editingFieldDraft.useFileUpload}
-                      onChange={() => setEditingFieldDraft({ ...editingFieldDraft, useFileUpload: true })}
-                      className="text-blue-600"
-                    />
+                      <input
+                        type="radio"
+                        id={`imageUpload-${editingFieldDraft.id}`}
+                        name={`imageSource-${editingFieldDraft.id}`}
+                        value="upload"
+                        checked={editingFieldDraft.useFileUpload}
+                        onChange={() => setEditingFieldDraft({ ...editingFieldDraft, useFileUpload: true })}
+                        className="text-blue-600"
+                      />
                       <label htmlFor={`imageUpload-${editingFieldDraft.id}`} className="text-sm text-gray-700 dark:text-gray-300">
                         Upload Image File
                       </label>
@@ -1611,7 +1611,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                             // Use your Cloudinary upload utility
                             const uploadResult = await uploadFormBuilderImage(file); // This should return the Cloudinary URL
                             console.log("Upload result:", uploadResult);
-                            
+
                             if (uploadResult && uploadResult.url) {
                               setEditingFieldDraft({ ...editingFieldDraft, imageUrl: uploadResult.url });
                             } else if (typeof uploadResult === 'string') {
@@ -1633,7 +1633,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     </p>
                   </div>
                 )}
-                
+
                 <Input
                   label="Alt Text (Accessibility)"
                   value={editingFieldDraft.altText || ""}
@@ -1735,9 +1735,9 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                   <div className="mt-4">
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview:</p>
                     <div className={`${getAlignmentClass(editingFieldDraft.alignment || "center")}`}>
-                      <img 
-                        src={editingFieldDraft.imageUrl} 
-                        alt={editingFieldDraft.altText || "Preview"} 
+                      <img
+                        src={editingFieldDraft.imageUrl}
+                        alt={editingFieldDraft.altText || "Preview"}
                         className={`${getImageSizeClass(editingFieldDraft.imageSize || "auto")} ${getBorderStyleClass(editingFieldDraft.borderStyle || "rounded")} ${getShadowClass(editingFieldDraft.shadow || "none")} border border-gray-300 dark:border-gray-600 ${editingFieldDraft.clickable ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
                         onError={(e) => {
                           e.target.src = "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=400";
@@ -1990,8 +1990,8 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                         <option value="hitam">Only @hitam.org emails</option>
                       </select>
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        {editingFieldDraft.emailDomain === "hitam" 
-                          ? "✓ Only emails ending with @hitam.org will be accepted" 
+                        {editingFieldDraft.emailDomain === "hitam"
+                          ? "✓ Only emails ending with @hitam.org will be accepted"
                           : "✓ Any email address format will be accepted"}
                       </p>
                     </div>
@@ -2016,11 +2016,11 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                         <option value="international">International format (+country code)</option>
                       </select>
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        {editingFieldDraft.phonePattern === "india" 
+                        {editingFieldDraft.phonePattern === "india"
                           ? "✓ Must be exactly 10 digits"
                           : editingFieldDraft.phonePattern === "international"
-                          ? "✓ Must start with + followed by country code"
-                          : "✓ At least 10 digits required"}
+                            ? "✓ Must start with + followed by country code"
+                            : "✓ At least 10 digits required"}
                       </p>
                     </div>
                   </div>
@@ -2038,6 +2038,22 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                   </label>
                 </div>
 
+                {/* Unique Value Setting - Only for specific field types */}
+                {["text", "email", "number", "phone"].includes(editingFieldDraft.type) && (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="unique-setting"
+                      checked={editingFieldDraft.isUnique || false}
+                      onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, isUnique: e.target.checked })}
+                      className="rounded border-gray-300 dark:border-gray-600"
+                    />
+                    <label htmlFor="unique-setting" className="text-sm text-gray-700 dark:text-gray-300">
+                      Unique Value (e.g., Roll No, Email)
+                    </label>
+                  </div>
+                )}
+
                 {/* Conditional Field Visibility */}
                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center space-x-2 mb-3">
@@ -2045,9 +2061,9 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                       type="checkbox"
                       id="field-conditional"
                       checked={editingFieldDraft.conditional?.enabled || false}
-                      onChange={(e) => setEditingFieldDraft({ 
-                        ...editingFieldDraft, 
-                        conditional: { ...editingFieldDraft.conditional, enabled: e.target.checked } 
+                      onChange={(e) => setEditingFieldDraft({
+                        ...editingFieldDraft,
+                        conditional: { ...editingFieldDraft.conditional, enabled: e.target.checked }
                       })}
                       className="rounded border-gray-300 dark:border-gray-600"
                     />
@@ -2064,9 +2080,9 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                         </label>
                         <select
                           value={editingFieldDraft.conditional?.fieldId || ""}
-                          onChange={(e) => setEditingFieldDraft({ 
-                            ...editingFieldDraft, 
-                            conditional: { ...editingFieldDraft.conditional, fieldId: e.target.value } 
+                          onChange={(e) => setEditingFieldDraft({
+                            ...editingFieldDraft,
+                            conditional: { ...editingFieldDraft.conditional, fieldId: e.target.value }
                           })}
                           className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         >
@@ -2086,9 +2102,9 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                         <input
                           type="text"
                           value={editingFieldDraft.conditional?.value || ""}
-                          onChange={(e) => setEditingFieldDraft({ 
-                            ...editingFieldDraft, 
-                            conditional: { ...editingFieldDraft.conditional, value: e.target.value } 
+                          onChange={(e) => setEditingFieldDraft({
+                            ...editingFieldDraft,
+                            conditional: { ...editingFieldDraft.conditional, value: e.target.value }
                           })}
                           placeholder="e.g., Student or Faculty"
                           className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"

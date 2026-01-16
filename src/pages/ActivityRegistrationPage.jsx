@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -21,6 +21,8 @@ function ActivityRegistrationPage() {
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0); // Track current section
   const [validationErrors, setValidationErrors] = useState([]);
+  const [uniqueErrors, setUniqueErrors] = useState({}); // New state for unique errors
+  const [validatingFields, setValidatingFields] = useState({}); // Track fields currently validating
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [touchedFields, setTouchedFields] = useState({});
 
@@ -396,9 +398,63 @@ function ActivityRegistrationPage() {
     });
   };
 
+  const checkUniqueValue = async (fieldId, value, label) => {
+    if (!value || !activity) return;
+
+    // Sanitize label to match how data is stored in Firestore
+    const sanitizedKey = label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+
+    console.log(`Checking uniqueness for ${label} (Key: ${sanitizedKey}): ${value}`);
+
+    // Clear error locally first
+    setUniqueErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldId];
+      return newErrors;
+    });
+
+    // Set validating state
+    setValidatingFields(prev => ({ ...prev, [fieldId]: true }));
+
+    try {
+      const q = query(
+        collection(db, "upcomingActivities", activity.id, "registrations"),
+        where(sanitizedKey, "==", value.trim())
+      );
+      const querySnapshot = await getDocs(q);
+
+      // TEMPORARY DEBUGGING ALERT - REMOVED
+      // alert(`Debug: Found ${querySnapshot.size} matches for ${label} = ${value}`);
+
+      if (!querySnapshot.empty) {
+        setUniqueErrors(prev => ({
+          ...prev,
+          [fieldId]: `This ${label} is already registered.`
+        }));
+        setValidatingFields(prev => ({ ...prev, [fieldId]: false }));
+        return false; // Not unique
+      }
+      setValidatingFields(prev => ({ ...prev, [fieldId]: false }));
+      return true; // Unique
+    } catch (error) {
+      console.error("Error checking unique value:", error);
+      // alert(`Validation Error: ${error.message}`); // Removed alert
+      setValidatingFields(prev => ({ ...prev, [fieldId]: false }));
+      return true; // We default to true on error, but the alert will help us fix it
+    }
+  };
+
   // Get field validation error (for live feedback)
   const getFieldError = (field) => {
     const value = registrationData[field.id];
+
+    // Check unique error first
+    if (uniqueErrors[field.id]) {
+      return uniqueErrors[field.id];
+    }
 
     // Check required fields
     if (field.required) {
@@ -436,7 +492,13 @@ function ActivityRegistrationPage() {
     const error = getFieldError(field);
 
     if (error) return 'error';
-    if (value && (typeof value === 'string' ? value.trim() : Array.isArray(value) ? value.length > 0 : value)) return 'valid';
+    if (value && (typeof value === 'string' ? value.trim() : Array.isArray(value) ? value.length > 0 : value)) {
+      // Don't show valid if check is pending or if it's a unique field that failed unique check (redundant but safe)
+      if (field.isUnique && (validatingFields[field.id] || uniqueErrors[field.id])) {
+        return 'validating_or_error';
+      }
+      return 'valid';
+    }
     return 'empty';
   };
 
@@ -464,11 +526,21 @@ function ActivityRegistrationPage() {
   };
 
   // Handle field blur - mark as touched and validate
-  const handleFieldBlur = (fieldId) => {
+  const handleFieldBlur = (field) => {
     setTouchedFields(prev => ({
       ...prev,
-      [fieldId]: true,
+      [field.id]: true,
     }));
+
+    // Debug log to verify if isUnique is coming through
+    if (field.isUnique) {
+      console.log(`Field ${field.label} is marked unique. Checking value...`);
+      if (registrationData[field.id]) {
+        checkUniqueValue(field.id, registrationData[field.id], field.label);
+      }
+    } else {
+      console.log(`Field ${field.label} is NOT marked unique.`);
+    }
   };
 
   // Handler for checkbox changes with conditional mapping check
@@ -601,6 +673,7 @@ function ActivityRegistrationPage() {
     const getBackgroundColor = () => {
       if (isTouched && fieldStatus === 'error') return 'bg-red-50 dark:bg-red-900/10';
       if (isTouched && fieldStatus === 'valid') return 'bg-green-50 dark:bg-green-900/10';
+      if (field.isUnique && validatingFields[field.id]) return 'bg-yellow-50 dark:bg-yellow-900/10';
       return 'bg-white dark:bg-gray-800';
     };
 
@@ -620,7 +693,7 @@ function ActivityRegistrationPage() {
             <textarea
               {...commonProps}
               onChange={(e) => handleFieldValueChange(field.id, e.target.value)}
-              onBlur={() => handleFieldBlur(field.id)}
+              onBlur={() => handleFieldBlur(field)}
               rows={4}
               className={`w-full px-3 py-2 border-2 rounded-xl ${getBackgroundColor()} text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${getFocusRing()} transition-colors ${getBorderColor()}`}
             />
@@ -629,9 +702,14 @@ function ActivityRegistrationPage() {
                 <span>⚠️</span> {fieldError}
               </p>
             )}
-            {isTouched && fieldStatus === 'valid' && (
+            {isTouched && fieldStatus === 'valid' && !field.isUnique && (
               <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
                 <span>✓</span> Valid
+              </p>
+            )}
+            {field.isUnique && validatingFields[field.id] && (
+              <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                <span>⏳</span> Checking availability...
               </p>
             )}
           </div>
@@ -646,7 +724,7 @@ function ActivityRegistrationPage() {
             <select
               {...commonProps}
               onChange={(e) => handleFieldValueChange(field.id, e.target.value)}
-              onBlur={() => handleFieldBlur(field.id)}
+              onBlur={() => handleFieldBlur(field)}
               className={`w-full px-3 py-2 border-2 rounded-xl ${getBackgroundColor()} text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${getFocusRing()} transition-colors ${getBorderColor()}`}
             >
               <option value="">Select an option</option>
@@ -661,9 +739,14 @@ function ActivityRegistrationPage() {
                 <span>⚠️</span> {fieldError}
               </p>
             )}
-            {isTouched && fieldStatus === 'valid' && (
+            {isTouched && fieldStatus === 'valid' && !field.isUnique && (
               <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
                 <span>✓</span> Valid
+              </p>
+            )}
+            {field.isUnique && validatingFields[field.id] && (
+              <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                <span>⏳</span> Checking availability...
               </p>
             )}
           </div>
@@ -685,7 +768,7 @@ function ActivityRegistrationPage() {
                     value={typeof opt === 'string' ? opt : opt.label}
                     checked={registrationData[field.id] === (typeof opt === 'string' ? opt : opt.label)}
                     onChange={(e) => handleFieldValueChange(field.id, e.target.value)}
-                    onBlur={() => handleFieldBlur(field.id)}
+                    onBlur={() => handleFieldBlur(field)}
                     className="w-4 h-4 text-blue-600"
                   />
                   <label htmlFor={`${field.id}-${idx}`} className="ml-2 text-sm text-gray-700 dark:text-gray-300">
@@ -699,9 +782,14 @@ function ActivityRegistrationPage() {
                 <span>⚠️</span> {fieldError}
               </p>
             )}
-            {isTouched && fieldStatus === 'valid' && (
+            {isTouched && fieldStatus === 'valid' && !field.isUnique && (
               <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
                 <span>✓</span> Valid
+              </p>
+            )}
+            {field.isUnique && validatingFields[field.id] && (
+              <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                <span>⏳</span> Checking availability...
               </p>
             )}
           </div>
@@ -724,7 +812,7 @@ function ActivityRegistrationPage() {
                       const value = typeof opt === 'string' ? opt : opt.label;
                       handleCheckboxValueChange(field.id, value, e.target.checked);
                     }}
-                    onBlur={() => handleFieldBlur(field.id)}
+                    onBlur={() => handleFieldBlur(field)}
                     className="w-4 h-4 text-blue-600 rounded border-gray-300"
                   />
                   <label htmlFor={`${field.id}-${idx}`} className="ml-2 text-sm text-gray-700 dark:text-gray-300">
@@ -738,9 +826,14 @@ function ActivityRegistrationPage() {
                 <span>⚠️</span> {fieldError}
               </p>
             )}
-            {isTouched && fieldStatus === 'valid' && (
+            {isTouched && fieldStatus === 'valid' && !field.isUnique && (
               <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
                 <span>✓</span> Valid
+              </p>
+            )}
+            {field.isUnique && validatingFields[field.id] && (
+              <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                <span>⏳</span> Checking availability...
               </p>
             )}
           </div>
@@ -758,7 +851,7 @@ function ActivityRegistrationPage() {
               paymentId={field.label?.toLowerCase().includes('payment') ? `${activity?.id || 'payment'}-proof` : null}
               onFilesUpload={(files) => {
                 setUploadedFiles({ ...uploadedFiles, [field.id]: files });
-                handleFieldBlur(field.id);
+                handleFieldBlur(field);
               }}
               multiple={true}
               label={`Upload files for ${field.label}`}
@@ -781,7 +874,7 @@ function ActivityRegistrationPage() {
               {...commonProps}
               type={field.type === 'phone' ? 'tel' : field.type}
               onChange={(e) => handleFieldValueChange(field.id, e.target.value)}
-              onBlur={() => handleFieldBlur(field.id)}
+              onBlur={() => handleFieldBlur(field)}
               className={`w-full px-3 py-2 border-2 rounded-xl ${getBackgroundColor()} text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${getFocusRing()} transition-colors ${getBorderColor()}`}
             />
             {isTouched && fieldError && (
@@ -789,9 +882,14 @@ function ActivityRegistrationPage() {
                 <span>⚠️</span> {fieldError}
               </p>
             )}
-            {isTouched && fieldStatus === 'valid' && (
+            {isTouched && fieldStatus === 'valid' && !field.isUnique && (
               <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
                 <span>✓</span> Valid
+              </p>
+            )}
+            {field.isUnique && validatingFields[field.id] && (
+              <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                <span>⏳</span> Checking availability...
               </p>
             )}
           </div>
@@ -849,8 +947,20 @@ function ActivityRegistrationPage() {
       });
     });
 
+    // Verify unique fields again before submission
+    const uniqueFields = sections.flatMap(s => s.fields || []).filter(f => f.isUnique);
+    for (const field of uniqueFields) {
+      const value = registrationData[field.id];
+      if (value) {
+        const isUnique = await checkUniqueValue(field.id, value, field.label);
+        if (!isUnique) {
+          validationErrors.push(`This ${field.label} is already registered.`);
+        }
+      }
+    }
+
     if (validationErrors.length > 0) {
-      const errorMessages = validationErrors.map((errorMsg, index) => {
+      const errorMessages = validationErrors.map((errorMsg) => {
         // Parse field name and message
         const parts = errorMsg.split(': ');
         return {
@@ -1113,36 +1223,45 @@ function ActivityRegistrationPage() {
 
                   {/* Section Navigation */}
                   <div className="mt-8 pt-6 border-t-2 border-dashed border-gray-300 dark:border-gray-700">
-                    <div className="flex items-center justify-between gap-4">
-                      {!isFirstSection && (
+                    <div className="flex items-center justify-between gap-4 w-full">
+                      {currentSectionIndex > 0 ? (
                         <Button
-                          type="button"
                           variant="outline"
-                          onClick={() => goToPreviousSection()}
-                          className="min-w-[150px]"
+                          onClick={goToPreviousSection}
+                          className="flex items-center gap-2"
+                          disabled={submitting}
                         >
-                          ← Previous
+                          <FiArrowLeft className="w-4 h-4" /> Previous
                         </Button>
+                      ) : (
+                        <div></div>
                       )}
-                      <div className="flex-1"></div>
-                      {!isLastVisibleSection && !shouldSubmitAfterCurrentSection() && (
+
+                      {currentSectionIndex < (formSections.length > 0 ? formSections.length : 1) - 1 ? (
                         <Button
-                          type="button"
-                          variant={isValid ? "primary" : "disabled"}
-                          onClick={() => goToNextSection()}
-                          disabled={!isValid}
-                          className="min-w-[150px]"
+                          onClick={goToNextSection}
+                          className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]"
+                          disabled={!isValid || Object.keys(uniqueErrors).length > 0 || Object.values(validatingFields).some(Boolean)}
                         >
-                          Next →
+                          Next Step
                         </Button>
-                      )}
-                      {(isLastVisibleSection || shouldSubmitAfterCurrentSection()) && (
+                      ) : (
                         <Button
-                          type="submit"
-                          disabled={!isValid}
-                          className="min-w-[150px]"
+                          onClick={handleSubmit}
+                          disabled={submitting || !isValid || (Object.keys(uniqueErrors).length > 0) || Object.values(validatingFields).some(Boolean)}
+                          className={`min-w-[150px] flex items-center justify-center gap-2 ${(submitting || !isValid || (Object.keys(uniqueErrors).length > 0) || Object.values(validatingFields).some(Boolean)) ? 'opacity-50 cursor-not-allowed bg-gray-400 dark:bg-gray-600' : 'bg-green-600 hover:bg-green-700'} text-white`}
                         >
-                          Register
+                          {submitting ? (
+                            <>
+                              <LoadingSpinner size="sm" color="white" />
+                              <span>Processing...</span>
+                            </>
+                          ) : (
+                            <>
+                              <FiCheckCircle className="w-4 h-4" />
+                              <span>Submit</span>
+                            </>
+                          )}
                         </Button>
                       )}
                     </div>
@@ -1150,51 +1269,48 @@ function ActivityRegistrationPage() {
                 </div>
               );
             })()}
-
           </form>
-
-          {/* Validation Error Modal */}
-          <Modal
-            isOpen={showErrorModal}
-            onClose={() => setShowErrorModal(false)}
-            title="⚠️ Validation Errors"
-          >
-            <div className="space-y-4">
-              <p className="text-gray-700 dark:text-gray-300">
-                Please fix the following errors before registering:
-              </p>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {validationErrors.map((error, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
-                  >
-                    <div className="flex gap-3">
-                      <FiAlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={18} />
-                      <div>
-                        <p className="font-medium text-red-900 dark:text-red-100">
-                          {error.field}
-                        </p>
-                        <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                          {error.message}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-              <button
-                onClick={() => setShowErrorModal(false)}
-                className="w-full mt-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-              >
-                OK, I'll Fix These
-              </button>
-            </div>
-          </Modal>
         </motion.div>
       </div>
+      <Modal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="⚠️ Validation Errors"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700 dark:text-gray-300">
+            Please fix the following errors before registering:
+          </p>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {validationErrors.map((error, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+              >
+                <div className="flex gap-3">
+                  <FiAlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={18} />
+                  <div>
+                    <p className="font-medium text-red-900 dark:text-red-100">
+                      {error.field}
+                    </p>
+                    <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                      {error.message}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowErrorModal(false)}
+            className="w-full mt-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+          >
+            OK, I'll Fix These
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

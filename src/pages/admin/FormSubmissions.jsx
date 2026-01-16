@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { collection, getDocs, doc } from "firebase/firestore";
+import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../../firebase";
 import { useAuth } from "../../contexts/AuthContext";
 
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
-import { Calendar, Users, BarChart3 } from "lucide-react";
+import Modal from "../../components/ui/Modal";
+import { Calendar, Users, BarChart3, Trash2 } from "lucide-react";
 
 const FormSubmissions = () => {
   const { user } = useAuth();
@@ -15,6 +16,7 @@ const FormSubmissions = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -50,7 +52,6 @@ const FormSubmissions = () => {
               activityId: doc.id,
               ...regDoc.data()
             }));
-            console.log(`Registrations for ${activity.title}:`, registrations.length);
           } catch (regError) {
             console.warn(`Error fetching registrations for ${activity.title}:`, regError);
             // Continue with empty registrations array
@@ -61,14 +62,12 @@ const FormSubmissions = () => {
       );
 
       setActivities(activitiesData);
-      console.log("Total activities loaded:", activitiesData.length);
     } catch (error) {
       console.error("Error fetching submissions:", error);
       setError(error.message);
 
       // Fallback: try to load from allRegistrations collection
       try {
-        console.log("Trying fallback method...");
         const allRegsSnapshot = await getDocs(collection(db, "allRegistrations"));
         const groupedRegistrations = {};
 
@@ -91,7 +90,6 @@ const FormSubmissions = () => {
 
         setActivities(Object.values(groupedRegistrations));
         setError(null);
-        console.log("Fallback method successful");
       } catch (fallbackError) {
         console.error("Fallback method also failed:", fallbackError);
         setError("Unable to load submissions. Please check your permissions.");
@@ -101,7 +99,44 @@ const FormSubmissions = () => {
     }
   };
 
+  const handlePermanentDelete = async () => {
+    const activityId = deleteConfirm;
+    if (!activityId) return;
 
+    try {
+      // 1. Delete all registrations in subcollection
+      const registrationsRef = collection(db, "upcomingActivities", activityId, "registrations");
+      const registrationsSnap = await getDocs(registrationsRef);
+      const batchOps = [];
+      registrationsSnap.forEach((docSnap) => {
+        batchOps.push(deleteDoc(docSnap.ref));
+      });
+      await Promise.all(batchOps);
+
+      // 2. Delete all documents in allRegistrations
+      const allRegistrationsRef = collection(db, "allRegistrations");
+      const allRegistrationsSnap = await getDocs(allRegistrationsRef);
+      const deleteAllRegOps = [];
+      allRegistrationsSnap.forEach((docSnap) => {
+        if (docSnap.data().activityId === activityId) {
+          deleteAllRegOps.push(deleteDoc(docSnap.ref));
+        }
+      });
+      await Promise.all(deleteAllRegOps);
+
+      // 3. Delete the activity document itself
+      await deleteDoc(doc(db, "upcomingActivities", activityId));
+
+      // 4. Update UI
+      setActivities(prev => prev.filter(a => a.id !== activityId));
+      setDeleteConfirm(null);
+      alert("Activity and all data permanently deleted.");
+
+    } catch (err) {
+      console.error("Error deleting activity:", err);
+      alert("Failed to delete activity. Please try again.");
+    }
+  };
 
   // Show loading state
   if (loading) {
@@ -176,11 +211,19 @@ const FormSubmissions = () => {
             <Card key={item.id} delay={index * 0.1}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     {item.title}
+                    {item.isDeleted && (
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                        Archived
+                      </span>
+                    )}
                   </h3>
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                    Activity
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.isDeleted
+                      ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                      : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                    }`}>
+                    {item.isDeleted ? "Inactive" : "Active"}
                   </span>
                 </div>
 
@@ -207,14 +250,22 @@ const FormSubmissions = () => {
                   )}
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-4 flex gap-2">
                   <Button
                     variant="default"
-                    className="w-full"
+                    className="flex-1"
                     onClick={() => navigate(`/admin/form-analytics/${item.id}`)}
                   >
                     <BarChart3 className="w-4 h-4 mr-2" />
-                    View Responses & Analytics
+                    View Data
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                    onClick={() => setDeleteConfirm(item.id)}
+                    title="Permanently Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -231,6 +282,41 @@ const FormSubmissions = () => {
           </div>
         )}
       </div>
+
+      {/* Permanent Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        title="Permanently Delete Activity"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-200 text-sm">
+            <strong>Warning:</strong> This action cannot be undone.
+          </div>
+          <p className="text-gray-600 dark:text-gray-300">
+            Are you sure you want to delete this activity? This will <strong>permanently remove</strong>:
+            <ul className="list-disc ml-5 mt-2 space-y-1">
+              <li>The activity and form configuration</li>
+              <li>All registered user data and submissions</li>
+              <li>All analytics data</li>
+            </ul>
+          </p>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="ghost"
+              onClick={() => setDeleteConfirm(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handlePermanentDelete}
+            >
+              Delete Forever
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
     </div>
 
