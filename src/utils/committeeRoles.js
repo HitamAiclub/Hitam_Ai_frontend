@@ -5,6 +5,7 @@
 
 // Allowed committee roles
 export const COMMITTEE_ROLES = {
+  FACULTY_COORDINATOR: 'Faculty Coordinator',
   LEAD: 'Lead',
   CO_LEAD: 'Co-Lead',
   MANAGER: 'Manager',

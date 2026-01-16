@@ -20,6 +20,7 @@ import ActivityAnalyticsPage from "./pages/admin/ActivityAnalyticsPage.jsx";
 import FormResponseAnalytics from "./pages/admin/FormResponseAnalytics.jsx";
 import CommunityMembers from "./pages/admin/CommunityMembers.jsx";
 import MediaManagement from "./pages/admin/MediaManagement.jsx";
+import HighlightsManager from "./pages/admin/HighlightsManager.jsx";
 import FormListPage from "./pages/admin/FormListPage.jsx";
 import FormEditPage from "./pages/admin/FormEditPage.jsx";
 import ActivityFormEditPage from "./pages/admin/ActivityFormEditPage.jsx";
@@ -116,6 +117,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MediaManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/highlights"
+                element={
+                  <ProtectedRoute>
+                    <HighlightsManager />
                   </ProtectedRoute>
                 }
               />

@@ -35,19 +35,20 @@ const Navbar = () => {
     { name: "Form Submissions", path: "/admin/submissions" },
     { name: "Community Members", path: "/admin/community" },
     { name: "Media Management", path: "/admin/media" },
+    { name: "Highlights", path: "/admin/highlights" },
   ];
 
   const navItems = user ? adminNavItems : publicNavItems;
 
   return (
-    <motion.nav 
+    <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center space-x-2"
@@ -81,7 +82,7 @@ const Navbar = () => {
               HITAM AI CLUB
             </Link>
           </motion.div>
-          
+
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
@@ -177,7 +178,7 @@ const Navbar = () => {
                   </Link>
                 </motion.div>
               ))}
-              
+
               {user ? (
                 <motion.button
                   initial={{ opacity: 0, x: -20 }}

@@ -7,6 +7,7 @@ import Button from "../components/ui/Button";
 import { Calendar, Users, Trophy, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { organizeMembersByRole, groupCoreTeamByLevel, CORE_TEAM_ROLES, shouldUseLevelWiseDisplay } from "../utils/committeeRoles";
+import HighlightsSection from "../components/home/HighlightsSection";
 
 const HomePage = () => {
   const [committeeMembers, setCommitteeMembers] = useState([]);
@@ -154,6 +155,9 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Weekly Highlights Section */}
+      <HighlightsSection />
 
       {/* About HITAM Section - Feature Layout (Image + Details) */}
       <section className="py-24 px-4 bg-transparent">
@@ -343,12 +347,55 @@ const HomePage = () => {
           ) : (
             <div className="space-y-12">
               {(() => {
-                const { coreTeam, committeeMembers: nonCoreMembers } = organizeMembersByRole(committeeMembers);
+                const facultyMembers = committeeMembers.filter(m => m.category === 'faculty').sort((a, b) => (a.priority || 99) - (b.priority || 99));
+                const students = committeeMembers.filter(m => (m.category || 'student') === 'student');
+                const { coreTeam, committeeMembers: nonCoreMembers } = organizeMembersByRole(students);
                 const coreTeamByLevel = groupCoreTeamByLevel(coreTeam);
                 const useLevelWise = shouldUseLevelWiseDisplay(coreTeam);
 
                 return (
                   <>
+                    {/* Faculty Section - NEW */}
+                    {facultyMembers.length > 0 && (
+                      <div className="mb-20">
+
+                        <div className="flex flex-wrap justify-center gap-8">
+                          {facultyMembers.map((member, index) => (
+                            <div key={member.id} className="w-64">
+                              <Card delay={index * 0.1}>
+                                <div className="p-6 text-center">
+                                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
+                                    {member.photoUrl ? (
+                                      <img
+                                        src={member.photoUrl}
+                                        alt={member.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <span className="text-white text-2xl font-bold">
+                                        {member.name?.charAt(0)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                                    {member.name}
+                                  </h3>
+                                  <p className="text-purple-600 dark:text-purple-400 font-medium whitespace-pre-wrap">
+                                    {member.role}
+                                  </p>
+                                  {member.designation && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 whitespace-pre-wrap">
+                                      {member.designation}
+                                    </p>
+                                  )}
+                                </div>
+                              </Card>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Core Team Section */}
                     {coreTeam.length > 0 && (
                       <div>
@@ -498,7 +545,7 @@ const HomePage = () => {
         </div>
       </section>
 
-    </div>
+    </div >
   );
 };
 

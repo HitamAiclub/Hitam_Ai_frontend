@@ -18,6 +18,9 @@ const CommitteeMembers = () => {
   const [formData, setFormData] = useState({
     name: "",
     role: "",
+    customRole: "",
+    category: "student", // 'student' or 'faculty'
+    priority: "",
     branch: "",
     year: "",
     email: "",
@@ -28,24 +31,25 @@ const CommitteeMembers = () => {
   const [optimisticMembers, setOptimisticMembers] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  // Committee roles (updated to match specification)
-  const roles = Object.values(COMMITTEE_ROLES);
+  // Committee roles
+  const studentRoles = Object.values(COMMITTEE_ROLES).filter(r => r !== 'Faculty Coordinator'); // Remove old faculty role if it exists in list
+  const facultyRoles = ['Principal', 'Director', 'Faculty Coordinator', 'Mentor', 'Other'];
 
   const branches = [
-     "Computer Science Engineering",
-  "Computer Science Engineering (AI & ML)",
-  "Computer Science Engineering (Data Science)",
-  "Computer Science Engineering (Cyber Security)",
-  "Computer Science Engineering (IoT)",
-  "Electronics and Communication Engineering",
-  "Electrical and Electronics Engineering",
-  "Mechanical Engineering"
+    "Computer Science Engineering",
+    "Computer Science Engineering (AI & ML)",
+    "Computer Science Engineering (Data Science)",
+    "Computer Science Engineering (Cyber Security)",
+    "Computer Science Engineering (IoT)",
+    "Electronics and Communication Engineering",
+    "Electrical and Electronics Engineering",
+    "Mechanical Engineering"
   ];
 
   useEffect(() => {
     // Real-time listener with error handling
     const unsubscribe = onSnapshot(
-      collection(db, "committeeMembers"), 
+      collection(db, "committeeMembers"),
       (snapshot) => {
         const membersData = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -54,7 +58,7 @@ const CommitteeMembers = () => {
         setMembers(membersData);
         setOptimisticMembers(membersData);
         setLoading(false);
-      }, 
+      },
       (error) => {
         console.warn("Committee members listener error:", error.message);
         setMembers([]);
@@ -69,25 +73,31 @@ const CommitteeMembers = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     console.log("Starting committee member submission...");
     console.log("Form data:", formData);
     console.log("Current user:", auth.currentUser);
-    
+
     // Check authentication first
     if (!auth.currentUser) {
       alert("You must be logged in to perform this action");
       return;
     }
-    
-    // Validate role strictly
-    if (!formData.role || !isValidRole(formData.role)) {
-      alert("Please select a valid role from the allowed roles.");
+
+    // Validate role
+    if (!formData.role) {
+      alert("Please specify a role.");
+      return;
+    }
+
+    // Strict validation for students only
+    if (formData.category === 'student' && !isValidRole(formData.role)) {
+      alert("Please select a valid committee role.");
       return;
     }
 
     setUploading(true);
-    
+
     // Optimistic update for faster UI response
     const tempId = Date.now().toString();
     const optimisticMember = {
@@ -101,8 +111,8 @@ const CommitteeMembers = () => {
 
     if (editingMember) {
       // Update existing member optimistically
-      setOptimisticMembers(prev => 
-        prev.map(member => 
+      setOptimisticMembers(prev =>
+        prev.map(member =>
           member.id === editingMember.id ? optimisticMember : member
         )
       );
@@ -117,7 +127,7 @@ const CommitteeMembers = () => {
 
     try {
       let photoUrl = editingMember?.photoUrl || "";
-      
+
       if (imageFile) {
         console.log("Uploading image to Cloudinary...");
         // Upload to Cloudinary
@@ -129,13 +139,19 @@ const CommitteeMembers = () => {
 
       const memberData = {
         ...formData,
+        role: formData.role,
+        designation: formData.designation || "",
+        priority: parseInt(formData.priority) || 99,
         photoUrl,
         createdAt: editingMember?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
+      // Cleanup temp fields not needed in DB
+      delete memberData.customRole;
+
       console.log("Saving member data to Firestore...");
-      
+
       if (editingMember) {
         await updateDoc(doc(db, "committeeMembers", editingMember.id), memberData);
         console.log("Member updated successfully");
@@ -151,17 +167,17 @@ const CommitteeMembers = () => {
       console.error("Error code:", error.code);
       console.error("Error message:", error.message);
       console.error("Auth state:", auth.currentUser ? "Authenticated" : "Not authenticated");
-      
+
       if (error.code === "permission-denied") {
         alert("Permission denied. Please ensure you are logged in as an admin and Firebase rules allow write access.");
       } else {
         alert(`Failed to save member: ${error.message}`);
       }
-      
+
       // Revert optimistic update on error
       if (editingMember) {
-        setOptimisticMembers(prev => 
-          prev.map(member => 
+        setOptimisticMembers(prev =>
+          prev.map(member =>
             member.id === editingMember.id ? editingMember : member
           )
         );
@@ -177,12 +193,29 @@ const CommitteeMembers = () => {
     setEditingMember(member);
     setFormData({
       name: member.name || "",
-      role: member.role || "",
+      role: member.role || "", // If it's a custom role, we might need to set role='Other' and customRole=member.role? 
+      // For simplicity, if role is not in standard list, set to Other?
+      // Let's keep it simple: populate role with current string. If not in list, it might show empty dropdown.
+      // Better logic: check if role is in our lists.
+      customRole: "",
+      category: member.category || "student",
+      priority: member.priority || "",
       branch: member.branch || "",
       year: member.year || "",
       email: member.email || "",
       phone: member.phone || ""
     });
+
+    // Logic to handle existing custom roles in dropdown
+    const isStudent = (member.category || 'student') === 'student';
+    const roleList = isStudent ? studentRoles : facultyRoles;
+    if (!roleList.includes(member.role)) {
+      setFormData(prev => ({
+        ...prev,
+        role: 'Other',
+        customRole: member.role
+      }));
+    }
     setShowModal(true);
   };
 
@@ -193,7 +226,7 @@ const CommitteeMembers = () => {
   const confirmDelete = async () => {
     const memberId = deleteConfirm;
     setDeleteConfirm(null);
-    
+
     // Optimistic delete
     const memberToDelete = optimisticMembers.find(m => m.id === memberId);
     setOptimisticMembers(prev => prev.filter(member => member.id !== memberId));
@@ -210,11 +243,15 @@ const CommitteeMembers = () => {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = (defaultCategory = "student") => {
     setEditingMember(null);
     setFormData({
       name: "",
       role: "",
+      designation: "",
+      customRole: "",
+      category: defaultCategory,
+      priority: "",
       branch: "",
       year: "",
       email: "",
@@ -232,7 +269,9 @@ const CommitteeMembers = () => {
     const csvContent = members.map(member => {
       return [
         member.name,
+        member.category || 'student',
         member.role,
+        member.priority || '',
         member.branch,
         member.year,
         member.email,
@@ -280,13 +319,23 @@ const CommitteeMembers = () => {
             </Button>
             <Button
               onClick={() => {
-                resetForm();
+                resetForm('faculty');
+                setShowModal(true);
+              }}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <Plus className="w-4 h-4" />
+              Add Head of Institution
+            </Button>
+            <Button
+              onClick={() => {
+                resetForm('student');
                 setShowModal(true);
               }}
               className="flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Add Member
+              Add Committee Member
             </Button>
           </div>
         </motion.div>
@@ -301,9 +350,52 @@ const CommitteeMembers = () => {
           </div>
         ) : (
           <div className="space-y-12">
+
+            {/* Faculty Section - NEW */}
+            {(() => {
+              const facultyMembers = optimisticMembers.filter(m => m.category === 'faculty').sort((a, b) => (a.priority || 99) - (b.priority || 99));
+
+              return facultyMembers.length > 0 && (
+                <div className="mb-12">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 border-b pb-2">
+                    Faculty & Mentors
+                  </h2>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {facultyMembers.map((member, index) => (
+                      <Card key={member.id} delay={index * 0.1}>
+                        <div className={`p-6 ${member.isOptimistic ? "opacity-75" : ""}`}>
+                          <div className="flex items-center space-x-4 mb-4">
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
+                              {member.photoUrl ? (
+                                <img src={member.photoUrl} alt={member.name} className="w-full h-full object-cover" />
+                              ) : <User className="w-8 h-8 text-white" />}
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{member.name}</h3>
+                              <p className="text-purple-600 font-medium">{member.role}</p>
+                              <p className="text-xs text-gray-400">Priority: {member.priority || '-'}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEdit(member)} className="flex-1" disabled={member.isOptimistic}>
+                              <Edit className="w-4 h-4 mr-1" /> Edit
+                            </Button>
+                            <Button variant="danger" size="sm" onClick={() => handleDelete(member.id)} disabled={member.isOptimistic}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Core Team Section */}
             {(() => {
-              const { coreTeam, committeeMembers } = organizeMembersByRole(optimisticMembers);
+              const students = optimisticMembers.filter(m => (m.category || 'student') === 'student'); // Default to student
+              const { coreTeam, committeeMembers } = organizeMembersByRole(students);
               const coreTeamByLevel = groupCoreTeamByLevel(coreTeam);
 
               return (
@@ -313,81 +405,40 @@ const CommitteeMembers = () => {
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                         Core Team
                       </h2>
-                      <div className="space-y-6">
-                        {Object.entries(coreTeamByLevel).map(([role, members]) => 
-                          members.length > 0 && (
-                            <div key={role}>
-                              <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4">
-                                {role}
-                              </h3>
-                              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {members.map((member, index) => (
-                                  <Card key={member.id} delay={index * 0.1}>
-                                    <div className={`p-6 ${member.isOptimistic ? "opacity-75" : ""}`}>
-                                      <div className="flex items-center space-x-4 mb-4">
-                                        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
-                                          {member.photoUrl ? (
-                                            <img 
-                                              src={member.photoUrl} 
-                                              alt={member.name}
-                                              className="w-full h-full object-cover"
-                                            />
-                                          ) : (
-                                            <User className="w-8 h-8 text-white" />
-                                          )}
-                                        </div>
-                                        <div className="flex-1">
-                                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                            {member.name}
-                                          </h3>
-                                          <p className="text-blue-600 dark:text-blue-400 font-medium">
-                                            {member.role}
-                                          </p>
-                                        </div>
-                                      </div>
-                                      
-                                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
-                                        {member.branch && (
-                                          <p><strong>Branch:</strong> {member.branch}</p>
-                                        )}
-                                        {member.year && (
-                                          <p><strong>Year:</strong> {member.year}</p>
-                                        )}
-                                        {member.email && (
-                                          <p><strong>Email:</strong> {member.email}</p>
-                                        )}
-                                        {member.phone && (
-                                          <p><strong>Phone:</strong> {member.phone}</p>
-                                        )}
-                                      </div>
-
-                                      <div className="flex gap-2">
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => handleEdit(member)}
-                                          className="flex-1"
-                                          disabled={member.isOptimistic}
-                                        >
-                                          <Edit className="w-4 h-4 mr-1" />
-                                          Edit
-                                        </Button>
-                                        <Button
-                                          variant="danger"
-                                          size="sm"
-                                          onClick={() => handleDelete(member.id)}
-                                          disabled={member.isOptimistic}
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </Card>
-                                ))}
+                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {coreTeam.map((member, index) => (
+                          <Card key={member.id} delay={index * 0.1}>
+                            <div className={`p-6 ${member.isOptimistic ? "opacity-75" : ""}`}>
+                              <div className="flex items-center space-x-4 mb-4">
+                                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
+                                  {member.photoUrl ? (
+                                    <img src={member.photoUrl} alt={member.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <User className="w-8 h-8 text-white" />
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{member.name}</h3>
+                                  <p className="text-blue-600 dark:text-blue-400 font-medium">{member.role}</p>
+                                </div>
+                              </div>
+                              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
+                                {member.branch && <p><strong>Branch:</strong> {member.branch}</p>}
+                                {member.year && <p><strong>Year:</strong> {member.year}</p>}
+                                {member.email && <p><strong>Email:</strong> {member.email}</p>}
+                                {member.phone && <p><strong>Phone:</strong> {member.phone}</p>}
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => handleEdit(member)} className="flex-1" disabled={member.isOptimistic}>
+                                  <Edit className="w-4 h-4 mr-1" /> Edit
+                                </Button>
+                                <Button variant="danger" size="sm" onClick={() => handleDelete(member.id)} disabled={member.isOptimistic}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               </div>
                             </div>
-                          )
-                        )}
+                          </Card>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -405,8 +456,8 @@ const CommitteeMembers = () => {
                               <div className="flex items-center space-x-4 mb-4">
                                 <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
                                   {member.photoUrl ? (
-                                    <img 
-                                      src={member.photoUrl} 
+                                    <img
+                                      src={member.photoUrl}
                                       alt={member.name}
                                       className="w-full h-full object-cover"
                                     />
@@ -423,7 +474,7 @@ const CommitteeMembers = () => {
                                   </p>
                                 </div>
                               </div>
-                              
+
                               <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 mb-4">
                                 {member.branch && (
                                   <p><strong>Branch:</strong> {member.branch}</p>
@@ -485,21 +536,21 @@ const CommitteeMembers = () => {
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        title={editingMember ? "Edit Member" : "Add Committee Member"}
+        title={editingMember ? "Edit Member" : (formData.category === 'faculty' ? "Add Head of Institution" : "Add Committee Member")}
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="text-center">
             <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4 overflow-hidden">
               {imageFile ? (
-                <img 
-                  src={URL.createObjectURL(imageFile)} 
+                <img
+                  src={URL.createObjectURL(imageFile)}
                   alt="Preview"
                   className="w-full h-full object-cover"
                 />
               ) : editingMember?.photoUrl ? (
-                <img 
-                  src={editingMember.photoUrl} 
+                <img
+                  src={editingMember.photoUrl}
                   alt={editingMember.name}
                   className="w-full h-full object-cover"
                 />
@@ -521,84 +572,148 @@ const CommitteeMembers = () => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
-            <Input
-              label="Full Name"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              required
-            />
-            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value, role: '', customRole: '' })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="student">Student Committee</option>
+                <option value="faculty">Faculty / Administration</option>
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Role
+                Display Order (Priority)
               </label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
+              <input
+                type="number"
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                placeholder="e.g. 1"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select Role</option>
-                {roles.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
+              />
+              <p className="text-xs text-gray-500 mt-1">1 = First/Leftmost</p>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
+            <Input
+              label="Full Name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Branch
+                Role
               </label>
-              <select
-                value={formData.branch}
-                onChange={(e) => setFormData({...formData, branch: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select Branch</option>
-                {branches.map((branch) => (
-                  <option key={branch} value={branch}>
-                    {branch}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                {formData.category === 'faculty' ? (
+                  <div className="relative">
+                    <Input
+                      list="faculty-roles"
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      placeholder="e.g. Principal, Director, Faculty Coordinator"
+                      required
+                    />
+                    <datalist id="faculty-roles">
+                      <option value="Principal" />
+                      <option value="Director" />
+                      <option value="Faculty Coordinator" />
+                      <option value="HOD" />
+                      <option value="Mentor" />
+                    </datalist>
+                  </div>
+
+                ) : (
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Select Role</option>
+                    {studentRoles.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Year
-              </label>
-              <select
-                value={formData.year}
-                onChange={(e) => setFormData({...formData, year: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select Year</option>
-                <option value="1st Year">1st Year</option>
-                <option value="2nd Year">2nd Year</option>
-                <option value="3rd Year">3rd Year</option>
-                <option value="4th Year">4th Year</option>
-              </select>
-            </div>
+
+            {formData.category === 'faculty' && (
+              <div>
+                <Input
+                  label="Designation / Department (Optional)"
+                  placeholder="e.g. HOD - CSE, Dean of Academics"
+                  value={formData.designation || ''}
+                  onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                />
+              </div>
+            )}
           </div>
+
+          {/* Only show academic details for students */}
+          {formData.category === 'student' && (
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Branch
+                </label>
+                <select
+                  value={formData.branch}
+                  onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Branch</option>
+                  {branches.map((branch) => (
+                    <option key={branch} value={branch}>
+                      {branch}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Year
+                </label>
+                <select
+                  value={formData.year}
+                  onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Year</option>
+                  <option value="1st Year">1st Year</option>
+                  <option value="2nd Year">2nd Year</option>
+                  <option value="3rd Year">3rd Year</option>
+                  <option value="4th Year">4th Year</option>
+                </select>
+              </div>
+            </div>
+          )}
 
           <div className="grid md:grid-cols-2 gap-4">
             <Input
               label="Email"
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="member@hitam.org"
             />
-            
+
             <Input
               label="Phone"
               type="tel"
               value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="+91 XXXXXXXXXX"
             />
           </div>
@@ -647,7 +762,7 @@ const CommitteeMembers = () => {
           </div>
         </div>
       </Modal>
-    </div>
+    </div >
   );
 };
 
