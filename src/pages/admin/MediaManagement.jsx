@@ -714,6 +714,7 @@ const MediaManagement = () => {
             folder={currentPath === 'hitam_ai' ? 'hitam_ai/general' : currentPath}
             onUpload={handleUploadSuccess}
             showPreview
+            allowMultiple
           />
         </div>
       </Modal>

@@ -35,7 +35,7 @@ const EventsPage = () => {
   useEffect(() => {
     // Real-time listener for events with error handling
     const unsubscribe = onSnapshot(
-      collection(db, "events"), 
+      collection(db, "events"),
       (snapshot) => {
         const eventsData = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -44,7 +44,7 @@ const EventsPage = () => {
         setEvents(eventsData);
         setOptimisticEvents(eventsData);
         setLoading(false);
-      }, 
+      },
       (error) => {
         console.warn("Events listener error:", error.message);
         setEvents([]);
@@ -101,8 +101,8 @@ const EventsPage = () => {
     };
 
     if (editingEvent) {
-      setOptimisticEvents(prev => 
-        prev.map(event => 
+      setOptimisticEvents(prev =>
+        prev.map(event =>
           event.id === editingEvent.id ? optimisticEvent : event
         )
       );
@@ -145,8 +145,8 @@ const EventsPage = () => {
       console.error("Error saving event:", error);
       // Revert optimistic update on error
       if (editingEvent) {
-        setOptimisticEvents(prev => 
-          prev.map(event => 
+        setOptimisticEvents(prev =>
+          prev.map(event =>
             event.id === editingEvent.id ? editingEvent : event
           )
         );
@@ -276,90 +276,98 @@ const EventsPage = () => {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {optimisticEvents.filter(event => 
+            {optimisticEvents.filter(event =>
               activeFilter === "all" || event.meta?.type === activeFilter
             ).map((event, index) => (
-              <Card key={event.id} delay={index * 0.1}>
-                <div className={`relative ${event.isOptimistic ? "opacity-75" : ""}`}>
+              <Card key={event.id} delay={index * 0.1} className="group h-full flex flex-col">
+                <div className="relative h-56 overflow-hidden bg-gray-900">
+                  {/* Blurred Background Image */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-center blur-md opacity-50 scale-110"
+                    style={{ backgroundImage: `url(${event.meta?.imageUrl || "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=800"})` }}
+                  />
+
+                  {/* Main Image */}
                   <img
                     src={event.meta?.imageUrl || "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=800"}
                     alt={event.meta?.title}
-                    className="w-full h-48 object-cover rounded-t-2xl"
+                    className="relative w-full h-full object-contain z-10 transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute top-4 right-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      event.meta?.type === "workshop" 
-                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                        : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                    }`}>
+
+                  {/* Type Badge */}
+                  <div className="absolute top-4 left-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider shadow-md ${event.meta?.type === "workshop"
+                      ? "bg-purple-500 text-white"
+                      : "bg-blue-500 text-white"
+                      }`}>
                       {event.meta?.type === "workshop" ? "Workshop" : "Event"}
                     </span>
                   </div>
                 </div>
-                
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    {event.meta?.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
-                    {event.meta?.description}
-                  </p>
-                  
-                  <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    {event.meta?.sessionBy && (
-                      <div className="flex items-center">
-                        <User className="w-4 h-4 mr-2" />
-                        <span>Session by: {event.meta.sessionBy}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span>
-                        {event.meta?.startDate && new Date(event.meta.startDate).toLocaleDateString()}
-                        {event.meta?.endDate && event.meta.endDate !== event.meta.startDate && 
-                          ` - ${new Date(event.meta.endDate).toLocaleDateString()}`
-                        }
-                      </span>
+
+                <div className="p-6 flex-1 flex flex-col">
+                  <div className="flex-1">
+                    <div className="mb-4">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {event.meta?.title}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 leading-relaxed">
+                        {event.meta?.description}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 mb-6">
+                      {event.meta?.sessionBy && (
+                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg">
+                          <User className="w-4 h-4 mr-2 text-blue-500" />
+                          <span className="font-medium">By {event.meta.sessionBy}</span>
+                        </div>
+                      )}
+
+
                     </div>
                   </div>
 
                   {user && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(event)}
+                        className="flex-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400"
                         disabled={event.isOptimistic}
                       >
-                        <Edit className="w-4 h-4 mr-1" />
+                        <Edit className="w-4 h-4 mr-2" />
                         Edit
                       </Button>
                       <Button
-                        variant="danger"
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(event.id)}
+                        className="flex-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
                         disabled={event.isOptimistic}
                       >
-                        <Trash2 className="w-4 h-4 mr-1" />
+                        <Trash2 className="w-4 h-4 mr-2" />
                         Delete
                       </Button>
                     </div>
                   )}
                 </div>
               </Card>
+
             ))}
           </div>
         )}
 
-        {optimisticEvents.filter(event => 
+        {optimisticEvents.filter(event =>
           activeFilter === "all" || event.meta?.type === activeFilter
         ).length === 0 && !loading && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">
-              No events found for the selected filter.
-            </p>
-          </div>
-        )}
+            <div className="text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400">
+                No events found for the selected filter.
+              </p>
+            </div>
+          )}
       </div>
 
       {/* Add/Edit Event Modal */}
@@ -373,17 +381,17 @@ const EventsPage = () => {
           <Input
             label="Title"
             value={formData.title}
-            onChange={(e) => setFormData({...formData, title: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
           />
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Description
             </label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
@@ -395,21 +403,21 @@ const EventsPage = () => {
               label="Start Date"
               type="date"
               value={formData.startDate}
-              onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
               required
             />
             <Input
               label="End Date"
               type="date"
               value={formData.endDate}
-              onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
             />
           </div>
 
           <Input
             label="Session By"
             value={formData.sessionBy}
-            onChange={(e) => setFormData({...formData, sessionBy: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, sessionBy: e.target.value })}
           />
 
           <div>
@@ -418,7 +426,7 @@ const EventsPage = () => {
             </label>
             <select
               value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="event">Event</option>
@@ -482,7 +490,7 @@ const EventsPage = () => {
           </div>
         </div>
       </Modal>
-    </div>
+    </div >
   );
 };
 

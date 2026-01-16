@@ -132,10 +132,10 @@ const HomePage = () => {
                   variant="outline"
                   size="lg"
                   className="border-2 border-purple-600 text-purple-700 hover:bg-purple-50 dark:border-purple-400 dark:text-purple-300 dark:hover:bg-purple-900/20 text-lg font-semibold flex items-center justify-center px-10 py-5 rounded-2xl transition-all hover:scale-105"
-                  onClick={() => navigate("/community")}
+                  onClick={() => navigate("/join")}
                 >
                   <Users className="mr-3 w-6 h-6" />
-                  Join Community
+                  Join the Club
                 </Button>
               </div>
 
@@ -305,10 +305,10 @@ const HomePage = () => {
 
               <div className="pt-2">
                 <Button
-                  onClick={() => navigate("/community")}
+                  onClick={() => navigate("/join")}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-semibold shadow-lg shadow-purple-500/30 transition flex items-center"
                 >
-                  Join Our Community
+                  Join the Club
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>
