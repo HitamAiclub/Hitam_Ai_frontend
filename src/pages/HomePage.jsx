@@ -345,7 +345,7 @@ const HomePage = () => {
               ))}
             </div>
           ) : (
-            <div className="space-y-12">
+            <div className="space-y-12 max-w-5xl mx-auto">
               {(() => {
                 const facultyMembers = committeeMembers.filter(m => m.category === 'faculty').sort((a, b) => (a.priority || 99) - (b.priority || 99));
                 const students = committeeMembers.filter(m => (m.category || 'student') === 'student');
@@ -458,29 +458,31 @@ const HomePage = () => {
                                   </h4>
                                   <div className="space-y-6">
                                     {members.map((member, index) => (
-                                      <Card key={member.id} delay={index * 0.05}>
-                                        <div className="p-6 text-center">
-                                          <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
-                                            {member.photoUrl ? (
-                                              <img
-                                                src={member.photoUrl}
-                                                alt={member.name}
-                                                className="w-full h-full object-cover"
-                                              />
-                                            ) : (
-                                              <span className="text-white text-2xl font-bold">
-                                                {member.name?.charAt(0)}
-                                              </span>
-                                            )}
+                                      <div key={member.id} className="w-64 mx-auto">
+                                        <Card delay={index * 0.05}>
+                                          <div className="p-6 text-center">
+                                            <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
+                                              {member.photoUrl ? (
+                                                <img
+                                                  src={member.photoUrl}
+                                                  alt={member.name}
+                                                  className="w-full h-full object-cover"
+                                                />
+                                              ) : (
+                                                <span className="text-white text-2xl font-bold">
+                                                  {member.name?.charAt(0)}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                                              {member.name}
+                                            </h3>
+                                            <p className="text-blue-600 dark:text-blue-400 font-medium">
+                                              {member.role}
+                                            </p>
                                           </div>
-                                          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                            {member.name}
-                                          </h3>
-                                          <p className="text-blue-600 dark:text-blue-400 font-medium">
-                                            {member.role}
-                                          </p>
-                                        </div>
-                                      </Card>
+                                        </Card>
+                                      </div>
                                     ))}
                                   </div>
                                 </div>
@@ -498,31 +500,33 @@ const HomePage = () => {
                           Committee Members
                         </h3>
                         <div className="w-full">
-                          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                          <div className="flex flex-wrap justify-center gap-8">
                             {nonCoreMembers.map((member, index) => (
-                              <Card key={member.id} delay={index * 0.1}>
-                                <div className="p-6 text-center">
-                                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
-                                    {member.photoUrl ? (
-                                      <img
-                                        src={member.photoUrl}
-                                        alt={member.name}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    ) : (
-                                      <span className="text-white text-2xl font-bold">
-                                        {member.name?.charAt(0)}
-                                      </span>
-                                    )}
+                              <div key={member.id} className="w-64">
+                                <Card delay={index * 0.1}>
+                                  <div className="p-6 text-center">
+                                    <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
+                                      {member.photoUrl ? (
+                                        <img
+                                          src={member.photoUrl}
+                                          alt={member.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <span className="text-white text-2xl font-bold">
+                                          {member.name?.charAt(0)}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                                      {member.name}
+                                    </h3>
+                                    <p className="text-blue-600 dark:text-blue-400 font-medium">
+                                      {member.role}
+                                    </p>
                                   </div>
-                                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                    {member.name}
-                                  </h3>
-                                  <p className="text-blue-600 dark:text-blue-400 font-medium">
-                                    {member.role}
-                                  </p>
-                                </div>
-                              </Card>
+                                </Card>
+                              </div>
                             ))}
                           </div>
                         </div>
