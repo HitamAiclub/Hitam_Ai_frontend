@@ -317,16 +317,7 @@ const CommitteeMembers = () => {
               <Upload className="w-4 h-4" />
               Export CSV
             </Button>
-            <Button
-              onClick={() => {
-                resetForm('faculty');
-                setShowModal(true);
-              }}
-              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              <Plus className="w-4 h-4" />
-              Add Head of Institution
-            </Button>
+
             <Button
               onClick={() => {
                 resetForm('student');
