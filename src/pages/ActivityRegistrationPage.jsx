@@ -1087,6 +1087,23 @@ function ActivityRegistrationPage() {
     );
   }
 
+  if (activity.isDeleted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center max-w-md mx-auto p-8">
+          <FiAlertCircle className="text-4xl text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Activity Inactive</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            This activity has been archived or is no longer active.
+          </p>
+          <Button onClick={() => navigate('/upcoming')}>
+            Back to Activities
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!isRegistrationOpen()) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">

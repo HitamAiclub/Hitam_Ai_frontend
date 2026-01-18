@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../../firebase";
 import { useAuth } from "../../contexts/AuthContext";
 
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
-import { Calendar, Users, BarChart3, Trash2 } from "lucide-react";
+import { Calendar, Users, BarChart3, Trash2, RefreshCw, Archive } from "lucide-react";
 
 const FormSubmissions = () => {
   const { user } = useAuth();
@@ -96,6 +96,32 @@ const FormSubmissions = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleStatus = async (activity) => {
+    try {
+      const activityRef = doc(db, "upcomingActivities", activity.id);
+      const newStatus = !activity.isDeleted; // Toggle status (if isDeleted is true, we set to false to restore)
+
+      // If we are restoring (making active), we set isDeleted to false
+      // If we are archiving (making inactive), we set isDeleted to true
+      await updateDoc(activityRef, {
+        isDeleted: !activity.isDeleted,
+        updatedAt: new Date().toISOString()
+      });
+
+      // Update local state
+      setActivities(prev => prev.map(a =>
+        a.id === activity.id
+          ? { ...a, isDeleted: !a.isDeleted }
+          : a
+      ));
+
+      alert(`Activity ${activity.isDeleted ? "restored" : "archived"} successfully`);
+    } catch (error) {
+      console.error("Error updating activity status:", error);
+      alert("Failed to update activity status");
     }
   };
 
@@ -220,8 +246,8 @@ const FormSubmissions = () => {
                     )}
                   </h3>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.isDeleted
-                      ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                      : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                    ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                    : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
                     }`}>
                     {item.isDeleted ? "Inactive" : "Active"}
                   </span>
@@ -266,6 +292,17 @@ const FormSubmissions = () => {
                     title="Permanently Delete"
                   >
                     <Trash2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => toggleStatus(item)}
+                    title={item.isDeleted ? "Restore Activity" : "Archive Activity"}
+                    className={item.isDeleted
+                      ? "text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                      : "text-gray-600 hover:text-gray-700 hover:bg-gray-50 border-gray-200"
+                    }
+                  >
+                    {item.isDeleted ? <RefreshCw className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>
