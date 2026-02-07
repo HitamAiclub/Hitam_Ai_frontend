@@ -26,7 +26,7 @@ function ActivityFormEditPage() {
     const sectionUrl = customUrl !== null ? customUrl : paymentUrl;
     const sectionInstructions = customInstructions !== null ? customInstructions : instructions;
     const timestamp = Date.now();
-    
+
     return {
       id: `section_payment_${timestamp}`,
       title: "Payment Information",
@@ -36,7 +36,7 @@ function ActivityFormEditPage() {
           id: `field_payment_info_${timestamp}`,
           type: "label",
           label: "",
-          content: sectionUrl 
+          content: sectionUrl
             ? `<div style="padding: 16px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; margin-bottom: 16px;"><p style="font-weight: bold; font-size: 18px; color: #92400e; margin-bottom: 8px;">Payment Required: ₹${sectionFee || '0'}</p><p style="margin-bottom: 8px;"><a href="${sectionUrl}" target="_blank" style="color: #3b82f6; text-decoration: underline; font-weight: 500;">🔗 Open Payment Link</a></p>${sectionInstructions ? '<p style="color: #78350f; font-size: 14px;"><strong>Instructions:</strong> ' + sectionInstructions + '</p>' : ''}</div>`
             : `<div style="padding: 16px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; margin-bottom: 16px;"><p style="font-weight: bold; font-size: 18px; color: #92400e; margin-bottom: 8px;">Payment Required: ₹${sectionFee || '0'}</p>${sectionInstructions ? '<p style="color: #78350f; font-size: 14px;"><strong>Instructions:</strong> ' + sectionInstructions + '</p>' : ''}</div>`,
           contentType: "html",
@@ -67,9 +67,9 @@ function ActivityFormEditPage() {
   // Auto-create/update/remove payment section based on isPaid and payment settings
   useEffect(() => {
     if (loading || formSections.length === 0) return; // Wait for initial load and sections to be ready
-    
+
     const existingPaymentSectionIndex = formSections.findIndex(s => s.id?.startsWith('section_payment_'));
-    
+
     if (isPaid) {
       // Create or update payment section
       if (existingPaymentSectionIndex >= 0) {
@@ -125,11 +125,11 @@ function ActivityFormEditPage() {
     try {
       const docRef = doc(db, 'upcomingActivities', id);
       const docSnap = await getDoc(docRef);
-      
+
       if (docSnap.exists()) {
         const activityData = { id: docSnap.id, ...docSnap.data() };
         setActivity(activityData);
-        
+
         // Load sections if they exist, otherwise convert formSchema to sections
         if (activityData.formSections && activityData.formSections.length > 0) {
           setFormSections(activityData.formSections);
@@ -162,7 +162,7 @@ function ActivityFormEditPage() {
         setFee(activityData.fee || '');
         setPaymentUrl(activityData.paymentDetails?.paymentUrl || '');
         setInstructions(activityData.paymentDetails?.instructions || '');
-        
+
         // If isPaid is true and no payment section exists, create it after a short delay
         if (activityData.isPaid) {
           setTimeout(() => {
@@ -193,6 +193,31 @@ function ActivityFormEditPage() {
     }
   };
 
+  // Helper to remove undefined values for Firestore
+  const sanitizeForFirestore = (obj) => {
+    if (obj === undefined) return null;
+    if (obj === null) return null;
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => sanitizeForFirestore(item));
+    }
+
+    if (typeof obj === 'object') {
+      const newObj = {};
+      Object.keys(obj).forEach(key => {
+        const value = sanitizeForFirestore(obj[key]);
+        if (value !== undefined) {
+          newObj[key] = value;
+        } else {
+          newObj[key] = null; // Explicitly set undefined to null
+        }
+      });
+      return newObj;
+    }
+
+    return obj;
+  };
+
   const handleSave = async () => {
     if (!activity) return;
 
@@ -205,10 +230,14 @@ function ActivityFormEditPage() {
     try {
       // Flatten sections to formSchema for backward compatibility
       const allFields = formSections.flatMap(s => s.fields || []);
-      
+
+      // Sanitize data before sending to Firestore
+      const sanitizedSections = sanitizeForFirestore(formSections);
+      const sanitizedSchema = sanitizeForFirestore(allFields);
+
       await updateDoc(doc(db, 'upcomingActivities', id), {
-        formSchema: allFields,
-        formSections: formSections,
+        formSchema: sanitizedSchema,
+        formSections: sanitizedSections,
         isPaid: isPaid,
         fee: isPaid ? fee : '',
         paymentDetails: {
@@ -217,7 +246,7 @@ function ActivityFormEditPage() {
         },
         updatedAt: new Date().toISOString()
       });
-      
+
       alert('Registration form & payment settings saved successfully!');
       navigate('/upcoming');
     } catch (error) {
@@ -266,7 +295,7 @@ function ActivityFormEditPage() {
             Registration Form Builder
           </h4>
           <p className="text-sm text-blue-700 dark:text-blue-300">
-            Design your registration form by adding, editing, and arranging form fields. 
+            Design your registration form by adding, editing, and arranging form fields.
             Students will fill out this form to register for your activity.
           </p>
         </div>
@@ -288,7 +317,7 @@ function ActivityFormEditPage() {
             paymentUrl={paymentUrl}
             paymentInstructions={instructions}
           />
-          
+
         </div>
 
         {/* Payment Settings */}
@@ -316,14 +345,14 @@ function ActivityFormEditPage() {
                 placeholder="Enter fee amount"
                 required
               />
-              
+
               <Input
                 label="Payment URL (UPI/QR Code Link)"
                 value={paymentUrl}
                 onChange={(e) => setPaymentUrl(e.target.value)}
                 placeholder="https://example.com/payment-qr or upi://pay?..."
               />
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Payment Instructions

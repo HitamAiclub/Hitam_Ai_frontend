@@ -23,7 +23,7 @@ function FormEditPage() {
     try {
       const docRef = doc(db, 'forms', id);
       const docSnap = await getDoc(docRef);
-      
+
       if (docSnap.exists()) {
         setForm({ id: docSnap.id, ...docSnap.data() });
       } else {
@@ -39,6 +39,31 @@ function FormEditPage() {
     }
   };
 
+  // Helper to remove undefined values for Firestore
+  const sanitizeForFirestore = (obj) => {
+    if (obj === undefined) return null;
+    if (obj === null) return null;
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => sanitizeForFirestore(item));
+    }
+
+    if (typeof obj === 'object') {
+      const newObj = {};
+      Object.keys(obj).forEach(key => {
+        const value = sanitizeForFirestore(obj[key]);
+        if (value !== undefined) {
+          newObj[key] = value;
+        } else {
+          newObj[key] = null;
+        }
+      });
+      return newObj;
+    }
+
+    return obj;
+  };
+
   const handleSave = async (formData) => {
     try {
       const formToSave = {
@@ -46,14 +71,17 @@ function FormEditPage() {
         updatedAt: new Date().toISOString(),
       };
 
+      // Sanitize the entire object
+      const sanitizedForm = sanitizeForFirestore(formToSave);
+
       if (id === 'new') {
         // Create new form
-        formToSave.createdAt = new Date().toISOString();
-        const docRef = await addDoc(collection(db, 'forms'), formToSave);
+        sanitizedForm.createdAt = new Date().toISOString();
+        const docRef = await addDoc(collection(db, 'forms'), sanitizedForm);
         navigate(`/upcoming/forms/${docRef.id}`);
       } else {
         // Update existing form
-        await updateDoc(doc(db, 'forms', id), formToSave);
+        await updateDoc(doc(db, 'forms', id), sanitizedForm);
         navigate('/upcoming/forms');
       }
     } catch (error) {
