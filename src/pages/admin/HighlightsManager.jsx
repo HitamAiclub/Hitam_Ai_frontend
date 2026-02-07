@@ -187,7 +187,7 @@ const HighlightsManager = () => {
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-8">
+        <div className="p-6 max-w-7xl mx-auto space-y-8 pt-20">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">

@@ -119,7 +119,7 @@ const Navbar = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleLogout}
-                className="hidden md:flex items-center space-x-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors duration-200"
+                className="hidden md:flex items-center justify-center space-x-2 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors duration-200"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Logout</span>
@@ -131,7 +131,7 @@ const Navbar = () => {
               >
                 <Link
                   to="/admin/login"
-                  className="hidden md:flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-200"
+                  className="hidden md:flex items-center justify-center space-x-2 px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-200"
                 >
                   <User className="w-4 h-4" />
                   <span>Admin Login</span>
