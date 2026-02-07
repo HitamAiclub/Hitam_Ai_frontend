@@ -1,14 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-* {
-  border: none !important;
-}
-
-main,
-#root,
-nav {
-  border: none !important;
-  outline: none !important;
-}

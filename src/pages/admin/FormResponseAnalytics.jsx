@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { Download, ArrowLeft, Filter, Table, Save, Search, Eye, ChevronDown } from 'lucide-react';
+import { Download, ArrowLeft, Filter, Table, Save, Search, Eye, ChevronDown, Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Frown, Meh } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Modal from '../../components/ui/Modal';
@@ -484,7 +484,199 @@ const FormResponseAnalytics = () => {
                             {/* Summary View Reuse - Using FILTERED analytics */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredAnalytics.formFields.map(field => {
+                                    const stats = filteredAnalytics.fieldStats[field.id];
                                     const data = filteredAnalytics.chartData[field.id];
+
+                                    // Determine Visualization Type based on stats AND label
+                                    let vizType = 'chart'; // default
+                                    if (stats) {
+                                        const uniqueCount = Object.keys(stats.distribution || {}).length;
+                                        const total = stats.filledResponses;
+                                        const lowerLabel = field.label.toLowerCase();
+
+                                        // 1. Label Heuristic (for small datasets like 2 responses)
+                                        const isIdentifierLabel = lowerLabel.includes('name') ||
+                                            lowerLabel.includes('email') ||
+                                            lowerLabel.includes('roll') ||
+                                            lowerLabel.includes('phone') ||
+                                            lowerLabel.includes('mobile') ||
+                                            lowerLabel.includes('id') ||
+                                            lowerLabel.includes('remarks') ||
+                                            lowerLabel.includes('feedback') ||
+                                            lowerLabel.includes('suggestion') ||
+                                            lowerLabel.includes('comment');
+
+                                        // 2. Statistical Heuristic (for larger datasets)
+                                        // If unique values > 50% of total responses OR unique values > 20
+                                        const isHighCardinality = (total > 5 && (uniqueCount > 20 || (uniqueCount / total) > 0.5));
+
+                                        if (isIdentifierLabel || isHighCardinality) {
+                                            vizType = 'list';
+                                        }
+                                    }
+
+                                    if (vizType === 'list') {
+                                        return (
+                                            <div key={field.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col">
+                                                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{field.label}</h3>
+                                                <p className="text-xs text-gray-500 mb-4">
+                                                    {stats.filledResponses} Responses • {Object.keys(stats.distribution).length} Unique Values
+                                                </p>
+
+                                                <div className="flex-1 overflow-y-auto max-h-48 pr-2 space-y-2">
+                                                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Recent Entries</h4>
+                                                    {getFilteredSubmissions.slice(0, 10).map((sub, idx) => {
+                                                        const val = sub[field.id];
+                                                        return (
+                                                            <div key={idx} className="text-sm text-gray-700 dark:text-gray-300 border-b border-gray-50 dark:border-gray-700 last:border-0 pb-1">
+                                                                {val ? String(val) : <span className="italic text-gray-400">Empty</span>}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    {getFilteredSubmissions.length > 10 && (
+                                                        <div className="text-xs text-center text-gray-400 mt-2">
+                                                            + {getFilteredSubmissions.length - 10} more...
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    // Special Visualization for Ratings
+                                    if (field.type === 'rating' && stats) {
+                                        const maxRating = field.maxRating || 5;
+                                        const total = stats.filledResponses;
+                                        const average = stats.average || 0;
+
+                                        // Calculate counts for each star (1 to maxRating)
+                                        const counts = {};
+                                        for (let i = 1; i <= maxRating; i++) counts[i] = 0;
+
+                                        if (stats.ratings) {
+                                            stats.ratings.forEach(r => {
+                                                const rounded = Math.round(r);
+                                                if (counts[rounded] !== undefined) counts[rounded]++;
+                                            });
+                                        }
+
+                                        // Helper to get Icon and Color based on type and state
+                                        const getRatingConfig = (type) => {
+                                            switch (type) {
+                                                case "heart": return { Icon: Heart, colorClass: "text-red-500", fillClass: "fill-current" };
+                                                case "thumbsUp": return { Icon: ThumbsUp, colorClass: "text-blue-500", fillClass: "fill-current" };
+                                                case "sun": return { Icon: Sun, colorClass: "text-orange-400", fillClass: "fill-current" };
+                                                case "moon": return { Icon: Moon, colorClass: "text-indigo-500", fillClass: "fill-current" };
+                                                case "zap": return { Icon: Zap, colorClass: "text-yellow-500", fillClass: "fill-current" };
+                                                case "award": return { Icon: Award, colorClass: "text-purple-500", fillClass: "fill-current" };
+                                                case "crown": return { Icon: Crown, colorClass: "text-yellow-600", fillClass: "fill-current" };
+                                                case "faces": return { Icon: Smile, colorClass: "text-green-500", fillClass: "" }; // Faces handled specially
+                                                default: return { Icon: Star, colorClass: "text-yellow-400", fillClass: "fill-current" };
+                                            }
+                                        };
+
+                                        const { Icon, colorClass, fillClass } = getRatingConfig(field.iconType);
+                                        const isFaces = field.iconType === "faces";
+
+                                        // For faces, we might want different icons per level
+                                        const getFaceIcon = (index) => {
+                                            if (!isFaces) return Icon;
+                                            // Map 0-4 index to Scale
+                                            // 1: Angry, 2: Sad, 3: Neutral, 4: Good, 5: Happy
+                                            if (index === 0) return Frown; // 1
+                                            if (index === 1) return Frown; // 2
+                                            if (index === 2) return Meh;   // 3
+                                            if (index === 3) return Smile; // 4
+                                            return Smile;                  // 5+
+                                        };
+
+                                        const getFaceColor = (index) => {
+                                            if (!isFaces) return colorClass;
+                                            if (index === 0) return "text-red-500";
+                                            if (index === 1) return "text-orange-500";
+                                            if (index === 2) return "text-yellow-500";
+                                            if (index === 3) return "text-blue-500";
+                                            return "text-green-500";
+                                        };
+
+                                        const progressBarColor = (index) => {
+                                            if (isFaces) return getFaceColor(index).replace('text-', 'bg-');
+                                            return colorClass.replace('text-', 'bg-');
+                                        };
+
+                                        return (
+                                            <div key={field.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                                                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{field.label}</h3>
+
+                                                <div className="flex items-center gap-4 mb-6">
+                                                    <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 w-24 h-24">
+                                                        <span className={`text-3xl font-bold ${colorClass.replace('fill-current', '')}`}>{average}</span>
+                                                        <div className="flex items-center mt-1">
+                                                            {isFaces ? (
+                                                                <Smile className="w-3 h-3 text-gray-400" />
+                                                            ) : (
+                                                                <Icon className={`w-3 h-3 ${colorClass} ${fillClass}`} />
+                                                            )}
+                                                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">/ {maxRating}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex-1">
+                                                        <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                                                            Based on {total} ratings
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            {[...Array(maxRating > 5 && !isFaces ? 1 : Math.min(maxRating, 5))].map((_, i) => {
+                                                                if (i >= 10) return null;
+
+                                                                const CurrentIcon = getFaceIcon(i);
+                                                                const currentColor = getFaceColor(i);
+                                                                const isFilled = i < Math.round(average);
+
+                                                                return (
+                                                                    <CurrentIcon
+                                                                        key={i}
+                                                                        className={`w-5 h-5 ${isFilled ? `${currentColor} ${fillClass}` : 'text-gray-200 dark:text-gray-700'}`}
+                                                                    />
+                                                                );
+                                                            })}
+                                                            {maxRating > 5 && !isFaces && <span className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">...</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    {[...Array(maxRating)].map((_, i) => {
+                                                        const starIndex = maxRating - 1 - i;
+                                                        const starValue = starIndex + 1;
+
+                                                        const count = counts[starValue] || 0;
+                                                        const percentage = total > 0 ? (count / total) * 100 : 0;
+
+                                                        const RowIcon = getFaceIcon(starIndex);
+                                                        const rowColor = getFaceColor(starIndex);
+                                                        const rowBgColor = progressBarColor(starIndex);
+
+                                                        return (
+                                                            <div key={starValue} className="flex items-center gap-2 text-xs">
+                                                                <span className="w-3 text-gray-500 dark:text-gray-400 font-medium">{starValue}</span>
+                                                                <RowIcon className={`w-3 h-3 ${rowColor} ${fillClass}`} />
+                                                                <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className={`h-full rounded-full ${rowBgColor}`}
+                                                                        style={{ width: `${percentage}%` }}
+                                                                    />
+                                                                </div>
+                                                                <span className="w-8 text-right text-gray-500 dark:text-gray-400">{count}</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    // Default to Chart for Categorical Data
                                     if (!data) return null;
                                     return (
                                         <div key={field.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
@@ -515,7 +707,7 @@ const FormResponseAnalytics = () => {
                                     );
                                 })}
                             </div>
-                            {Object.keys(filteredAnalytics.chartData).length === 0 && (
+                            {Object.keys(filteredAnalytics.chartData).length === 0 && filteredAnalytics.formFields.length === 0 && (
                                 <div className="text-center py-12 text-gray-500">
                                     No chart data available for this view.
                                 </div>

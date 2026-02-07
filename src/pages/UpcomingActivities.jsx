@@ -1663,22 +1663,7 @@ const UpcomingActivities = () => {
                             <Edit className="w-4 h-4 mr-1" />
                             Edit
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => viewRegistrations(activity)}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => exportRegistrations(activity.id)}
-                          >
-                            <Download className="w-4 h-4 mr-1" />
-                            Export
-                          </Button>
+
                           <Button
                             variant="danger"
                             size="sm"

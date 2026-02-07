@@ -8,6 +8,7 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import FormFileUpload from '../components/ui/FormFileUpload';
 import { FiArrowLeft, FiCheckCircle, FiAlertCircle, FiExternalLink } from 'react-icons/fi';
+import { Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Meh, Frown } from 'lucide-react';
 
 function ActivityRegistrationPage() {
   const { id } = useParams();
@@ -856,6 +857,99 @@ function ActivityRegistrationPage() {
               multiple={true}
               label={`Upload files for ${field.label}`}
             />
+            {isTouched && fieldError && (
+              <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                <span>⚠️</span> {fieldError}
+              </p>
+            )}
+          </div>
+        );
+
+      case "rating":
+        const renderRatingIcon = (index, filled) => {
+          const iconProps = {
+            className: `w-8 h-8 transition-transform cursor-pointer hover:scale-110 ${filled ? "fill-current" : "text-gray-300"}`,
+            strokeWidth: filled ? 0 : 2
+          };
+
+          // Dynamic Colors based on fill for shapes
+          const getShapeColor = () => {
+            if (!filled) return "text-gray-300";
+            switch (field.iconType) {
+              case "heart": return "text-red-500";
+              case "thumbsUp": return "text-blue-500";
+              case "sun": return "text-orange-400";
+              case "moon": return "text-indigo-500";
+              case "zap": return "text-yellow-500";
+              case "award": return "text-purple-500";
+              case "crown": return "text-yellow-600";
+              default: return "text-yellow-500"; // Star default
+            }
+          };
+
+          if (field.iconType === "faces") {
+            const faces = [
+              { icon: Frown, color: "text-red-500", label: "Angry" },
+              { icon: Frown, color: "text-orange-500", label: "Sad" },
+              { icon: Meh, color: "text-yellow-500", label: "Neutral" },
+              { icon: Smile, color: "text-blue-500", label: "Good" },
+              { icon: Smile, color: "text-green-500", label: "Happy" }
+            ];
+            // For scale of 5
+            const faceIndex = index;
+            const FaceIcon = faces[faceIndex % 5].icon;
+            const isFilled = (registrationData[field.id] || 0) >= index + 1;
+
+            return (
+              <FaceIcon
+                className={`w-10 h-10 transition-transform hover:scale-110 cursor-pointer ${isFilled ? faces[faceIndex % 5].color : "text-gray-300"}`}
+                onClick={() => {
+                  handleFieldValueChange(field.id, index + 1);
+                  handleFieldBlur(field);
+                }}
+              />
+            );
+          }
+
+          return (
+            <div
+              onClick={() => {
+                handleFieldValueChange(field.id, index + 1);
+                handleFieldBlur(field);
+              }}
+              className={getShapeColor()}
+            >
+              {(() => {
+                switch (field.iconType) {
+                  case "heart": return <Heart {...iconProps} className={`${iconProps.className} ${filled ? "text-red-500" : "text-gray-300"}`} />;
+                  case "thumbsUp": return <ThumbsUp {...iconProps} className={`${iconProps.className} ${filled ? "text-blue-500" : "text-gray-300"}`} />;
+                  case "sun": return <Sun {...iconProps} className={`${iconProps.className} ${filled ? "text-orange-400" : "text-gray-300"}`} />;
+                  case "moon": return <Moon {...iconProps} className={`${iconProps.className} ${filled ? "text-indigo-500" : "text-gray-300"}`} />;
+                  case "zap": return <Zap {...iconProps} className={`${iconProps.className} ${filled ? "text-yellow-500" : "text-gray-300"}`} />;
+                  case "award": return <Award {...iconProps} className={`${iconProps.className} ${filled ? "text-purple-500" : "text-gray-300"}`} />;
+                  case "crown": return <Crown {...iconProps} className={`${iconProps.className} ${filled ? "text-yellow-600" : "text-gray-300"}`} />;
+                  default: return <Star {...iconProps} className={`${iconProps.className} ${filled ? "text-yellow-500" : "text-gray-300"}`} />;
+                }
+              })()}
+            </div>
+          );
+        };
+
+        return (
+          <div key={field.id} className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {field.label} {field.required && "*"}
+            </label>
+            <div className="flex items-center space-x-2">
+              {Array.from({ length: field.maxRating || 5 }).map((_, i) => (
+                <div key={i}>
+                  {renderRatingIcon(i, (registrationData[field.id] || 0) >= i + 1)}
+                </div>
+              ))}
+            </div>
+            {field.helpText && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">{field.helpText}</p>
+            )}
             {isTouched && fieldError && (
               <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
                 <span>⚠️</span> {fieldError}

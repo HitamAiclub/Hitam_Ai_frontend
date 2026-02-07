@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, GripVertical, Eye, Settings, Link, Image as ImageIcon, Type, Copy, ArrowUp, ArrowDown, ArrowRight, Download, Play, CheckCircle, Info } from "lucide-react";
+import { Plus, Trash2, GripVertical, Eye, Settings, Link, Image as ImageIcon, Type, Copy, ArrowUp, ArrowDown, ArrowRight, Download, Play, CheckCircle, Info, Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Meh, Frown } from "lucide-react";
 import { uploadFormBuilderImage, uploadFormFiles } from "../../utils/cloudinary";
 
 import Button from "../ui/Button";
@@ -97,7 +97,8 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
     { type: "url", label: "Website URL", icon: "🌐", category: "input" },
     { type: "label", label: "Description", icon: "📋", category: "content" },
     { type: "image", label: "Image", icon: "🖼️", category: "content" },
-    { type: "link", label: "Link/Button", icon: "🔗", category: "content" }
+    { type: "link", label: "Link/Button", icon: "🔗", category: "content" },
+    { type: "rating", label: "Rating", icon: "⭐", category: "input" }
   ];
 
   // Section management functions
@@ -218,7 +219,10 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
       shadow: type === "image" ? "none" : undefined,
       clickable: type === "image" ? false : undefined,
       clickUrl: type === "image" ? "" : undefined,
-      useFileUpload: type === "image" ? false : undefined
+      useFileUpload: type === "image" ? false : undefined,
+      maxRating: type === "rating" ? 5 : undefined,
+      // iconType is already defined above for link, reuse or override if rating
+      ...(type === "rating" ? { iconType: "star" } : {})
     };
 
     const currentSection = getCurrentSection();
@@ -227,9 +231,12 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
 
     setShowAddField(false);
 
-    // Auto-open settings for content fields
-    if (["label", "image", "link"].includes(type)) {
-      setTimeout(() => setEditingField(newField), 100);
+    // Auto-open settings for content fields and rating
+    if (["label", "image", "link", "rating"].includes(type)) {
+      setTimeout(() => {
+        setEditingField(newField);
+        setEditingFieldDraft({ ...newField });
+      }, 100);
     }
   };
 
@@ -334,7 +341,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                 <img
                   src={field.imageUrl}
                   alt={field.altText || "Form image"}
-                  className={`${getImageSizeClass(field.imageSize)} ${getBorderStyleClass(field.borderStyle)} ${getShadowClass(field.shadow)} border border-gray-300 dark:border-gray-600`}
+                  className={`${getImageSizeClass(field.imageSize)} ${getBorderStyleClass(field.borderStyle)} ${getShadowClass(field.shadow)} border-2 border-gray-300 dark:border-gray-600`}
                   onError={(e) => {
                     e.target.src = "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=400";
                   }}
@@ -370,7 +377,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
               </label>
               <select
                 disabled
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-500 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option>Select an option</option>
                 {field.options?.map((option, i) => (
@@ -424,27 +431,70 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                 disabled
                 placeholder={field.placeholder}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-500 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
           );
 
-        case "file":
+
+
+        case "rating":
+          const renderRatingIcon = (index, filled) => {
+            const iconProps = {
+              className: `w-6 h-6 ${filled ? "fill-current text-yellow-500" : "text-gray-300"} transition-colors`,
+              strokeWidth: filled ? 0 : 2
+            };
+
+            if (field.iconType === "faces") {
+              const faces = [
+                { icon: Frown, color: "text-red-500", label: "Angry" },
+                { icon: Frown, color: "text-orange-500", label: "Sad" },
+                { icon: Meh, color: "text-yellow-500", label: "Neutral" },
+                { icon: Smile, color: "text-blue-500", label: "Good" },
+                { icon: Smile, color: "text-green-500", label: "Happy" }
+              ];
+              // Map index to 5-step scale if maxRating is different, but for faces usually fixed to 5
+              const faceIndex = Math.min(Math.floor((index / (field.maxRating || 5)) * 5), 4);
+              const FaceIcon = faces[faceIndex].icon;
+
+              return (
+                <FaceIcon
+                  className={`w-8 h-8 ${filled ? faces[faceIndex].color : "text-gray-300"} transition-colors`}
+                />
+              );
+            }
+
+            switch (field.iconType) {
+              case "heart": return <Heart {...iconProps} className={`w-6 h-6 ${filled ? "fill-current text-red-500" : "text-gray-300"}`} />;
+              case "thumbsUp": return <ThumbsUp {...iconProps} className={`w-6 h-6 ${filled ? "fill-current text-blue-500" : "text-gray-300"}`} />;
+              case "sun": return <Sun {...iconProps} className={`w-6 h-6 ${filled ? "fill-current text-orange-400" : "text-gray-300"}`} />;
+              case "moon": return <Moon {...iconProps} className={`w-6 h-6 ${filled ? "fill-current text-indigo-500" : "text-gray-300"}`} />;
+              case "zap": return <Zap {...iconProps} className={`w-6 h-6 ${filled ? "fill-current text-yellow-500" : "text-gray-300"}`} />;
+              case "award": return <Award {...iconProps} className={`w-6 h-6 ${filled ? "fill-current text-purple-500" : "text-gray-300"}`} />;
+              case "crown": return <Crown {...iconProps} className={`w-6 h-6 ${filled ? "fill-current text-yellow-600" : "text-gray-300"}`} />;
+              default: return <Star {...iconProps} />;
+            }
+          };
+
           return (
-            <div className="space-y-1">
+            <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {field.label} {field.required && "*"}
               </label>
-              <input
-                type="file"
-                disabled
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
+              <div className="flex items-center space-x-2">
+                {Array.from({ length: field.maxRating || 5 }).map((_, i) => (
+                  <div key={i} className="cursor-pointer">
+                    {renderRatingIcon(i, i < 3)} {/* Showing example filled state */}
+                  </div>
+                ))}
+              </div>
               {field.helpText && (
                 <p className="text-xs text-gray-500 dark:text-gray-400">{field.helpText}</p>
               )}
             </div>
           );
+
+
 
         default:
           return (
@@ -456,7 +506,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                 type={field.type}
                 disabled
                 placeholder={field.placeholder}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-500 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
           );
@@ -563,7 +613,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     type="text"
                     value={option}
                     onChange={(e) => updateOption(optionIndex, e.target.value)}
-                    className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="flex-1 px-2 py-1 text-sm border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                   <Button
                     type="button"
@@ -586,6 +636,8 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
   const FormPreview = ({ fields, isPaid = false, fee = '', paymentUrl = '', paymentInstructions = '' }) => {
     const hasPaymentFields = Array.isArray(fields) && fields.some(f => {
       const text = `${(f.id || '')} ${(f.label || '')}`.toLowerCase();
+      // Only treat as payment info if it's not our explicit rating field (unlikely to have rating named payment, but safe check)
+      if (f.type === "rating") return false;
       return /payment|upi|transaction|transactionid|paymentproof|payment_proof|payment_screenshot|waive|exempt/.test(text);
     });
 
@@ -593,7 +645,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
 
     const renderField = (field) => {
       // Debug logging for content fields
-      if (["label", "image", "link"].includes(field.type)) {
+      if (["label", "image", "link", "rating"].includes(field.type)) {
         console.log(`Rendering ${field.type} field:`, field);
       }
 
@@ -619,7 +671,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                 <img
                   src={field.imageUrl}
                   alt={field.altText || "Form image"}
-                  className={`${getImageSizeClass(field.imageSize)} ${getBorderStyleClass(field.borderStyle)} ${getShadowClass(field.shadow)} border border-gray-300 dark:border-gray-600 ${field.clickable ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                  className={`${getImageSizeClass(field.imageSize)} ${getBorderStyleClass(field.borderStyle)} ${getShadowClass(field.shadow)} border-2 border-gray-300 dark:border-gray-600 ${field.clickable ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
                   onError={(e) => {
                     e.target.src = "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=400";
                   }}
@@ -685,7 +737,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                 placeholder={field.placeholder}
                 required={field.required}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {field.helpText && (
                 <p className="text-sm text-gray-500 dark:text-gray-400">{field.helpText}</p>
@@ -703,7 +755,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                 value={formData[field.id] || ""}
                 onChange={(e) => setFormData({ ...formData, [field.id]: e.target.value })}
                 required={field.required}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select an option</option>
                 {field.options?.map((option, index) => (
@@ -794,13 +846,111 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                 type="file"
                 required={field.required}
                 accept={field.acceptedFileTypes || "*"}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {field.helpText && (
                 <p className="text-sm text-gray-500 dark:text-gray-400">{field.helpText}</p>
               )}
             </div>
           );
+
+        case "rating":
+          const renderRatingIcon = (index, filled, setHover) => {
+            const iconProps = {
+              className: `w-8 h-8 transition-transform cursor-pointer ${setHover ? "hover:scale-110" : ""} ${filled ? "fill-current" : "text-gray-300"}`,
+              strokeWidth: filled ? 0 : 2
+            };
+
+            // Dynamic Colors based on fill for shapes
+            const getShapeColor = () => {
+              if (!filled) return "text-gray-300";
+              switch (field.iconType) {
+                case "heart": return "text-red-500";
+                case "thumbsUp": return "text-blue-500";
+                case "sun": return "text-orange-400";
+                case "moon": return "text-indigo-500";
+                case "zap": return "text-yellow-500";
+                case "award": return "text-purple-500";
+                case "crown": return "text-yellow-600";
+                default: return "text-yellow-500"; // Star default
+              }
+            };
+
+            if (field.iconType === "faces") {
+              const faces = [
+                { icon: Frown, color: "text-red-500", label: "Angry" },
+                { icon: Frown, color: "text-orange-500", label: "Sad" },
+                { icon: Meh, color: "text-yellow-500", label: "Neutral" },
+                { icon: Smile, color: "text-blue-500", label: "Good" },
+                { icon: Smile, color: "text-green-500", label: "Happy" }
+              ];
+              // For scale of 5
+              const faceIndex = index;
+              const FaceIcon = faces[faceIndex % 5].icon;
+              const isActive = filled; // In faces, often we just highlight the selected one or up to selected
+              // Implementation: Emotes usually single selection behavior visually, but rating logic implies scale.
+              // Let's treat it as "highlight selected and ones before it" OR "highlight just selected"
+              // Standard rating is cumulative. Let's do cumulative for now but maybe change style.
+
+              // Better approach for faces: Highlight ONLY the selected one, and gray out others? 
+              // OR Color them up to the point. 
+              // Standard "Rate Experience" usually is "Select One Emotion". 
+              // If it matches index, color it. 
+
+              const isSelected = (formData[field.id] || 0) == index + 1;
+              const isHovered = false; // We can't easily track hover state per icon in this map without more state. 
+              // Simplified for preview: Check if value >= index + 1
+
+              const isFilled = (formData[field.id] || 0) >= index + 1;
+
+              return (
+                <FaceIcon
+                  className={`w-10 h-10 transition-transform hover:scale-110 cursor-pointer ${isFilled ? faces[faceIndex % 5].color : "text-gray-300"}`}
+                  onClick={() => setFormData({ ...formData, [field.id]: index + 1 })}
+                />
+              );
+            }
+
+            return (
+              <div
+                onClick={() => setFormData({ ...formData, [field.id]: index + 1 })}
+                className={getShapeColor()}
+              >
+                {(() => {
+                  switch (field.iconType) {
+                    case "heart": return <Heart {...iconProps} className={`${iconProps.className} ${filled ? "text-red-500" : "text-gray-300"}`} />;
+                    case "thumbsUp": return <ThumbsUp {...iconProps} className={`${iconProps.className} ${filled ? "text-blue-500" : "text-gray-300"}`} />;
+                    case "sun": return <Sun {...iconProps} className={`${iconProps.className} ${filled ? "text-orange-400" : "text-gray-300"}`} />;
+                    case "moon": return <Moon {...iconProps} className={`${iconProps.className} ${filled ? "text-indigo-500" : "text-gray-300"}`} />;
+                    case "zap": return <Zap {...iconProps} className={`${iconProps.className} ${filled ? "text-yellow-500" : "text-gray-300"}`} />;
+                    case "award": return <Award {...iconProps} className={`${iconProps.className} ${filled ? "text-purple-500" : "text-gray-300"}`} />;
+                    case "crown": return <Crown {...iconProps} className={`${iconProps.className} ${filled ? "text-yellow-600" : "text-gray-300"}`} />;
+                    default: return <Star {...iconProps} className={`${iconProps.className} ${filled ? "text-yellow-500" : "text-gray-300"}`} />;
+                  }
+                })()}
+              </div>
+            );
+          };
+
+          return (
+            <div key={field.id} className="space-y-3 mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {field.label} {field.required && "*"}
+              </label>
+              <div className="flex items-center space-x-2">
+                {Array.from({ length: field.maxRating || 5 }).map((_, i) => (
+                  <div key={i}>
+                    {renderRatingIcon(i, (formData[field.id] || 0) >= i + 1, true)}
+                  </div>
+                ))}
+              </div>
+              {field.helpText && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">{field.helpText}</p>
+              )}
+            </div>
+          );
+
+
 
         default:
           return (
@@ -814,7 +964,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                 onChange={(e) => setFormData({ ...formData, [field.id]: e.target.value })}
                 placeholder={field.placeholder}
                 required={field.required}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-500 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {field.helpText && (
                 <p className="text-sm text-gray-500 dark:text-gray-400">{field.helpText}</p>
@@ -1239,7 +1389,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                           updateSection(section.id, { navigation: { type: "section", sectionId: value } });
                         }
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     >
                       <option value="next">Continue to next section</option>
                       {sections.map((s, idx) => {
@@ -1413,7 +1563,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                   <select
                     value={editingFieldDraft.contentType || "text"}
                     onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, contentType: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="text">Plain Text</option>
                     <option value="markdown">Markdown (with links)</option>
@@ -1430,7 +1580,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, content: e.target.value })}
                     placeholder="Enter your content here. For markdown, you can use [link text](https://example.com)"
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   {editingFieldDraft.contentType === "markdown" && (
                     <p className="text-xs text-gray-500 mt-1">
@@ -1447,7 +1597,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.fontSize || "medium"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, fontSize: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="xs">Extra Small</option>
                       <option value="sm">Small</option>
@@ -1465,7 +1615,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.alignment || "left"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, alignment: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="left">Left</option>
                       <option value="center">Center</option>
@@ -1482,7 +1632,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.textColor || "default"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, textColor: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="default">Default</option>
                       <option value="primary">Primary (Blue)</option>
@@ -1500,7 +1650,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.fontWeight || "normal"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, fontWeight: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="normal">Normal</option>
                       <option value="medium">Medium</option>
@@ -1626,7 +1776,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                           }
                         }
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Supported formats: JPG, PNG, GIF, WebP (Max 5MB)
@@ -1649,7 +1799,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.imageSize || "auto"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, imageSize: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="auto">Auto (Original)</option>
                       <option value="small">Small (200px)</option>
@@ -1665,7 +1815,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.alignment || "center"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, alignment: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="left">Left</option>
                       <option value="center">Center</option>
@@ -1682,7 +1832,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.borderStyle || "rounded"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, borderStyle: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="none">No Border</option>
                       <option value="rounded">Rounded</option>
@@ -1698,7 +1848,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.shadow || "none"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, shadow: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="none">No Shadow</option>
                       <option value="sm">Small Shadow</option>
@@ -1738,7 +1888,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                       <img
                         src={editingFieldDraft.imageUrl}
                         alt={editingFieldDraft.altText || "Preview"}
-                        className={`${getImageSizeClass(editingFieldDraft.imageSize || "auto")} ${getBorderStyleClass(editingFieldDraft.borderStyle || "rounded")} ${getShadowClass(editingFieldDraft.shadow || "none")} border border-gray-300 dark:border-gray-600 ${editingFieldDraft.clickable ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                        className={`${getImageSizeClass(editingFieldDraft.imageSize || "auto")} ${getBorderStyleClass(editingFieldDraft.borderStyle || "rounded")} ${getShadowClass(editingFieldDraft.shadow || "none")} border-2 border-gray-300 dark:border-gray-600 ${editingFieldDraft.clickable ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
                         onError={(e) => {
                           e.target.src = "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=400";
                         }}
@@ -1752,6 +1902,60 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {editingFieldDraft.type === "rating" && (
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Maximum Rating
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={editingFieldDraft.iconType === "faces" ? 5 : 10}
+                    value={editingFieldDraft.maxRating || 5}
+                    onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, maxRating: parseInt(e.target.value) })}
+                    disabled={editingFieldDraft.iconType === "faces"}
+                    className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {editingFieldDraft.iconType === "faces" && (
+                    <p className="text-xs text-gray-500 mt-1">Faces scale is fixed to 5 emotions.</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Icon Style
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { type: "star", label: "Star", icon: <Star className="w-6 h-6 text-yellow-500 fill-current" /> },
+                      { type: "heart", label: "Heart", icon: <Heart className="w-6 h-6 text-red-500 fill-current" /> },
+                      { type: "thumbsUp", label: "Thumbs Up", icon: <ThumbsUp className="w-6 h-6 text-blue-500 fill-current" /> },
+                      { type: "faces", label: "Faces", icon: <Smile className="w-6 h-6 text-green-500" /> },
+                      { type: "sun", label: "Sun", icon: <Sun className="w-6 h-6 text-orange-400 fill-current" /> },
+                      { type: "moon", label: "Moon", icon: <Moon className="w-6 h-6 text-indigo-500 fill-current" /> },
+                      { type: "zap", label: "Lightning", icon: <Zap className="w-6 h-6 text-yellow-500 fill-current" /> },
+                      { type: "award", label: "Award", icon: <Award className="w-6 h-6 text-purple-500 fill-current" /> },
+                      { type: "crown", label: "Crown", icon: <Crown className="w-6 h-6 text-yellow-600 fill-current" /> },
+                    ].map((option) => (
+                      <div
+                        key={option.type}
+                        onClick={() => setEditingFieldDraft({
+                          ...editingFieldDraft,
+                          iconType: option.type,
+                          maxRating: option.type === "faces" ? 5 : (editingFieldDraft.maxRating || 5)
+                        })}
+                        className={`cursor-pointer p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${editingFieldDraft.iconType === option.type ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-gray-200 dark:border-gray-700 hover:border-blue-300"}`}
+                      >
+                        {option.icon}
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{option.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1780,7 +1984,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.buttonStyle || "primary"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, buttonStyle: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="primary">Primary Button</option>
                       <option value="secondary">Secondary Button</option>
@@ -1798,7 +2002,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.buttonSize || "md"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, buttonSize: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="xs">Extra Small</option>
                       <option value="sm">Small</option>
@@ -1817,7 +2021,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.alignment || "left"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, alignment: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="left">Left</option>
                       <option value="center">Center</option>
@@ -1831,7 +2035,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.buttonWidth || "auto"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, buttonWidth: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="auto">Auto Width</option>
                       <option value="full">Full Width</option>
@@ -1875,7 +2079,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                       <select
                         value={editingFieldDraft.iconType || "arrow"}
                         onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, iconType: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="arrow">Arrow Right</option>
                         <option value="external">External Link</option>
@@ -1893,7 +2097,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                       <select
                         value={editingFieldDraft.iconPosition || "right"}
                         onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, iconPosition: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="left">Left</option>
                         <option value="right">Right</option>
@@ -1941,12 +2145,14 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                   onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, label: e.target.value })}
                   placeholder="Enter field label"
                 />
-                <Input
-                  label="Placeholder Text"
-                  value={editingFieldDraft.placeholder || ""}
-                  onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, placeholder: e.target.value })}
-                  placeholder="Enter placeholder text"
-                />
+                {!["rating", "file"].includes(editingFieldDraft.type) && (
+                  <Input
+                    label="Placeholder Text"
+                    value={editingFieldDraft.placeholder || ""}
+                    onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, placeholder: e.target.value })}
+                    placeholder="Enter placeholder text"
+                  />
+                )}
                 <Input
                   label="Help Text"
                   value={editingFieldDraft.helpText || ""}
@@ -1961,7 +2167,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                     <select
                       value={editingFieldDraft.acceptedFileTypes || "*"}
                       onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, acceptedFileTypes: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="*">All Files</option>
                       <option value="image/*">Images Only</option>
@@ -1984,7 +2190,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                       <select
                         value={editingFieldDraft.emailDomain || "all"}
                         onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, emailDomain: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="all">All emails allowed</option>
                         <option value="hitam">Only @hitam.org emails</option>
@@ -2009,7 +2215,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                       <select
                         value={editingFieldDraft.phonePattern || "any"}
                         onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, phonePattern: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="any">Any format (10+ digits)</option>
                         <option value="india">Indian format (10 digits)</option>
@@ -2084,7 +2290,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                             ...editingFieldDraft,
                             conditional: { ...editingFieldDraft.conditional, fieldId: e.target.value }
                           })}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                          className="w-full px-2 py-1 text-sm border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         >
                           <option value="">Select a field</option>
                           {getCurrentSection()?.fields?.map(f => f.type !== editingFieldDraft.type && (
@@ -2107,7 +2313,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                             conditional: { ...editingFieldDraft.conditional, value: e.target.value }
                           })}
                           placeholder="e.g., Student or Faculty"
-                          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                          className="w-full px-2 py-1 text-sm border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
                       </div>
 
@@ -2143,7 +2349,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                               newOptions[optionIndex] = e.target.value;
                               setEditingFieldDraft({ ...editingFieldDraft, options: newOptions });
                             }}
-                            className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="flex-1 px-2 py-1 text-sm border-2 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                           />
                           <Button
                             type="button"
