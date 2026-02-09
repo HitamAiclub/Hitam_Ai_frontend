@@ -1196,8 +1196,8 @@ const UpcomingActivities = () => {
     if (showShareModal && activityToShare && qrCodeRef.current) {
       if (!qrCodeInstance.current) {
         qrCodeInstance.current = new QRCodeStyling({
-          width: 250,
-          height: 250,
+          width: 400,
+          height: 400,
           type: "svg",
           data: `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`,
           image: qrOptions.includeLogo ? "/logo2.png" : undefined,
@@ -1276,13 +1276,45 @@ const UpcomingActivities = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const downloadQRCode = (format) => {
-    if (qrCodeInstance.current) {
-      qrCodeInstance.current.download({
-        name: `${activityToShare?.title || "activity"}-qr`,
-        extension: format
-      });
-    }
+  const downloadQRCode = async (format) => {
+    if (!activityToShare) return;
+
+    // Create a temporary instance with high resolution for download
+    const tempQr = new QRCodeStyling({
+      width: 4000,
+      height: 4000,
+      type: "svg",
+      data: `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`,
+      image: qrOptions.includeLogo ? "/logo2.png" : undefined,
+      dotsOptions: {
+        color: qrOptions.color, // Color takes precedence if gradient is null
+        gradient: qrOptions.gradient,
+        type: qrOptions.style === "dots" ? "dots" : "square",
+      },
+      backgroundOptions: {
+        color: qrOptions.bgColor,
+      },
+      imageOptions: {
+        crossOrigin: "anonymous",
+        margin: 20, // Scaled up margin for higher resolution (2 * 10)
+        imageSize: 0.7
+      },
+      cornersSquareOptions: {
+        type: qrOptions.style === "dots" ? "extra-rounded" : "square",
+        color: qrOptions.gradient ? undefined : qrOptions.color,
+        gradient: qrOptions.gradient
+      },
+      cornersDotOptions: {
+        type: qrOptions.style === "dots" ? "dot" : "square",
+        color: qrOptions.gradient ? undefined : qrOptions.color,
+        gradient: qrOptions.gradient
+      }
+    });
+
+    await tempQr.download({
+      name: `${activityToShare.title || "activity"}-qr`,
+      extension: format
+    });
   };
 
 
