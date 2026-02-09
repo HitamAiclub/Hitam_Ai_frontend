@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where } from "firebase/firestore";
@@ -10,11 +10,99 @@ import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
 import FormBuilder from "../components/FormBuilder/FormBuilder";
-import { Calendar, Users, Plus, Edit, Trash2, Download, Eye, ExternalLink, FileText, CreditCard } from "lucide-react";
+import { Calendar, Users, Plus, Edit, Trash2, Download, Eye, ExternalLink, FileText, CreditCard, Share2, Copy, Check, Sliders } from "lucide-react";
+
+import QRCodeStyling from "qr-code-styling";
 
 const UpcomingActivities = () => {
   console.log("🚀 UpcomingActivities component is loading...");
   const navigate = useNavigate();
+
+  // Define schema first to avoid ReferenceErrors
+  const getDefaultFormSchema = () => [
+    // Content Elements
+    {
+      id: "welcome_label",
+      type: "label",
+      label: "Welcome Message",
+      content: "Welcome to our event! Please fill out the registration form below.",
+      contentType: "text",
+      fontSize: "lg",
+      textColor: "primary",
+      fontWeight: "semibold",
+      alignment: "center",
+      italic: false,
+      underline: false
+    },
+
+    // Basic Form Fields
+    {
+      id: "name",
+      type: "text",
+      label: "Full Name",
+      required: true,
+      placeholder: "Enter your full name"
+    },
+    {
+      id: "rollNo",
+      type: "text",
+      label: "Roll Number",
+      required: true,
+      placeholder: "Enter your roll number"
+    },
+    {
+      id: "email",
+      type: "email",
+      label: "Email Address",
+      required: true,
+      placeholder: "your.email@hitam.org"
+    },
+    {
+      id: "phone",
+      type: "phone",
+      label: "Phone Number",
+      required: true,
+      placeholder: "+91 XXXXXXXXXX"
+    },
+    {
+      id: "year",
+      type: "select",
+      label: "Academic Year",
+      required: true,
+      options: ["1st Year", "2nd Year", "3rd Year", "4th Year"]
+    },
+    {
+      id: "branch",
+      type: "select",
+      label: "Branch",
+      required: true,
+      options: [
+        "Computer Science Engineering",
+        "Computer Science Engineering (AI & ML)",
+        "Computer Science Engineering (Data Science)",
+        "Computer Science Engineering (Cyber Security)",
+        "Computer Science Engineering (IoT)",
+        "Electronics and Communication Engineering",
+        "Electrical and Electronics Engineering",
+        "Mechanical Engineering"
+      ]
+    },
+
+    // Closing Content Element
+    {
+      id: "terms_label",
+      type: "label",
+      label: "Terms and Conditions",
+      content: "By submitting this form, you agree to our terms and conditions. For questions, contact us at [admin@hitam.org](mailto:admin@hitam.org).",
+      contentType: "markdown",
+      fontSize: "sm",
+      textColor: "muted",
+      fontWeight: "normal",
+      alignment: "left",
+      italic: false,
+      underline: false
+    }
+  ];
 
   // Add error handling for useAuth
   let user = null;
@@ -59,6 +147,19 @@ const UpcomingActivities = () => {
   // State for tracking unique field validation errors
   const [uniqueErrors, setUniqueErrors] = useState({});
   const [optimisticActivities, setOptimisticActivities] = useState([]);
+
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [activityToShare, setActivityToShare] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [qrOptions, setQrOptions] = useState({
+    color: "#000000",
+    gradient: null, // { type: 'linear', rotation: 0, colorStops: [{ offset: 0, color: 'blue' }, { offset: 1, color: 'red' }] }
+    bgColor: "#ffffff",
+    style: "dots",
+    includeLogo: true
+  });
+  const qrCodeRef = useRef(null);
+  const qrCodeInstance = useRef(null);
 
   // Test Firebase connectivity and permissions
   const testFirebaseConnection = async () => {
@@ -218,9 +319,12 @@ const UpcomingActivities = () => {
     );
   };
 
+
+
   useEffect(() => {
     console.log("🔄 useEffect triggered - starting initialization");
     const initializeComponent = async () => {
+
       try {
         setLoading(true);
         setError(null);
@@ -1066,90 +1170,122 @@ const UpcomingActivities = () => {
     }
   };
 
-  const getDefaultFormSchema = () => [
-    // Content Elements
-    {
-      id: "welcome_label",
-      type: "label",
-      label: "Welcome Message",
-      content: "Welcome to our event! Please fill out the registration form below.",
-      contentType: "text",
-      fontSize: "lg",
-      textColor: "primary",
-      fontWeight: "semibold",
-      alignment: "center",
-      italic: false,
-      underline: false
-    },
+  // Helper to generate colored SVG logo
+  const getColoredLogoUrl = (color) => {
+    // Ensure color is a string
+    const safeColor = typeof color === 'string' ? color : '#000000';
 
-    // Basic Form Fields
-    {
-      id: "name",
-      type: "text",
-      label: "Full Name",
-      required: true,
-      placeholder: "Enter your full name"
-    },
-    {
-      id: "rollNo",
-      type: "text",
-      label: "Roll Number",
-      required: true,
-      placeholder: "Enter your roll number"
-    },
-    {
-      id: "email",
-      type: "email",
-      label: "Email Address",
-      required: true,
-      placeholder: "your.email@hitam.org"
-    },
-    {
-      id: "phone",
-      type: "phone",
-      label: "Phone Number",
-      required: true,
-      placeholder: "+91 XXXXXXXXXX"
-    },
-    {
-      id: "year",
-      type: "select",
-      label: "Academic Year",
-      required: true,
-      options: ["1st Year", "2nd Year", "3rd Year", "4th Year"]
-    },
-    {
-      id: "branch",
-      type: "select",
-      label: "Branch",
-      required: true,
-      options: [
-        "Computer Science Engineering",
-        "Computer Science Engineering (AI & ML)",
-        "Computer Science Engineering (Data Science)",
-        "Computer Science Engineering (Cyber Security)",
-        "Computer Science Engineering (IoT)",
-        "Electronics and Communication Engineering",
-        "Electrical and Electronics Engineering",
-        "Mechanical Engineering"
-      ]
-    },
+    // Default logo SVG with placeholders for color
+    const svgString = `
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 4C12.954 4 4 12.954 4 24C4 35.046 12.954 44 24 44C35.046 44 44 35.046 44 24C44 12.954 35.046 4 24 4Z" fill="${safeColor}" fill-opacity="0.1"/>
+        <path d="M24 8C15.178 8 8 15.178 8 24C8 32.822 15.178 40 24 40C32.822 40 40 32.822 40 24C40 15.178 32.822 8 24 8Z" stroke="${safeColor}" stroke-width="2"/>
+        <path d="M15 17.5H19M29 17.5H33M15 30.5H19M29 30.5H33M24 14V34" stroke="${safeColor}" stroke-width="2" stroke-linecap="round"/>
+        <path d="M21 14H27" stroke="${safeColor}" stroke-width="2" stroke-linecap="round"/>
+        <path d="M21 34H27" stroke="${safeColor}" stroke-width="2" stroke-linecap="round"/>
+        <path d="M24 24C25.6569 24 27 22.6569 27 21C27 19.3431 25.6569 18 24 18C22.3431 18 21 19.3431 21 21C21 22.6569 22.3431 24 24 24Z" fill="${safeColor}"/>
+        <path d="M24 30C25.6569 30 27 28.6569 27 27C27 25.3431 25.6569 24 24 24C22.3431 24 21 25.3431 21 27C21 28.6569 22.3431 30 24 30Z" fill="${safeColor}"/>
+      </svg>
+    `;
 
-    // Closing Content Element
-    {
-      id: "terms_label",
-      type: "label",
-      label: "Terms and Conditions",
-      content: "By submitting this form, you agree to our terms and conditions. For questions, contact us at [admin@hitam.org](mailto:admin@hitam.org).",
-      contentType: "markdown",
-      fontSize: "sm",
-      textColor: "muted",
-      fontWeight: "normal",
-      alignment: "left",
-      italic: false,
-      underline: false
+    // Use encodeURIComponent which is safer for SVGs
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
+  };
+
+  useEffect(() => {
+    if (showShareModal && activityToShare && qrCodeRef.current) {
+      if (!qrCodeInstance.current) {
+        qrCodeInstance.current = new QRCodeStyling({
+          width: 250,
+          height: 250,
+          type: "svg",
+          data: `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`,
+          image: qrOptions.includeLogo ? "/logo2.png" : undefined,
+          dotsOptions: {
+            color: qrOptions.color,
+            gradient: qrOptions.gradient,
+            type: qrOptions.style === "dots" ? "dots" : "square",
+          },
+          backgroundOptions: {
+            color: qrOptions.bgColor,
+          },
+          imageOptions: {
+            crossOrigin: "anonymous",
+            margin: 2,
+            imageSize: 0.7
+          },
+          cornersSquareOptions: {
+            type: qrOptions.style === "dots" ? "extra-rounded" : "square",
+            color: qrOptions.color,
+            gradient: qrOptions.gradient
+          },
+          cornersDotOptions: {
+            type: qrOptions.style === "dots" ? "dot" : "square",
+            color: qrOptions.color,
+            gradient: qrOptions.gradient
+          }
+        });
+        qrCodeRef.current.innerHTML = "";
+        qrCodeInstance.current.append(qrCodeRef.current);
+      } else {
+        qrCodeInstance.current.update({
+          data: `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`,
+          image: qrOptions.includeLogo ? "/logo2.png" : undefined,
+          dotsOptions: {
+            color: qrOptions.gradient ? undefined : qrOptions.color,
+            gradient: qrOptions.gradient,
+            type: qrOptions.style === "dots" ? "dots" : "square",
+          },
+          backgroundOptions: {
+            color: qrOptions.bgColor,
+          },
+          cornersSquareOptions: {
+            type: qrOptions.style === "dots" ? "extra-rounded" : "square",
+            color: qrOptions.gradient ? undefined : qrOptions.color,
+            gradient: qrOptions.gradient
+          },
+          cornersDotOptions: {
+            type: qrOptions.style === "dots" ? "dot" : "square",
+            color: qrOptions.gradient ? undefined : qrOptions.color,
+            gradient: qrOptions.gradient
+          }
+        });
+      }
     }
-  ];
+  }, [showShareModal, activityToShare, qrOptions]);
+
+
+  const handleShare = (activity) => {
+    setActivityToShare(activity);
+    setCopied(false);
+    setQrOptions({
+      color: "#000000",
+      gradient: null,
+      bgColor: "#ffffff",
+      style: "dots",
+      includeLogo: true
+    });
+    setShowShareModal(true);
+  };
+
+  const copyToClipboard = () => {
+    if (!activityToShare) return;
+    const url = `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const downloadQRCode = (format) => {
+    if (qrCodeInstance.current) {
+      qrCodeInstance.current.download({
+        name: `${activityToShare?.title || "activity"}-qr`,
+        extension: format
+      });
+    }
+  };
+
+
 
   const renderFormField = (field) => {
     if (field.type === "label" || field.type === "image" || field.type === "link") {
@@ -1500,34 +1636,39 @@ const UpcomingActivities = () => {
       {/* Emergency Fallback UI - Removed Debug Message */}
 
       {/* Error Display */}
+      {/* Error Display for Component Errors */}
       {componentError && (
-        <div style={{
-          position: 'fixed',
-          top: 80,
-          left: 20,
-          right: 20,
-          background: 'darkred',
-          color: 'white',
-          padding: '20px',
-          zIndex: 9997,
-          fontSize: '16px'
-        }}>
-          <h3>🚨 Component Error:</h3>
-          <p>{componentError.message}</p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              background: 'white',
-              color: 'darkred',
-              padding: '10px 20px',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              marginTop: '10px'
-            }}
-          >
-            Reload Page
-          </button>
+        <div className="fixed top-20 left-4 right-4 z-50 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 shadow-lg rounded-r">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="font-bold">Component Error</p>
+              <p>{componentError.message}</p>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Error Display for Data/Fetch Errors */}
+      {error && (
+        <div className="fixed top-32 left-4 right-4 z-50 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 shadow-lg rounded-r">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="font-bold">Error Loading Data</p>
+              <p>{error}</p>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       )}
 
@@ -1535,6 +1676,8 @@ const UpcomingActivities = () => {
 
       {/* Main Component */}
       <div className="min-h-screen pt-16">
+
+
         <div className="max-w-6xl mx-auto px-4 py-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1672,6 +1815,16 @@ const UpcomingActivities = () => {
                           >
                             <Trash2 className="w-4 h-4 mr-1" />
                             Delete
+                          </Button>
+
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleShare(activity)}
+                            disabled={activity.isOptimistic}
+                          >
+                            <Share2 className="w-4 h-4 mr-1" />
+                            Share
                           </Button>
                         </>
                       )}
@@ -2000,7 +2153,176 @@ const UpcomingActivities = () => {
             </div>
           </div>
         </Modal>
-      </div>
+
+        {/* Share Activity Modal */}
+        <Modal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          title={`Share ${activityToShare?.title}`}
+          size="md"
+        >
+          <div className="flex flex-col items-center space-y-6 p-4">
+            {activityToShare && (
+              <>
+                <div className="flex flex-col items-center">
+                  <div className="p-4 bg-white rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-4 flex justify-center items-center" style={{ backgroundColor: qrOptions.bgColor === 'transparent' ? '#f3f4f6' : 'white' }}>
+                    <div ref={qrCodeRef} />
+                  </div>
+
+                  <div className="w-full space-y-4">
+                    {/* Controls */}
+                    <div className="flex flex-col gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Brand Color</span>
+                        <button
+                          onClick={() => setQrOptions(prev => ({
+                            ...prev,
+                            color: undefined,
+                            gradient: {
+                              type: 'linear',
+                              rotation: 45 * (Math.PI / 180),
+                              colorStops: [
+                                { offset: 0, color: '#06b6d4' }, // Cyan
+                                { offset: 1, color: '#8b5cf6' }  // Purple
+                              ]
+                            }
+                          }))}
+                          className={`px-3 py-1 text-xs rounded border font-bold text-white bg-gradient-to-r from-cyan-500 to-purple-500 ${qrOptions.gradient ? "ring-2 ring-offset-2 ring-purple-500" : ""}`}
+                        >
+                          Hitam AI Brand
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Solid Colors</span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setQrOptions(prev => ({ ...prev, color: "#000000", gradient: null }))}
+                            className={`w-6 h-6 rounded-full bg-black border-2 ${!qrOptions.gradient && qrOptions.color === "#000000" ? "border-blue-500" : "border-transparent"}`}
+                            title="Black"
+                          />
+                          <button
+                            onClick={() => setQrOptions(prev => ({ ...prev, color: "#2563eb", gradient: null }))}
+                            className={`w-6 h-6 rounded-full bg-blue-600 border-2 ${!qrOptions.gradient && qrOptions.color === "#2563eb" ? "border-blue-500" : "border-transparent"}`}
+                            title="Blue"
+                          />
+                          <button
+                            onClick={() => setQrOptions(prev => ({ ...prev, color: "#dc2626", gradient: null }))}
+                            className={`w-6 h-6 rounded-full bg-red-600 border-2 ${!qrOptions.gradient && qrOptions.color === "#dc2626" ? "border-blue-500" : "border-transparent"}`}
+                            title="Red"
+                          />
+                          <button
+                            onClick={() => setQrOptions(prev => ({ ...prev, color: "#16a34a", gradient: null }))}
+                            className={`w-6 h-6 rounded-full bg-green-600 border-2 ${!qrOptions.gradient && qrOptions.color === "#16a34a" ? "border-blue-500" : "border-transparent"}`}
+                            title="Green"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Background</span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setQrOptions(prev => ({ ...prev, bgColor: "#ffffff", color: prev.color === "#ffffff" ? "#000000" : prev.color }))}
+                            className={`px-3 py-1 text-xs rounded border ${qrOptions.bgColor === "#ffffff" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-white border-gray-300 text-gray-700"}`}
+                          >
+                            White
+                          </button>
+                          <button
+                            onClick={() => setQrOptions(prev => ({ ...prev, bgColor: "#000000", color: "#ffffff", gradient: null }))}
+                            className={`px-3 py-1 text-xs rounded border ${qrOptions.bgColor === "#000000" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-black border-gray-600 text-white"}`}
+                          >
+                            Black
+                          </button>
+                          <button
+                            onClick={() => setQrOptions(prev => ({ ...prev, bgColor: "transparent", color: prev.color === "#ffffff" ? "#000000" : prev.color }))}
+                            className={`px-3 py-1 text-xs rounded border ${qrOptions.bgColor === "transparent" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-white border-gray-300 text-gray-700"}`}
+                          >
+                            Transparent
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show Logo</span>
+                        <input
+                          type="checkbox"
+                          checked={qrOptions.includeLogo}
+                          onChange={(e) => setQrOptions(prev => ({ ...prev, includeLogo: e.target.checked }))}
+                          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Style</span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setQrOptions(prev => ({ ...prev, style: "dots" }))}
+                            className={`px-3 py-1 text-xs rounded border ${qrOptions.style === "dots" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-white border-gray-300 text-gray-700"}`}
+                          >
+                            Dots
+                          </button>
+                          <button
+                            onClick={() => setQrOptions(prev => ({ ...prev, style: "squares" }))}
+                            className={`px-3 py-1 text-xs rounded border ${qrOptions.style === "squares" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-white border-gray-300 text-gray-700"}`}
+                          >
+                            Squares
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 justify-center">
+                      <Button size="sm" onClick={() => downloadQRCode('png')}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download PNG
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => downloadQRCode('jpeg')}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download JPG
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="w-full space-y-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Registration Link
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`}
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-300 text-sm focus:outline-none"
+                    />
+                    <Button
+                      variant={copied ? "success" : "outline"}
+                      onClick={copyToClipboard}
+                      className="shrink-0"
+                    >
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Scan the QR code or copy the link to share this event with participants.
+                  </p>
+                </div>
+
+                <div className="w-full pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+                  <Button variant="ghost" onClick={() => setShowShareModal(false)}>
+                    Close
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </Modal>
+
+      </div >
     </>
   );
 };
