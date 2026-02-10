@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiChevronLeft, FiChevronRight, FiImage, FiVideo, FiX } from 'react-icons/fi';
 import { differenceInDays, parseISO } from 'date-fns';
 import { db } from '../../firebase';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 
 const HighlightsSection = () => {
     const [media, setMedia] = useState([]);
@@ -34,36 +34,35 @@ const HighlightsSection = () => {
             // Convert to array and sort desc
             const sortedWeeks = Array.from(uniqueWeeks).sort((a, b) => b.localeCompare(a));
 
-            // 2. Find latest active week (within 7 days)
-            let activeWeekName = null;
+            // 2. Find ALL active weeks (within 7 days)
+            const activeWeeks = [];
             for (const week of sortedWeeks) {
                 try {
                     const diff = differenceInDays(new Date(), parseISO(week));
                     if (diff >= 0 && diff < 7) {
-                        activeWeekName = week;
-                        break;
+                        activeWeeks.push(week);
                     }
                 } catch (e) {
                     console.warn(`Could not parse week name as date: ${week}`, e);
                 }
             }
 
-            if (!activeWeekName) {
+            if (activeWeeks.length === 0) {
                 setLoading(false);
                 return;
             }
 
-            // 3. Fetch media from Firestore for the active week
+            // 3. Fetch media from Firestore for ALL active weeks
+            // Firestore 'in' query supports up to 10 values, which is plenty for 7 days
             const q = query(
                 collection(db, "highlights"),
-                where("week", "==", activeWeekName)
-                // We'll sort by createdAt in client to avoid requiring composite index immediately
+                where("week", "in", activeWeeks)
             );
             const querySnapshot = await getDocs(q);
             const files = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-            })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
             setMedia(files);
             setLoading(false);
