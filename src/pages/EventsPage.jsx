@@ -40,7 +40,7 @@ const EventsPage = () => {
         const eventsData = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })).sort((a, b) => new Date(b.meta.startDate) - new Date(a.meta.startDate));
         setEvents(eventsData);
         setOptimisticEvents(eventsData);
         setLoading(false);
@@ -66,7 +66,7 @@ const EventsPage = () => {
       const eventsData = eventsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })).sort((a, b) => new Date(b.meta.startDate) - new Date(a.meta.startDate));
       setEvents(eventsData);
     } catch (error) {
       console.error("Error fetching events:", error);
