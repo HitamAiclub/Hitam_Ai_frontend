@@ -880,23 +880,47 @@ const FormResponseAnalytics = () => {
 
                         <div className="grid grid-cols-1 gap-6">
                             {baseAnalytics.formFields.map(field => {
-                                const val = selectedSubmission[field.id];
+                                // Try to get value from direct property or files object
+                                let val = selectedSubmission[field.id];
+                                if ((val === undefined || val === null) && selectedSubmission.files) {
+                                    val = selectedSubmission.files[field.id];
+                                }
+
                                 return (
                                     <div key={field.id} className="bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg">
                                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{field.label}</p>
                                         <div className="font-medium text-gray-900 dark:text-white whitespace-pre-wrap">
-                                            {val === undefined || val === null || val === '' ? (
+                                            {val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0) ? (
                                                 <span className="text-gray-400 italic">No response</span>
+                                            ) : field.type === 'file' ? (
+                                                <div className="flex flex-col gap-2">
+                                                    {(Array.isArray(val) ? val : [val]).map((file, idx) => (
+                                                        <a
+                                                            key={idx}
+                                                            href={file.url || file}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-2 text-blue-600 hover:underline bg-white dark:bg-gray-600 p-2 rounded border border-blue-100 dark:border-gray-500 w-max"
+                                                        >
+                                                            <div className="bg-blue-100 dark:bg-blue-900/30 p-1.5 rounded">
+                                                                <Download className="w-4 h-4" />
+                                                            </div>
+                                                            <span className="text-sm">
+                                                                {file.originalName || file.name || `File ${idx + 1}`}
+                                                            </span>
+                                                        </a>
+                                                    ))}
+                                                </div>
                                             ) : Array.isArray(val) ? (
                                                 <div className="flex flex-wrap gap-2">
-                                                    {val.map(v => (
-                                                        <span key={v} className="px-2 py-1 bg-white dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500 text-sm">
-                                                            {v}
+                                                    {val.map((v, i) => (
+                                                        <span key={i} className="px-2 py-1 bg-white dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500 text-sm">
+                                                            {typeof v === 'object' ? JSON.stringify(v) : v}
                                                         </span>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                val
+                                                String(val)
                                             )}
                                         </div>
                                     </div>

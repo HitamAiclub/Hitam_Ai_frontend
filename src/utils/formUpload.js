@@ -30,16 +30,18 @@ export const generateFormFolderPath = (
 
   // Payment proof upload path
   if (paymentId) {
-    return `upcoming-activities/${sanitizedTitle}/payments/${paymentId}/proofs`;
+    // New structure: registrations/payment_proofs
+    return `hitam_ai/upcoming-activities/${sanitizedTitle}/registrations/payment_proofs`;
   }
 
   // Registration upload path
   if (registrationId) {
-    return `upcoming-activities/${sanitizedTitle}/registrations/${registrationId}/uploads`;
+    // New structure: registrations/{registrationId}
+    return `hitam_ai/upcoming-activities/${sanitizedTitle}/registrations/${registrationId}`;
   }
 
-  // Regular activity file upload path (images, files, etc.)
-  return `upcoming-activities/${sanitizedTitle}/${fileType}`;
+  // Default fallback (though usually covered by above)
+  return `hitam_ai/upcoming-activities/${sanitizedTitle}/registrations/user_uploads`;
 };
 
 /**

@@ -286,10 +286,9 @@ function ActivityFormEditPage() {
 
     try {
       setUploadingQr(true);
-      // Use uploadUpcomingActivityFile to organize under upcoming-activities folder
-      // Pass sanitized activity title for subfolder organization if available
-      const sanitizedTitle = activity?.title ? activity.title.replace(/[^a-zA-Z0-9-_]/g, '_') : '';
-      const response = await uploadUpcomingActivityFile(file, sanitizedTitle);
+      setUploadingQr(true);
+      // Use uploadUpcomingActivityFile with new structure: admin/qr_code
+      const response = await uploadUpcomingActivityFile(file, activity.title, 'admin', 'qr_code');
       setQrCodeUrl(response.url);
     } catch (error) {
       console.error('Error uploading QR code:', error);
@@ -358,6 +357,7 @@ function ActivityFormEditPage() {
             fee={fee}
             paymentUrl={paymentUrl}
             paymentInstructions={instructions}
+            activityTitle={activity.title}
           />
 
         </div>

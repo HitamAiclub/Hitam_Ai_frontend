@@ -250,13 +250,28 @@ export const getAllFolders = async () => {
 // SPECIALIZED UPLOAD FUNCTIONS FOR PAGES
 // ============================================
 
+// Helper to sanitize title for folder names (kebab-case)
+const sanitizeTitle = (title) => {
+  if (!title) return '';
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-_]/g, '-') // Replace special chars with hyphens
+    .replace(/-+/g, '-')          // Replace multiple hyphens with single hyphen
+    .replace(/^-|-$/g, '');       // Remove leading/trailing hyphens
+};
+
 /**
  * Upload file to Upcoming Activities folder
+ * Structure: hitam_ai/upcoming-activities/{activityTitle}/{section}/{category}
+ * @param {File} file - File to upload
+ * @param {string} activityName - Title of the activity
+ * @param {string} section - 'admin' or 'registrations' (default: 'admin')
+ * @param {string} category - 'poster', 'qr_code', 'form_media', 'payment_proofs', 'user_uploads' (default: 'general')
  */
-export const uploadUpcomingActivityFile = async (file, activityName = '') => {
-  const folder = activityName
-    ? `hitam_ai/upcoming-activities/${activityName}`
-    : 'hitam_ai/upcoming-activities';
+export const uploadUpcomingActivityFile = async (file, activityName = '', section = 'admin', category = 'general') => {
+  const sanitizedTitle = sanitizeTitle(activityName) || 'untitled-activity';
+  const folder = `hitam_ai/upcoming-activities/${sanitizedTitle}/${section}/${category}`;
   return await uploadToCloudinary(file, folder);
 };
 

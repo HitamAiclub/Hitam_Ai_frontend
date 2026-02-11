@@ -7,7 +7,7 @@ import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Modal from "../ui/Modal";
 
-const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paymentUrl = '', paymentInstructions = '' }) => {
+const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paymentUrl = '', paymentInstructions = '', activityTitle = '' }) => {
   // Convert formSchema to sections structure if needed
   const initializeSections = () => {
     // Check if formSchema is already an array of sections (has id, title, fields properties)
@@ -1758,8 +1758,23 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                         if (file) {
                           try {
                             console.log("Uploading image file:", file.name, file.size, file.type);
-                            // Use your Cloudinary upload utility
-                            const uploadResult = await uploadFormBuilderImage(file); // This should return the Cloudinary URL
+
+                            let uploadResult;
+                            if (typeof activityTitle === 'string' && activityTitle) {
+                              // Use organized structure if activity title is available
+                              // Import this function at the top if not already: import { uploadUpcomingActivityFile } from "../../utils/cloudinary";
+                              // For now, we'll assume it needs to be imported or we check if we can switch completely.
+                              // Since FormBuilder might be used elsewhere, let's conditionally use the new function
+                              // But first we need to make sure we have access to it. 
+                              // Ideally `uploadFormBuilderImage` should handle this logic if we passed context, but here we do it explicitly.
+                              const { uploadUpcomingActivityFile } = await import("../../utils/cloudinary");
+                              uploadResult = await uploadUpcomingActivityFile(file, activityTitle, 'admin', 'form_media');
+                            } else {
+                              // Fallback for generic forms
+                              uploadResult = await uploadFormBuilderImage(file);
+                            }
+
+                            // const uploadResult = await uploadFormBuilderImage(file); // This should return the Cloudinary URL
                             console.log("Upload result:", uploadResult);
 
                             if (uploadResult && uploadResult.url) {
