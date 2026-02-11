@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -6,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { Download, ArrowLeft, Filter, Table, Save, Search, Eye, ChevronDown, Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Frown, Meh } from 'lucide-react';
+import { Download, ArrowLeft, Filter, Table, Save, Search, Eye, ChevronDown, Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Frown, Meh, X } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Modal from '../../components/ui/Modal';
@@ -163,6 +164,7 @@ const FormResponseAnalytics = () => {
     const [activeTab, setActiveTab] = useState('summary'); // 'summary' | 'responses'
     const [savingNote, setSavingNote] = useState(null); // submission ID being saved
     const [selectedSubmission, setSelectedSubmission] = useState(null); // For modal view
+    const [viewingMedia, setViewingMedia] = useState(null); // { type: 'image' | 'video', url: string }
 
     // Filter State
     const [filters, setFilters] = useState({});
@@ -369,7 +371,22 @@ const FormResponseAnalytics = () => {
                 sub.id,
                 sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : '',
                 ...fieldsToExport.map(f => {
-                    const val = sub[f.id];
+                    let val = sub[f.id];
+                    // Fallback to files object if main key is empty (legacy support)
+                    if ((val === undefined || val === null || val === '') && sub.files && sub.files[f.id]) {
+                        val = sub.files[f.id];
+                    }
+
+                    if (f.type === 'file') {
+                        if (Array.isArray(val)) {
+                            return `"${val.map(v => (v.url || v)).join('; ')}"`;
+                        } else if (val && typeof val === 'object' && val.url) {
+                            return `"${val.url}"`;
+                        } else {
+                            return `"${val || ''}"`;
+                        }
+                    }
+
                     return `"${String(Array.isArray(val) ? val.join('; ') : (val || '')).replace(/"/g, '""')}"`;
                 }),
                 `"${(sub.adminNote || '').replace(/"/g, '""')}"`,
@@ -384,6 +401,67 @@ const FormResponseAnalytics = () => {
         a.href = url;
         a.download = `${activity.title}_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
+    };
+
+    // Helper to render file values in the table
+    const renderFileValue = (val) => {
+        if (!val) return <span className="text-gray-400 italic text-xs">No file</span>;
+
+        const files = Array.isArray(val) ? val : [val];
+
+        return (
+            <div className="flex flex-wrap gap-2">
+                {files.map((file, idx) => {
+                    const url = file.url || file;
+                    if (!url || typeof url !== 'string') return null;
+
+                    const extension = url.split('.').pop().split('?')[0].toLowerCase();
+                    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension);
+                    const isVideo = ['mp4', 'webm', 'ogg', 'mov'].includes(extension);
+                    const isPDF = ['pdf'].includes(extension);
+
+                    if (isImage) {
+                        return (
+                            <button
+                                key={idx}
+                                onClick={() => setViewingMedia({ type: 'image', url })}
+                                className="block relative group cursor-zoom-in"
+                            >
+                                <img src={url} alt="Upload" className="h-12 w-12 object-cover rounded border border-gray-200 dark:border-gray-700 group-hover:opacity-80 transition-opacity" />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded" />
+                            </button>
+                        );
+                    }
+
+                    if (isVideo) {
+                        return (
+                            <div key={idx} className="relative group w-12 h-12 cursor-pointer" onClick={() => setViewingMedia({ type: 'video', url })}>
+                                <video src={url} className="h-12 w-12 object-cover rounded border border-gray-200 dark:border-gray-700" />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors rounded text-white">
+                                    <div className="w-4 h-4 rounded-full border border-white flex items-center justify-center">
+                                        <div className="w-0 h-0 border-t-[3px] border-t-transparent border-l-[6px] border-l-white border-b-[3px] border-b-transparent ml-0.5"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    // Text Link for PDF and other files (as requested: "open links for all files")
+                    return (
+                        <a
+                            key={idx}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded border border-blue-100 dark:border-blue-900"
+                        >
+                            <Download className="w-3 h-3" />
+                            {isPDF ? 'PDF' : 'Link'}
+                        </a>
+                    );
+                })}
+            </div>
+        );
     };
 
     if (loading) return <LoadingSpinner />;
@@ -805,10 +883,17 @@ const FormResponseAnalytics = () => {
                                                     {sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : '-'}
                                                 </td>
                                                 {baseAnalytics.formFields.map(field => {
-                                                    const val = sub[field.id];
+                                                    let val = sub[field.id];
+                                                    // Fallback to files object if main key is empty (legacy support)
+                                                    if ((val === undefined || val === null || val === '') && sub.files && sub.files[field.id]) {
+                                                        val = sub.files[field.id];
+                                                    }
+
                                                     return (
                                                         <td key={field.id} className="px-6 py-4 text-gray-900 dark:text-white">
-                                                            {Array.isArray(val) ? (
+                                                            {field.type === 'file' ? (
+                                                                renderFileValue(val)
+                                                            ) : Array.isArray(val) ? (
                                                                 <div className="flex flex-wrap gap-1">
                                                                     {val.map(v => (
                                                                         <span key={v} className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded-full">{v}</span>
@@ -939,6 +1024,49 @@ const FormResponseAnalytics = () => {
                     </div>
                 )}
             </Modal>
+            {/* Media Viewer Modal */}
+            {createPortal(
+                <AnimatePresence>
+                    {viewingMedia && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
+                            onClick={() => setViewingMedia(null)}
+                        >
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingMedia(null);
+                                }}
+                                className="absolute top-6 right-6 z-[10000] p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-all hover:scale-110"
+                                title="Close"
+                            >
+                                <X className="w-8 h-8" />
+                            </button>
+
+                            <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
+                                {viewingMedia.type === 'image' ? (
+                                    <img
+                                        src={viewingMedia.url}
+                                        alt="Full view"
+                                        className="max-w-full max-h-full object-contain rounded shadow-2xl"
+                                    />
+                                ) : (
+                                    <video
+                                        src={viewingMedia.url}
+                                        controls
+                                        autoPlay
+                                        className="max-w-full max-h-full rounded shadow-2xl"
+                                    />
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 };
