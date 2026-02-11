@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -80,6 +80,7 @@ function ActivityRegistrationPage() {
       if (docSnap.exists()) {
         const activityData = { id: docSnap.id, ...docSnap.data() };
         setActivity(activityData);
+
         const sections = normalizeSections(activityData);
         setFormSections(sections);
 
@@ -107,6 +108,26 @@ function ActivityRegistrationPage() {
       setLoading(false);
     }
   };
+
+  // Listen for real-time registration count
+  useEffect(() => {
+    if (!id) return;
+
+    const q = query(collection(db, 'upcomingActivities', id, 'registrations'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setActivity(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          currentRegistrations: snapshot.size
+        };
+      });
+    }, (error) => {
+      console.error("Error listening to registration count:", error);
+    });
+
+    return () => unsubscribe();
+  }, [id]);
 
   const renderContentField = (field) => {
     const renderMarkdownLinks = (text) => {
@@ -442,9 +463,13 @@ function ActivityRegistrationPage() {
       return true; // Unique
     } catch (error) {
       console.error("Error checking unique value:", error);
-      // alert(`Validation Error: ${error.message}`); // Removed alert
+      alert(`Debug Error checking unique value: ${error.message}\nKey: ${sanitizedKey}\nValue: ${value.trim()}`);
       setValidatingFields(prev => ({ ...prev, [fieldId]: false }));
-      return true; // We default to true on error, but the alert will help us fix it
+
+      // If we can't check, we should probably assume it's NOT unique or warn the user
+      // For now, let's return FALSE so they can't submit if the check fails (safety first)
+      // But we need to distinguish between "duplicate found" and "error checking"
+      return false;
     }
   };
 
@@ -1045,10 +1070,12 @@ function ActivityRegistrationPage() {
     const uniqueFields = sections.flatMap(s => s.fields || []).filter(f => f.isUnique);
     for (const field of uniqueFields) {
       const value = registrationData[field.id];
-      if (value) {
-        const isUnique = await checkUniqueValue(field.id, value, field.label);
+      if (value && typeof value === 'string') {
+        const isUnique = await checkUniqueValue(field.id, value.trim(), field.label);
         if (!isUnique) {
-          validationErrors.push(`This ${field.label} is already registered.`);
+          // If the check failed (returned false), it might be a duplicate OR a permission error
+          // The alert in checkUniqueValue will show the technical error
+          validationErrors.push(`Unique check failed for ${field.label}. It may be a duplicate or a system error.`);
         }
       }
     }
@@ -1092,7 +1119,12 @@ function ActivityRegistrationPage() {
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '_')
           .replace(/^_+|_+$/g, '');
-        dataWithLabels[sanitizedKey] = registrationData[fieldId];
+
+        let value = registrationData[fieldId];
+        if (typeof value === 'string') {
+          value = value.trim();
+        }
+        dataWithLabels[sanitizedKey] = value;
       });
 
       // Convert uploadedFiles to use field labels as keys
@@ -1206,6 +1238,44 @@ function ActivityRegistrationPage() {
           <h2 className="text-2xl font-bold mb-2">Registration Closed</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Registration for this activity is currently closed.
+          </p>
+          <Button onClick={() => navigate('/upcoming')}>
+            Back to Activities
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if registration is full
+  const isRegistrationFull = () => {
+    if (!activity) return false;
+
+    // If maxParticipants is null, undefined, or empty string/0, treat as infinite
+    // BUT usually 0 might mean 0 allowed, so let's be careful.
+    // The user said: "null mena s infinite partispance"
+    // Let's check if it has a valid number
+    if (activity.maxParticipants === null || activity.maxParticipants === undefined || activity.maxParticipants === "") {
+      return false;
+    }
+
+    const max = parseInt(activity.maxParticipants, 10);
+    if (isNaN(max) || max === 0) return false; // Invalid number or 0 treated as infinite
+
+    const current = activity.currentRegistrations || 0;
+
+    return current >= max;
+  };
+
+  if (isRegistrationFull()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center max-w-md mx-auto p-8">
+          <FiAlertCircle className="text-4xl text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Registration Full</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            We've reached the maximum number of participants for this activity.
+            Please check back later or contact the organizers.
           </p>
           <Button onClick={() => navigate('/upcoming')}>
             Back to Activities

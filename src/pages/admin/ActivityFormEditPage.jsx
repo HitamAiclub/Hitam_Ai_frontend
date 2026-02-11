@@ -6,7 +6,8 @@ import FormBuilder from '../../components/FormBuilder/FormBuilder';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { FiArrowLeft, FiSave } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiUpload } from 'react-icons/fi';
+import { uploadUpcomingActivityFile } from '../../utils/cloudinary';
 
 function ActivityFormEditPage() {
   const { id } = useParams();
@@ -17,15 +18,36 @@ function ActivityFormEditPage() {
   const [isPaid, setIsPaid] = useState(false);
   const [fee, setFee] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [instructions, setInstructions] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingQr, setUploadingQr] = useState(false);
+
   // Create payment section with current payment details
-  const createPaymentSection = (customFee = null, customUrl = null, customInstructions = null) => {
+  const createPaymentSection = (customFee = null, customUrl = null, customQrUrl = null, customInstructions = null) => {
     const sectionFee = customFee !== null ? customFee : fee;
     const sectionUrl = customUrl !== null ? customUrl : paymentUrl;
+    const sectionQrUrl = customQrUrl !== null ? customQrUrl : qrCodeUrl;
     const sectionInstructions = customInstructions !== null ? customInstructions : instructions;
     const timestamp = Date.now();
+
+    let paymentContentHtml = `<div style="padding: 16px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; margin-bottom: 16px;">
+      <p style="font-weight: bold; font-size: 18px; color: #92400e; margin-bottom: 8px;">Payment Required: ₹${sectionFee || '0'}</p>`;
+
+    if (sectionQrUrl) {
+      paymentContentHtml += `<div style="margin-bottom: 12px; text-align: center;"><img src="${sectionQrUrl}" alt="Payment QR Code" style="max-width: 200px; border-radius: 8px; border: 1px solid #e5e7eb;" /></div>`;
+    }
+
+    if (sectionUrl) {
+      paymentContentHtml += `<p style="margin-bottom: 8px;"><a href="${sectionUrl}" target="_blank" style="color: #3b82f6; text-decoration: underline; font-weight: 500;">🔗 Open Payment Link</a></p>`;
+    }
+
+    if (sectionInstructions) {
+      paymentContentHtml += `<p style="color: #78350f; font-size: 14px;"><strong>Instructions:</strong> ${sectionInstructions}</p>`;
+    }
+
+    paymentContentHtml += `</div>`;
 
     return {
       id: `section_payment_${timestamp}`,
@@ -36,9 +58,7 @@ function ActivityFormEditPage() {
           id: `field_payment_info_${timestamp}`,
           type: "label",
           label: "",
-          content: sectionUrl
-            ? `<div style="padding: 16px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; margin-bottom: 16px;"><p style="font-weight: bold; font-size: 18px; color: #92400e; margin-bottom: 8px;">Payment Required: ₹${sectionFee || '0'}</p><p style="margin-bottom: 8px;"><a href="${sectionUrl}" target="_blank" style="color: #3b82f6; text-decoration: underline; font-weight: 500;">🔗 Open Payment Link</a></p>${sectionInstructions ? '<p style="color: #78350f; font-size: 14px;"><strong>Instructions:</strong> ' + sectionInstructions + '</p>' : ''}</div>`
-            : `<div style="padding: 16px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; margin-bottom: 16px;"><p style="font-weight: bold; font-size: 18px; color: #92400e; margin-bottom: 8px;">Payment Required: ₹${sectionFee || '0'}</p>${sectionInstructions ? '<p style="color: #78350f; font-size: 14px;"><strong>Instructions:</strong> ' + sectionInstructions + '</p>' : ''}</div>`,
+          content: paymentContentHtml,
           contentType: "html",
           alignment: "left",
           fontSize: "medium"
@@ -96,7 +116,7 @@ function ActivityFormEditPage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPaid, fee, paymentUrl, instructions, loading]);
+  }, [isPaid, fee, paymentUrl, qrCodeUrl, instructions, loading]);
 
   useEffect(() => {
     fetchActivity();
@@ -161,6 +181,7 @@ function ActivityFormEditPage() {
         setIsPaid(activityData.isPaid || false);
         setFee(activityData.fee || '');
         setPaymentUrl(activityData.paymentDetails?.paymentUrl || '');
+        setQrCodeUrl(activityData.paymentDetails?.qrCodeUrl || '');
         setInstructions(activityData.paymentDetails?.instructions || '');
 
         // If isPaid is true and no payment section exists, create it after a short delay
@@ -172,6 +193,7 @@ function ActivityFormEditPage() {
                 const paymentSection = createPaymentSection(
                   activityData.fee,
                   activityData.paymentDetails?.paymentUrl,
+                  activityData.paymentDetails?.qrCodeUrl,
                   activityData.paymentDetails?.instructions
                 );
                 return [...prev, paymentSection];
@@ -242,6 +264,7 @@ function ActivityFormEditPage() {
         fee: isPaid ? fee : '',
         paymentDetails: {
           paymentUrl: isPaid ? paymentUrl : '',
+          qrCodeUrl: isPaid ? qrCodeUrl : '',
           instructions: isPaid ? instructions : ''
         },
         updatedAt: new Date().toISOString()
@@ -254,6 +277,25 @@ function ActivityFormEditPage() {
       alert('Error saving form. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleQrUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setUploadingQr(true);
+      // Use uploadUpcomingActivityFile to organize under upcoming-activities folder
+      // Pass sanitized activity title for subfolder organization if available
+      const sanitizedTitle = activity?.title ? activity.title.replace(/[^a-zA-Z0-9-_]/g, '_') : '';
+      const response = await uploadUpcomingActivityFile(file, sanitizedTitle);
+      setQrCodeUrl(response.url);
+    } catch (error) {
+      console.error('Error uploading QR code:', error);
+      alert(`Failed to upload QR code: ${error.message || 'Unknown error'}`);
+    } finally {
+      setUploadingQr(false);
     }
   };
 
@@ -336,7 +378,7 @@ function ActivityFormEditPage() {
           </div>
 
           {isPaid ? (
-            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+            <div className="space-y-6 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
               <Input
                 label="Registration Fee (₹)"
                 type="number"
@@ -346,12 +388,71 @@ function ActivityFormEditPage() {
                 required
               />
 
-              <Input
-                label="Payment URL (UPI/QR Code Link)"
-                value={paymentUrl}
-                onChange={(e) => setPaymentUrl(e.target.value)}
-                placeholder="https://example.com/payment-qr or upi://pay?..."
-              />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <Input
+                    label="Payment URL (UPI Link)"
+                    value={paymentUrl}
+                    onChange={(e) => setPaymentUrl(e.target.value)}
+                    placeholder="https:// or upi://pay?..."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Optional: Provide a direct payment link or UPI ID link.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Payment QR Code (Image)
+                  </label>
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1">
+                      <label
+                        className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${uploadingQr ? 'border-blue-400 bg-blue-50' : 'border-gray-300 dark:border-gray-600'
+                          }`}
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          {uploadingQr ? (
+                            <LoadingSpinner size="sm" />
+                          ) : (
+                            <>
+                              <FiUpload className="w-8 h-8 mb-2 text-gray-400" />
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Click to upload QR image
+                              </p>
+                            </>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleQrUpload}
+                          disabled={uploadingQr}
+                        />
+                      </label>
+                    </div>
+                    {qrCodeUrl && (
+                      <div className="relative group">
+                        <img
+                          src={qrCodeUrl}
+                          alt="QR Preview"
+                          className="h-32 w-32 object-contain bg-white rounded-lg border border-gray-200"
+                        />
+                        <button
+                          onClick={() => setQrCodeUrl('')}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remove QR Code"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

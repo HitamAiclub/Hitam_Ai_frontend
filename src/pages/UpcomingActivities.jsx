@@ -378,11 +378,14 @@ const UpcomingActivities = () => {
     }
   }, []);
 
+  // Store unsubscribe functions for registration listeners
+  const registrationUnsubscribes = useRef({});
+
   useEffect(() => {
     console.log("🔄 Second useEffect triggered - setting up Firebase listener");
     const unsubscribe = onSnapshot(
       collection(db, "upcomingActivities"),
-      async (snapshot) => {
+      (snapshot) => {
         console.log("📊 Firebase snapshot received:", snapshot.docs.length, "documents");
         try {
           const activitiesData = snapshot.docs
@@ -392,24 +395,39 @@ const UpcomingActivities = () => {
             }))
             .filter(activity => !activity.isDeleted); // Filter out soft-deleted activities
           console.log("📋 Activities data processed:", activitiesData.length, "activities");
+
           setActivities(activitiesData);
           setOptimisticActivities(activitiesData);
-
-          const registrationsData = {};
-          for (const activity of activitiesData) {
-            try {
-              const registrationsSnapshot = await getDocs(collection(db, "upcomingActivities", activity.id, "registrations"));
-              registrationsData[activity.id] = registrationsSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              }));
-            } catch (error) {
-              console.warn(`Could not fetch registrations for ${activity.id}:`, error.message);
-              registrationsData[activity.id] = [];
-            }
-          }
-          setRegistrations(registrationsData);
           setLoading(false);
+
+          // Set up real-time listeners for registrations for each activity
+          activitiesData.forEach(activity => {
+            // Only set up if not already compatible or if ID is new
+            if (!registrationUnsubscribes.current[activity.id]) {
+              const q = query(collection(db, "upcomingActivities", activity.id, "registrations"));
+              const unsub = onSnapshot(q, (regSnapshot) => {
+                const regs = regSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setRegistrations(prev => ({
+                  ...prev,
+                  [activity.id]: regs
+                }));
+              }, (error) => {
+                console.error(`Error listening to registrations for ${activity.id}:`, error);
+              });
+              registrationUnsubscribes.current[activity.id] = unsub;
+            }
+          });
+
+          // Cleanup listeners for removed activities? 
+          // For simplicity, we keep them for now or verify against current IDs. 
+          // But to avoid memory leaks if activities are deleted:
+          Object.keys(registrationUnsubscribes.current).forEach(id => {
+            if (!activitiesData.find(a => a.id === id)) {
+              registrationUnsubscribes.current[id]();
+              delete registrationUnsubscribes.current[id];
+            }
+          });
+
           console.log("✅ Firebase listener setup completed");
         } catch (error) {
           console.error("❌ Error processing activities data:", error);
@@ -429,8 +447,40 @@ const UpcomingActivities = () => {
     return () => {
       console.log("🧹 Cleaning up Firebase listener");
       unsubscribe();
+      // Cleanup all registration listeners
+      Object.values(registrationUnsubscribes.current).forEach(unsub => unsub());
+      registrationUnsubscribes.current = {};
     };
   }, []);
+
+  // Helper to check if text is effectively infinite (0, null, undefined, empty)
+  const isInfiniteParticipants = (maxParticipants) => {
+    if (maxParticipants === null || maxParticipants === undefined || maxParticipants === "") return true;
+    const val = parseInt(maxParticipants, 10);
+    return isNaN(val) || val === 0;
+  }
+
+  // Helper to check if registration is effectively full
+  const isActivityFull = (activity) => {
+    const max = activity.maxParticipants;
+    if (isInfiniteParticipants(max)) return false;
+    const count = registrations[activity.id]?.length || 0;
+    return count >= parseInt(max, 10);
+  };
+
+  // Helper to check if user can register
+  const canRegister = (activity) => {
+    if (!isRegistrationOpen(activity)) return false;
+    return !isActivityFull(activity);
+  };
+
+  // Helper to check if registration window is open (Date based)
+  const isRegistrationOpen = (activity) => {
+    const now = new Date();
+    const start = new Date(activity.registrationStart);
+    const end = new Date(activity.registrationEnd);
+    return now >= start && now <= end;
+  };
 
   // Function to fetch registrations for a specific activity
   const fetchRegistrations = async (activityId) => {
@@ -570,11 +620,11 @@ const UpcomingActivities = () => {
         ...formData,
         maxParticipants: formData.maxParticipants && formData.maxParticipants !== ""
           ? parseInt(formData.maxParticipants, 10)
-          : undefined,
+          : null, // Explicitly set to null to indicate infinite/no limit (overwrites existing value)
         formSchema: finalFormSchema
       };
 
-      console.log("Cleaned form data:", cleanedFormData);
+      console.log("Cleaned form data (maxParticipants check):", cleanedFormData.maxParticipants);
 
       // Clean the form schema to remove undefined values
       const cleanedFormSchema = removeUndefinedValues(finalFormSchema);
@@ -587,6 +637,7 @@ const UpcomingActivities = () => {
       };
 
       // Final cleanup of the entire activity data object
+      // Note: we want to keep null values (like maxParticipants) but remove undefined
       const finalActivityData = removeUndefinedValues(activityData);
 
       console.log("Final activity data to save:", finalActivityData);
@@ -991,13 +1042,6 @@ const UpcomingActivities = () => {
     setActiveTab("basic");
   };
 
-  const isRegistrationOpen = (activity) => {
-    const now = new Date();
-    const start = new Date(activity.registrationStart);
-    const end = new Date(activity.registrationEnd);
-    return now >= start && now <= end;
-  };
-
   const exportRegistrations = (activityId) => {
     const activityRegistrations = registrations[activityId] || [];
     if (activityRegistrations.length === 0) {
@@ -1125,16 +1169,6 @@ const UpcomingActivities = () => {
 
   const openRegistrationForm = (activity) => {
     navigate(`/upcoming/activities/${activity.id}/register`);
-  };
-
-  const canRegister = (activity) => {
-    const now = new Date();
-    const start = new Date(activity.registrationStart);
-    const end = new Date(activity.registrationEnd);
-    const isOpen = now >= start && now <= end;
-    const hasSpace = !activity.maxParticipants ||
-      (registrations[activity.id]?.length || 0) < parseInt(activity.maxParticipants);
-    return isOpen && hasSpace;
   };
 
   const viewRegistrations = (activity) => {
@@ -1769,7 +1803,7 @@ const UpcomingActivities = () => {
                         <Users className="w-4 h-4 mr-2" />
                         <span>
                           Registered: {registrations[activity.id]?.length || 0}
-                          {activity.maxParticipants && ` / ${activity.maxParticipants}`}
+                          {!isInfiniteParticipants(activity.maxParticipants) && ` / ${activity.maxParticipants}`}
                         </span>
                       </div>
                       <div className="flex items-center">
@@ -1781,7 +1815,7 @@ const UpcomingActivities = () => {
                           }`}>
                           {!isRegistrationOpen(activity)
                             ? "Registration Closed"
-                            : !canRegister(activity)
+                            : isActivityFull(activity) // Use logic check for "Full"
                               ? "Registration Full"
                               : "Registration Open"
                           }
