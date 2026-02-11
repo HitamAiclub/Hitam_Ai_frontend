@@ -216,6 +216,8 @@ const MediaManagement = () => {
       pathParts[pathParts.length - 1] = newName.trim();
       const toPath = pathParts.join('/');
 
+      console.log('Renaming folder:', { fromPath: selectedFolder.path, toPath });
+
       const res = await fetch(`${API_URL}/api/cloudinary/rename-folder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
