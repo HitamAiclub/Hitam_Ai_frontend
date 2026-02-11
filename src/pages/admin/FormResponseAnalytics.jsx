@@ -165,13 +165,13 @@ const FormResponseAnalytics = () => {
     const [savingNote, setSavingNote] = useState(null); // submission ID being saved
     const [selectedSubmission, setSelectedSubmission] = useState(null); // For modal view
     const [viewingMedia, setViewingMedia] = useState(null); // { type: 'image' | 'video', url: string }
+    const [showExportMenu, setShowExportMenu] = useState(false);
 
     // Filter State
     const [filters, setFilters] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Export State
-    const [showExportMenu, setShowExportMenu] = useState(false);
+
     const [selectedExportColumns, setSelectedExportColumns] = useState([]);
 
     // Initialize export columns when fields change
@@ -356,7 +356,8 @@ const FormResponseAnalytics = () => {
         }
     };
 
-    const handleExport = () => {
+    const handleExport = (format) => {
+        const exportFormat = typeof format === 'string' ? format : 'csv';
         const dataToExport = getFilteredSubmissions;
         if (!dataToExport.length) return alert("No data to export");
 
@@ -381,7 +382,17 @@ const FormResponseAnalytics = () => {
                         if (Array.isArray(val)) {
                             return `"${val.map(v => (v.url || v)).join('; ')}"`;
                         } else if (val && typeof val === 'object' && val.url) {
+                            if (exportFormat === 'excel') {
+                                const label = (val.originalName || val.name || 'View File').replace(/"/g, '""');
+                                const url = val.url.replace(/"/g, '""');
+                                return `"=HYPERLINK(""${url}"", ""${label}"")"`;
+                            }
                             return `"${val.url}"`;
+                        } else if (val && typeof val === 'string' && val.startsWith('http')) {
+                            if (exportFormat === 'excel') {
+                                return `"=HYPERLINK(""${val.replace(/"/g, '""')}"", ""View File"")"`;
+                            }
+                            return `"${val}"`;
                         } else {
                             return `"${val || ''}"`;
                         }
@@ -399,8 +410,9 @@ const FormResponseAnalytics = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${activity.title}_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `${activity.title}_${exportFormat === 'excel' ? 'excel' : 'export'}_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
+        setShowExportMenu(false);
     };
 
     // Helper to render file values in the table
@@ -491,9 +503,35 @@ const FormResponseAnalytics = () => {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <Button onClick={handleExport} variant="outline" className="gap-2">
-                            <Download className="w-4 h-4" /> Export CSV
-                        </Button>
+                        {/* Export Menu */}
+                        <div className="relative">
+                            <Button onClick={() => setShowExportMenu(!showExportMenu)} variant="outline" className="flex items-center gap-2">
+                                <Download className="w-4 h-4" />
+                                Export
+                                <ChevronDown className="w-4 h-4" />
+                            </Button>
+                            {showExportMenu && (
+                                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                                    <button
+                                        onClick={() => handleExport('csv')}
+                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm flex flex-col gap-0.5"
+                                    >
+                                        <span className="font-medium text-gray-900 dark:text-gray-100">Standard CSV</span>
+                                        <span className="text-xs text-gray-500">Plain text links</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleExport('excel')}
+                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm border-t border-gray-100 dark:border-gray-700 flex flex-col gap-0.5"
+                                    >
+                                        <span className="font-medium text-gray-900 dark:text-gray-100">Excel Format</span>
+                                        <span className="text-xs text-gray-500">Active/Clickable links</span>
+                                    </button>
+                                </div>
+                            )}
+                            {showExportMenu && (
+                                <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
