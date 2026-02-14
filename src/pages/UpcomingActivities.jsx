@@ -156,7 +156,8 @@ const UpcomingActivities = () => {
     gradient: null, // { type: 'linear', rotation: 0, colorStops: [{ offset: 0, color: 'blue' }, { offset: 1, color: 'red' }] }
     bgColor: "#ffffff",
     style: "dots",
-    includeLogo: true
+    includeLogo: true,
+    logo: "/logo2.png"
   });
   const qrCodeRef = useRef(null);
   const qrCodeInstance = useRef(null);
@@ -1230,11 +1231,11 @@ const UpcomingActivities = () => {
     if (showShareModal && activityToShare && qrCodeRef.current) {
       if (!qrCodeInstance.current) {
         qrCodeInstance.current = new QRCodeStyling({
-          width: 400,
-          height: 400,
+          width: 300,
+          height: 300,
           type: "svg",
           data: `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`,
-          image: qrOptions.includeLogo ? "/logo2.png" : undefined,
+          image: qrOptions.includeLogo ? qrOptions.logo : undefined,
           dotsOptions: {
             color: qrOptions.color,
             gradient: qrOptions.gradient,
@@ -1246,7 +1247,7 @@ const UpcomingActivities = () => {
           imageOptions: {
             crossOrigin: "anonymous",
             margin: 2,
-            imageSize: 0.7
+            imageSize: 0.8
           },
           cornersSquareOptions: {
             type: qrOptions.style === "dots" ? "extra-rounded" : "square",
@@ -1264,7 +1265,7 @@ const UpcomingActivities = () => {
       } else {
         qrCodeInstance.current.update({
           data: `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`,
-          image: qrOptions.includeLogo ? "/logo2.png" : undefined,
+          image: qrOptions.includeLogo ? qrOptions.logo : undefined,
           dotsOptions: {
             color: qrOptions.gradient ? undefined : qrOptions.color,
             gradient: qrOptions.gradient,
@@ -1297,7 +1298,8 @@ const UpcomingActivities = () => {
       gradient: null,
       bgColor: "#ffffff",
       style: "dots",
-      includeLogo: true
+      includeLogo: true,
+      logo: "/logo2.png"
     });
     setShowShareModal(true);
   };
@@ -1319,7 +1321,7 @@ const UpcomingActivities = () => {
       height: 4000,
       type: "svg",
       data: `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`,
-      image: qrOptions.includeLogo ? "/logo2.png" : undefined,
+      image: qrOptions.includeLogo ? qrOptions.logo : undefined,
       dotsOptions: {
         color: qrOptions.color, // Color takes precedence if gradient is null
         gradient: qrOptions.gradient,
@@ -2319,6 +2321,28 @@ const UpcomingActivities = () => {
                         />
                       </div>
 
+
+
+                      {qrOptions.includeLogo && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Select Logo</span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setQrOptions(prev => ({ ...prev, logo: "/logo2.png" }))}
+                              className={`px-3 py-1 text-xs rounded border ${qrOptions.logo === "/logo2.png" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-white border-gray-300 text-gray-700"}`}
+                            >
+                              Logo 1
+                            </button>
+                            <button
+                              onClick={() => setQrOptions(prev => ({ ...prev, logo: "/logo_3.png" }))}
+                              className={`px-3 py-1 text-xs rounded border ${qrOptions.logo === "/logo_3.png" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-white border-gray-300 text-gray-700"}`}
+                            >
+                              Logo 2
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Style</span>
                         <div className="flex gap-2">
@@ -2386,7 +2410,7 @@ const UpcomingActivities = () => {
               </>
             )}
           </div>
-        </Modal>
+        </Modal >
 
       </div >
     </>
