@@ -100,7 +100,7 @@ const computeAnalytics = (data, formSections, existingFields = null) => {
                 if (field.type !== 'file') {
                     const vals = Array.isArray(val) ? val : [String(val)];
                     vals.forEach(v => {
-                        const key = v.length > 30 ? v.substring(0, 30) + '...' : v;
+                        const key = v;
                         stats.distribution[key] = (stats.distribution[key] || 0) + 1;
                     });
                 }
