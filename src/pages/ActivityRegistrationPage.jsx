@@ -1169,9 +1169,10 @@ function ActivityRegistrationPage() {
       }
 
       setSubmitted(true);
+      const redirectDelay = activity.postRegistration?.joinLink ? 10000 : 3000;
       setTimeout(() => {
         navigate('/upcoming');
-      }, 3000);
+      }, redirectDelay);
     } catch (error) {
       console.error('Error submitting registration:', error);
       alert('Error submitting registration. Please try again.');
@@ -1303,10 +1304,32 @@ function ActivityRegistrationPage() {
           </motion.div>
           <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Your registration has been submitted successfully.
+            {activity.postRegistration?.joinLinkMessage || "Your registration has been submitted successfully."}
           </p>
+
+          {activity.postRegistration?.joinLink && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mb-6"
+            >
+              <a
+                href={activity.postRegistration.joinLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all hover:scale-105 shadow-lg"
+              >
+                <span>{activity.postRegistration.joinLinkLabel || "Join Community"}</span>
+                <FiArrowLeft className="rotate-180" />
+              </a>
+            </motion.div>
+          )}
+
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Redirecting to activities page...
+            {activity.postRegistration?.joinLink
+              ? "Redirecting to activities page in 10 seconds..."
+              : "Redirecting to activities page..."}
           </p>
         </motion.div>
       </div>

@@ -10,7 +10,7 @@ import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
 import FormBuilder from "../components/FormBuilder/FormBuilder";
-import { Calendar, Users, Plus, Edit, Trash2, Download, Eye, ExternalLink, FileText, CreditCard, Share2, Copy, Check, Sliders } from "lucide-react";
+import { Calendar, Users, Plus, Edit, Trash2, Download, Eye, ExternalLink, FileText, CreditCard, Share2, Copy, Check, Sliders, CheckCircle, ArrowRight, Upload, Save } from "lucide-react";
 
 import QRCodeStyling from "qr-code-styling";
 
@@ -146,6 +146,7 @@ const UpcomingActivities = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   // State for tracking unique field validation errors
   const [uniqueErrors, setUniqueErrors] = useState({});
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [optimisticActivities, setOptimisticActivities] = useState([]);
 
   const [showShareModal, setShowShareModal] = useState(false);
@@ -938,9 +939,10 @@ const UpcomingActivities = () => {
       }
 
       console.log("Registration saved successfully!");
-      setShowRegistrationForm(false);
+      setRegistrationSuccess(true);
       setRegistrationData({});
-      alert("Registration submitted successfully!");
+      // No longer using alert, using showRegistrationSuccess instead
+      // alert("Registration submitted successfully!");
 
       // Refresh the registrations data
       if (selectedActivity) {
@@ -2023,118 +2025,171 @@ const UpcomingActivities = () => {
         {/* Registration Form Modal */}
         <Modal
           isOpen={showRegistrationForm}
-          onClose={() => setShowRegistrationForm(false)}
-          title={`Register for ${selectedActivity?.title}`}
+          onClose={() => {
+            setShowRegistrationForm(false);
+            setRegistrationSuccess(false);
+          }}
+          title={registrationSuccess ? "Registration Successful" : `Register for ${selectedActivity?.title}`}
           size="lg"
         >
           <div className="space-y-6">
-            {selectedActivity?.description && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
-                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                  About this Activity
-                </h4>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  {selectedActivity.description}
-                </p>
-                <div className="mt-3 text-xs text-blue-600 dark:text-blue-400">
-                  <p><strong>Event Date:</strong> {new Date(selectedActivity.eventDate).toLocaleDateString()}</p>
-                  <p><strong>Registration Deadline:</strong> {new Date(selectedActivity.registrationEnd).toLocaleDateString()}</p>
-                  {selectedActivity.maxParticipants && (
-                    <p><strong>Max Participants:</strong> {selectedActivity.maxParticipants}</p>
-                  )}
+            {registrationSuccess ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="py-12 px-6 text-center"
+              >
+                <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
                 </div>
-              </div>
-            )}
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                  Registration Complete!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-sm mx-auto">
+                  {selectedActivity?.postRegistration?.joinLinkMessage || "Your registration has been submitted successfully."}
+                </p>
 
-            <form onSubmit={handleRegistrationSubmit} className="space-y-6">
-              {(selectedActivity?.formSchema || getDefaultFormSchema()).map((field) => {
-                if (field.type === "label" || field.type === "image" || field.type === "link") {
-                  return renderContentField(field);
-                }
-                return renderFormField(field);
-              })}
+                {selectedActivity?.postRegistration?.joinLink && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="mb-8"
+                  >
+                    <a
+                      href={selectedActivity.postRegistration.joinLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all hover:scale-105 shadow-lg"
+                    >
+                      <span>{selectedActivity.postRegistration.joinLinkLabel || "Join Community"}</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </a>
+                  </motion.div>
+                )}
 
-              {/* Payment Section - Only show if not redundant with schema fields */}
-              {selectedActivity?.isPaid && !selectedActivity.formSchema?.some(f => f.id === 'payment_screenshot') && (
-                <div className="mt-6 pt-6 border-t-2 border-dashed border-yellow-300 dark:border-yellow-700">
-                  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-2xl">💳</span>
-                      <h4 className="font-semibold text-yellow-900 dark:text-yellow-100">
-                        Payment Required: ₹{selectedActivity.fee}
-                      </h4>
-                    </div>
-
-                    {selectedActivity.paymentDetails?.paymentUrl && (
-                      <div className="mb-3">
-                        <a
-                          href={selectedActivity.paymentDetails.paymentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                        >
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Open Payment Link
-                        </a>
-                      </div>
-                    )}
-
-                    {selectedActivity.paymentDetails?.instructions && (
-                      <div className="mb-3">
-                        <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-1">
-                          <strong>Instructions:</strong>
-                        </p>
-                        <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                          {selectedActivity.paymentDetails.instructions}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="grid md:grid-cols-2 gap-4 mt-4">
-                      <div>
-                        <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">
-                          Payment Screenshot *
-                        </label>
-                        <input
-                          type="file"
-                          accept="image/*,.pdf"
-                          onChange={(e) => setRegistrationData({ ...registrationData, paymentProof: e.target.files[0] })}
-                          required
-                          className="w-full px-3 py-2 border border-yellow-300 dark:border-yellow-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">
-                          UPI Transaction ID *
-                        </label>
-                        <input
-                          type="text"
-                          value={registrationData.upiTransactionId || ""}
-                          onChange={(e) => setRegistrationData({ ...registrationData, upiTransactionId: e.target.value })}
-                          placeholder="Enter UPI transaction ID"
-                          required
-                          className="w-full px-3 py-2 border border-yellow-300 dark:border-yellow-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                        />
-                      </div>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowRegistrationForm(false);
+                    setRegistrationSuccess(false);
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  Close
+                </Button>
+              </motion.div>
+            ) : (
+              <>
+                {selectedActivity?.description && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                      About this Activity
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      {selectedActivity.description}
+                    </p>
+                    <div className="mt-3 text-xs text-blue-600 dark:text-blue-400">
+                      <p><strong>Event Date:</strong> {new Date(selectedActivity.eventDate).toLocaleDateString()}</p>
+                      <p><strong>Registration Deadline:</strong> {new Date(selectedActivity.registrationEnd).toLocaleDateString()}</p>
+                      {selectedActivity.maxParticipants && (
+                        <p><strong>Max Participants:</strong> {selectedActivity.maxParticipants}</p>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div className="flex gap-4">
-                <Button type="submit" loading={submitting} className="flex-1">
-                  Submit Registration
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowRegistrationForm(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
+                <form onSubmit={handleRegistrationSubmit} className="space-y-6">
+                  {(selectedActivity?.formSchema || getDefaultFormSchema()).map((field) => {
+                    if (field.type === "label" || field.type === "image" || field.type === "link") {
+                      return renderContentField(field);
+                    }
+                    return renderFormField(field);
+                  })}
+
+                  {/* Payment Section - Only show if not redundant with schema fields */}
+                  {selectedActivity?.isPaid && !selectedActivity.formSchema?.some(f => f.id === 'payment_screenshot') && (
+                    <div className="mt-6 pt-6 border-t-2 border-dashed border-yellow-300 dark:border-yellow-700">
+                      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-2xl">💳</span>
+                          <h4 className="font-semibold text-yellow-900 dark:text-yellow-100">
+                            Payment Required: ₹{selectedActivity.fee}
+                          </h4>
+                        </div>
+
+                        {selectedActivity.paymentDetails?.paymentUrl && (
+                          <div className="mb-3">
+                            <a
+                              href={selectedActivity.paymentDetails.paymentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                            >
+                              <Upload className="w-4 h-4 mr-2" />
+                              Open Payment Link
+                            </a>
+                          </div>
+                        )}
+
+                        {selectedActivity.paymentDetails?.instructions && (
+                          <div className="mb-3">
+                            <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-1">
+                              <strong>Instructions:</strong>
+                            </p>
+                            <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                              {selectedActivity.paymentDetails.instructions}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="grid md:grid-cols-2 gap-4 mt-4">
+                          <div>
+                            <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">
+                              Payment Screenshot *
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              onChange={(e) => setRegistrationData({ ...registrationData, paymentProof: e.target.files[0] })}
+                              required
+                              className="w-full px-3 py-2 border border-yellow-300 dark:border-yellow-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-1">
+                              UPI Transaction ID *
+                            </label>
+                            <input
+                              type="text"
+                              value={registrationData.upiTransactionId || ""}
+                              onChange={(e) => setRegistrationData({ ...registrationData, upiTransactionId: e.target.value })}
+                              placeholder="Enter UPI transaction ID"
+                              required
+                              className="w-full px-3 py-2 border border-yellow-300 dark:border-yellow-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-4">
+                    <Button type="submit" loading={submitting} className="flex-1">
+                      Submit Registration
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowRegistrationForm(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </Modal>
 
@@ -2154,7 +2209,7 @@ const UpcomingActivities = () => {
                 size="sm"
                 onClick={() => exportRegistrations(selectedActivity?.id)}
               >
-                <Download className="w-4 h-4 mr-1" />
+                <Upload className="w-4 h-4 mr-1" />
                 Export CSV
               </Button>
             </div>
@@ -2367,11 +2422,11 @@ const UpcomingActivities = () => {
 
                     <div className="flex gap-2 justify-center">
                       <Button size="sm" onClick={() => downloadQRCode('png')}>
-                        <Download className="w-4 h-4 mr-2" />
+                        <Upload className="w-4 h-4 mr-2" />
                         Download PNG
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => downloadQRCode('jpeg')}>
-                        <Download className="w-4 h-4 mr-2" />
+                        <Upload className="w-4 h-4 mr-2" />
                         Download JPG
                       </Button>
                     </div>
@@ -2394,7 +2449,7 @@ const UpcomingActivities = () => {
                       onClick={copyToClipboard}
                       className="shrink-0"
                     >
-                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {copied ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                     </Button>
                   </div>
                 </div>
@@ -2415,7 +2470,7 @@ const UpcomingActivities = () => {
           </div>
         </Modal >
 
-      </div >
+      </div>
     </>
   );
 };

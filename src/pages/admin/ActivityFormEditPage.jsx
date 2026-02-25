@@ -20,6 +20,9 @@ function ActivityFormEditPage() {
   const [paymentUrl, setPaymentUrl] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [instructions, setInstructions] = useState('');
+  const [joinLink, setJoinLink] = useState('');
+  const [joinLinkMessage, setJoinLinkMessage] = useState('');
+  const [joinLinkLabel, setJoinLinkLabel] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingQr, setUploadingQr] = useState(false);
@@ -185,6 +188,9 @@ function ActivityFormEditPage() {
         setPaymentUrl(activityData.paymentDetails?.paymentUrl || '');
         setQrCodeUrl(activityData.paymentDetails?.qrCodeUrl || '');
         setInstructions(activityData.paymentDetails?.instructions || '');
+        setJoinLink(activityData.postRegistration?.joinLink || '');
+        setJoinLinkMessage(activityData.postRegistration?.joinLinkMessage || '');
+        setJoinLinkLabel(activityData.postRegistration?.joinLinkLabel || '');
 
         // If isPaid is true and no payment section exists, create it after a short delay
         if (activityData.isPaid) {
@@ -268,6 +274,11 @@ function ActivityFormEditPage() {
           paymentUrl: isPaid ? paymentUrl : '',
           qrCodeUrl: isPaid ? qrCodeUrl : '',
           instructions: isPaid ? instructions : ''
+        },
+        postRegistration: {
+          joinLink: joinLink,
+          joinLinkMessage: joinLinkMessage,
+          joinLinkLabel: joinLinkLabel
         },
         updatedAt: new Date().toISOString()
       });
@@ -473,6 +484,47 @@ function ActivityFormEditPage() {
               <p>This activity is currently free. Enable "This is a paid event" to add payment settings.</p>
             </div>
           )}
+        </div>
+
+        {/* Post-Registration Settings */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <span className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">🎉</span>
+            Post-Registration Settings
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Configure what happens after a student successfully registers.
+          </p>
+
+          <div className="space-y-6 p-6 bg-green-50/50 dark:bg-green-900/10 rounded-xl border border-green-100 dark:border-green-800/50">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Input
+                label="Join Link (WhatsApp/Discord/etc.)"
+                value={joinLink}
+                onChange={(e) => setJoinLink(e.target.value)}
+                placeholder="https://chat.whatsapp.com/..."
+              />
+              <Input
+                label="Join Button Label"
+                value={joinLinkLabel}
+                onChange={(e) => setJoinLinkLabel(e.target.value)}
+                placeholder="Join WhatsApp Group"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Success Message
+              </label>
+              <textarea
+                value={joinLinkMessage}
+                onChange={(e) => setJoinLinkMessage(e.target.value)}
+                rows={3}
+                placeholder="Message displayed after registration (e.g. Join our group for updates!)"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Action Buttons */}
