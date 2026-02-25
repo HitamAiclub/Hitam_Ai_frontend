@@ -765,12 +765,15 @@ const UpcomingActivities = () => {
 
       // Additional validation for paid events (skip if payment waived by registrant)
       if (selectedActivity?.isPaid && !registrationData.paymentWaived) {
-        if (!registrationData.paymentProof || !(registrationData.paymentProof instanceof File)) {
+        const hasPaymentProof = registrationData.paymentProof || registrationData.payment_screenshot;
+        const hasUpiTransaction = registrationData.upiTransactionId || registrationData.upi_transaction;
+
+        if (!hasPaymentProof || (!(hasPaymentProof instanceof File) && !hasPaymentProof.fileUrl)) {
           alert("Payment proof is required for paid events. Please upload a screenshot or PDF of your payment.");
           setSubmitting(false);
           return;
         }
-        if (!registrationData.upiTransactionId || registrationData.upiTransactionId.trim() === "") {
+        if (!hasUpiTransaction || (typeof hasUpiTransaction === 'string' && hasUpiTransaction.trim() === "")) {
           alert("UPI Transaction ID is required for paid events. Please enter your transaction ID.");
           setSubmitting(false);
           return;
@@ -2051,8 +2054,8 @@ const UpcomingActivities = () => {
                 return renderFormField(field);
               })}
 
-              {/* Payment Section at Bottom of Form */}
-              {selectedActivity?.isPaid && (
+              {/* Payment Section - Only show if not redundant with schema fields */}
+              {selectedActivity?.isPaid && !selectedActivity.formSchema?.some(f => f.id === 'payment_screenshot') && (
                 <div className="mt-6 pt-6 border-t-2 border-dashed border-yellow-300 dark:border-yellow-700">
                   <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
                     <div className="flex items-center gap-2 mb-3">

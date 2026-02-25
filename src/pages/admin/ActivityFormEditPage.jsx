@@ -25,7 +25,7 @@ function ActivityFormEditPage() {
   const [uploadingQr, setUploadingQr] = useState(false);
 
   // Create payment section with current payment details
-  const createPaymentSection = (customFee = null, customUrl = null, customQrUrl = null, customInstructions = null) => {
+  const createPaymentSection = (customFee = null, customUrl = null, customQrUrl = null, customInstructions = null, existingFields = []) => {
     const sectionFee = customFee !== null ? customFee : fee;
     const sectionUrl = customUrl !== null ? customUrl : paymentUrl;
     const sectionQrUrl = customQrUrl !== null ? customQrUrl : qrCodeUrl;
@@ -49,13 +49,17 @@ function ActivityFormEditPage() {
 
     paymentContentHtml += `</div>`;
 
+    // Extract dynamic fields (not the default ones we recreate)
+    const staticFieldIds = ['payment_info', 'payment_screenshot', 'upi_transaction'];
+    const customFields = existingFields.filter(f => !staticFieldIds.includes(f.id));
+
     return {
-      id: `section_payment_${timestamp}`,
+      id: `section_payment_${timestamp}`, // Note: We might want to keep the same ID if we were doing deep merges, but FormBuilder handles section swaps ok
       title: "Payment Information",
       description: `Registration Fee: ₹${sectionFee || '0'}`,
       fields: [
         {
-          id: `field_payment_info_${timestamp}`,
+          id: `payment_info`,
           type: "label",
           label: "",
           content: paymentContentHtml,
@@ -63,8 +67,9 @@ function ActivityFormEditPage() {
           alignment: "left",
           fontSize: "medium"
         },
+        ...customFields, // Insert custom fields after the info label
         {
-          id: `field_payment_screenshot_${timestamp}`,
+          id: `payment_screenshot`,
           type: "file",
           label: "Payment Screenshot",
           required: true,
@@ -72,7 +77,7 @@ function ActivityFormEditPage() {
           acceptedFileTypes: "image/*,.pdf"
         },
         {
-          id: `field_upi_transaction_${timestamp}`,
+          id: `upi_transaction`,
           type: "text",
           label: "UPI Transaction ID",
           required: true,
@@ -93,14 +98,11 @@ function ActivityFormEditPage() {
     if (isPaid) {
       // Create or update payment section
       if (existingPaymentSectionIndex >= 0) {
-        // Update existing payment section with new payment details
+        // Update existing payment section with new payment details while preserving custom fields
         const updatedSections = [...formSections];
-        const paymentSection = createPaymentSection();
+        const existingFields = formSections[existingPaymentSectionIndex].fields || [];
+        const paymentSection = createPaymentSection(null, null, null, null, existingFields);
         paymentSection.id = formSections[existingPaymentSectionIndex].id; // Keep same ID
-        // Update field IDs to refresh content
-        paymentSection.fields[0].id = `field_payment_info_${Date.now()}`;
-        paymentSection.fields[1].id = `field_payment_screenshot_${Date.now()}`;
-        paymentSection.fields[2].id = `field_upi_transaction_${Date.now()}`;
         updatedSections[existingPaymentSectionIndex] = paymentSection;
         setFormSections(updatedSections);
       } else {
@@ -285,7 +287,6 @@ function ActivityFormEditPage() {
     if (!file) return;
 
     try {
-      setUploadingQr(true);
       setUploadingQr(true);
       // Use uploadUpcomingActivityFile with new structure: admin/qr_code
       const response = await uploadUpcomingActivityFile(file, activity.title, 'admin', 'qr_code');
