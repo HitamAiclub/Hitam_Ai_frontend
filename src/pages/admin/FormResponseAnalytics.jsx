@@ -1008,17 +1008,35 @@ const FormResponseAnalytics = () => {
 
                                                     return (
                                                         <td key={field.id} className="px-6 py-4 text-gray-900 dark:text-white">
-                                                            {field.type === 'file' ? (
-                                                                renderFileValue(val)
-                                                            ) : Array.isArray(val) ? (
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {val.map(v => (
-                                                                        <span key={v} className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded-full">{v}</span>
-                                                                    ))}
-                                                                </div>
-                                                            ) : (
-                                                                <span className="line-clamp-2" title={val}>{val}</span>
-                                                            )}
+                                                            {(() => {
+                                                                if (val === undefined || val === null || val === '') return <span className="text-gray-400 italic text-xs">-</span>;
+
+                                                                let isFile = field.type === 'file';
+                                                                if (!isFile && val !== null && typeof val === 'object') {
+                                                                    if (Array.isArray(val)) {
+                                                                        if (val.length > 0 && typeof val[0] === 'object' && val[0] !== null && val[0].url) isFile = true;
+                                                                    } else if (val.url) {
+                                                                        isFile = true;
+                                                                    }
+                                                                }
+
+                                                                if (isFile) return renderFileValue(val);
+
+                                                                if (Array.isArray(val)) {
+                                                                    return (
+                                                                        <div className="flex flex-wrap gap-1">
+                                                                            {val.map((v, i) => (
+                                                                                <span key={i} className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded-full">
+                                                                                    {typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}
+                                                                                </span>
+                                                                            ))}
+                                                                        </div>
+                                                                    );
+                                                                }
+
+                                                                const displayStr = typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val);
+                                                                return <span className="line-clamp-2" title={displayStr}>{displayStr}</span>;
+                                                            })()}
                                                         </td>
                                                     );
                                                 })}
@@ -1092,38 +1110,63 @@ const FormResponseAnalytics = () => {
                                     <div key={field.id} className="bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg">
                                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{field.label}</p>
                                         <div className="font-medium text-gray-900 dark:text-white whitespace-pre-wrap">
-                                            {val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0) ? (
-                                                <span className="text-gray-400 italic">No response</span>
-                                            ) : field.type === 'file' ? (
-                                                <div className="flex flex-col gap-2">
-                                                    {(Array.isArray(val) ? val : [val]).map((file, idx) => (
-                                                        <a
-                                                            key={idx}
-                                                            href={file.url || file}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center gap-2 text-blue-600 hover:underline bg-white dark:bg-gray-600 p-2 rounded border border-blue-100 dark:border-gray-500 w-max"
-                                                        >
-                                                            <div className="bg-blue-100 dark:bg-blue-900/30 p-1.5 rounded">
-                                                                <Download className="w-4 h-4" />
-                                                            </div>
-                                                            <span className="text-sm">
-                                                                {file.originalName || file.name || `File ${idx + 1}`}
-                                                            </span>
-                                                        </a>
-                                                    ))}
-                                                </div>
-                                            ) : Array.isArray(val) ? (
-                                                <div className="flex flex-wrap gap-2">
-                                                    {val.map((v, i) => (
-                                                        <span key={i} className="px-2 py-1 bg-white dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500 text-sm">
-                                                            {typeof v === 'object' ? JSON.stringify(v) : v}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                String(val)
-                                            )}
+                                            {(() => {
+                                                if (val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0)) {
+                                                    return <span className="text-gray-400 italic">No response</span>;
+                                                }
+
+                                                let isFile = field.type === 'file';
+                                                if (!isFile && val !== null && typeof val === 'object') {
+                                                    if (Array.isArray(val)) {
+                                                        if (val.length > 0 && typeof val[0] === 'object' && val[0] !== null && val[0].url) isFile = true;
+                                                    } else if (val.url) {
+                                                        isFile = true;
+                                                    }
+                                                }
+
+                                                if (isFile) {
+                                                    return (
+                                                        <div className="flex flex-col gap-2">
+                                                            {(Array.isArray(val) ? val : [val]).map((file, idx) => {
+                                                                if (!file) return null;
+                                                                const url = typeof file === 'string' ? file : file.url;
+                                                                if (typeof url !== 'string') return null;
+
+                                                                return (
+                                                                    <a
+                                                                        key={idx}
+                                                                        href={url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="flex items-center gap-2 text-blue-600 hover:underline bg-white dark:bg-gray-600 p-2 rounded border border-blue-100 dark:border-gray-500 w-max"
+                                                                    >
+                                                                        <div className="bg-blue-100 dark:bg-blue-900/30 p-1.5 rounded">
+                                                                            <Download className="w-4 h-4" />
+                                                                        </div>
+                                                                        <span className="text-sm">
+                                                                            {file.originalName || file.name || `File ${idx + 1}`}
+                                                                        </span>
+                                                                    </a>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    );
+                                                }
+
+                                                if (Array.isArray(val)) {
+                                                    return (
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {val.map((v, i) => (
+                                                                <span key={i} className="px-2 py-1 bg-white dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500 text-sm">
+                                                                    {typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val);
+                                            })()}
                                         </div>
                                     </div>
                                 );
