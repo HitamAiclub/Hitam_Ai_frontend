@@ -447,18 +447,64 @@ const HomePage = () => {
                             })}
                           </div>
                         ) : (
-                          /* Left-to-right display (Rule A) */
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                          /* Left-to-right display with multi-members dropping down */
+                          <div className="space-y-12">
+                            {/* Top row: Roles with 1 or 2 members */}
+                            <div className="flex flex-wrap justify-center gap-8">
+                              {CORE_TEAM_ROLES.map((role) => {
+                                const members = coreTeamByLevel[role] || [];
+                                if (members.length === 0 || members.length > 2) return null;
+                                return (
+                                  <div key={role} className="flex flex-col">
+                                    <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 text-center">
+                                      {role}
+                                    </h4>
+                                    <div className="flex flex-wrap justify-center gap-6">
+                                      {members.map((member, index) => (
+                                        <div key={member.id} className="w-64">
+                                          <Card delay={index * 0.05}>
+                                            <div className="p-6 text-center">
+                                              <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
+                                                {member.photoUrl ? (
+                                                  <img
+                                                    src={member.photoUrl}
+                                                    alt={member.name}
+                                                    className="w-full h-full object-cover"
+                                                  />
+                                                ) : (
+                                                  <span className="text-white text-2xl font-bold">
+                                                    {member.name?.charAt(0)}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                                                {member.name}
+                                              </h3>
+                                              <p className="text-blue-600 dark:text-blue-400 font-medium">
+                                                {member.role}
+                                              </p>
+                                            </div>
+                                          </Card>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Bottom sections: Roles with more than 2 members */}
                             {CORE_TEAM_ROLES.map((role) => {
                               const members = coreTeamByLevel[role] || [];
+                              if (members.length <= 2) return null;
                               return (
-                                <div key={role}>
-                                  <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 ml-2">
-                                    {role}
+                                <div key={`multi-${role}`} className="flex flex-col w-full clear-both">
+                                  <h4 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-6 text-center">
+                                    {role}s
                                   </h4>
-                                  <div className="space-y-6">
+                                  <div className="flex flex-wrap justify-center gap-8">
                                     {members.map((member, index) => (
-                                      <div key={member.id} className="w-64 mx-auto">
+                                      <div key={member.id} className="w-64">
                                         <Card delay={index * 0.05}>
                                           <div className="p-6 text-center">
                                             <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
