@@ -45,11 +45,11 @@ const Card = ({
       whileHover={hoverVariants}
       variants={variants}
       className={`
-        bg-white/90 dark:bg-gray-800/90 backdrop-blur-md 
-        border border-gray-200/20 dark:border-gray-700/20 
-        rounded-2xl shadow-lg dark:shadow-2xl 
+        bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl 
+        border border-white/20 dark:border-white/10 
+        rounded-2xl shadow-xl dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] 
         overflow-hidden
-        hover:bg-white/95 dark:hover:bg-gray-800/95
+        hover:bg-white/80 dark:hover:bg-gray-900/80
         transition-all duration-300
         relative z-10
         ${className}

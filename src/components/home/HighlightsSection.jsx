@@ -92,7 +92,7 @@ const HighlightsSection = () => {
     if (loading || media.length === 0) return null;
 
     return (
-        <section className="py-20 bg-gray-50 dark:bg-gray-900/50">
+        <section className="py-20 bg-transparent">
             <div className="container mx-auto max-w-7xl px-4">
                 <div className="text-center mb-12">
                     <motion.div
