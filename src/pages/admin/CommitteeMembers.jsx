@@ -24,7 +24,12 @@ const CommitteeMembers = () => {
     branch: "",
     year: "",
     email: "",
-    phone: ""
+    phone: "",
+    bio: "",
+    linkedin: "",
+    github: "",
+    portfolio: "",
+    otherLink: ""
   });
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -203,7 +208,12 @@ const CommitteeMembers = () => {
       branch: member.branch || "",
       year: member.year || "",
       email: member.email || "",
-      phone: member.phone || ""
+      phone: member.phone || "",
+      bio: member.bio || "",
+      linkedin: member.linkedin || "",
+      github: member.github || "",
+      portfolio: member.portfolio || "",
+      otherLink: member.otherLink || ""
     });
 
     // Logic to handle existing custom roles in dropdown
@@ -255,7 +265,12 @@ const CommitteeMembers = () => {
       branch: "",
       year: "",
       email: "",
-      phone: ""
+      phone: "",
+      bio: "",
+      linkedin: "",
+      github: "",
+      portfolio: "",
+      otherLink: ""
     });
     setImageFile(null);
   };
@@ -266,24 +281,39 @@ const CommitteeMembers = () => {
       return;
     }
 
-    const csvContent = members.map(member => {
+    const escapeCsv = (str) => {
+      if (str === undefined || str === null) return '""';
+      const strVal = String(str);
+      // Escape double quotes by doubling them, and wrap the whole string in quotes
+      return `"${strVal.replace(/"/g, '""')}"`;
+    };
+
+    // Sort logic to match UI
+    const facultyMembers = members.filter(m => m.category === 'faculty').sort((a, b) => (a.priority || 99) - (b.priority || 99));
+    const students = members.filter(m => (m.category || 'student') === 'student');
+    const { coreTeam, committeeMembers: regularMembers } = organizeMembersByRole(students);
+
+    // Combine into final ordered array
+    const orderedMembers = [...facultyMembers, ...coreTeam, ...regularMembers];
+
+    const csvContent = orderedMembers.map(member => {
       return [
-        member.name,
-        member.category || 'student',
-        member.role,
-        member.priority || '',
-        member.branch,
-        member.year,
-        member.email,
-        member.phone,
-        member.createdAt
+        escapeCsv(member.name),
+        escapeCsv(member.category || 'student'),
+        escapeCsv(member.role),
+        escapeCsv(member.priority || ''),
+        escapeCsv(member.branch || ''),
+        escapeCsv(member.year || ''),
+        escapeCsv(member.email || ''),
+        escapeCsv(member.phone || ''),
+        escapeCsv(member.createdAt ? new Date(member.createdAt).toLocaleString() : '')
       ].join(",");
     }).join("\n");
 
-    const headers = "Name,Role,Branch,Year,Email,Phone,Created At";
+    const headers = "\"Name\",\"Category\",\"Role\",\"Priority\",\"Branch\",\"Year\",\"Email\",\"Phone\",\"Created At\"";
     const fullContent = headers + "\n" + csvContent;
 
-    const blob = new Blob([fullContent], { type: "text/csv" });
+    const blob = new Blob([fullContent], { type: "text/csv;charset=utf-8;" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -351,7 +381,7 @@ const CommitteeMembers = () => {
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 border-b pb-2">
                     Faculty & Mentors
                   </h2>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {facultyMembers.map((member, index) => (
                       <Card key={member.id} delay={index * 0.1}>
                         <div className={`p-6 ${member.isOptimistic ? "opacity-75" : ""}`}>
@@ -396,7 +426,7 @@ const CommitteeMembers = () => {
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                         Core Team
                       </h2>
-                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {coreTeam.map((member, index) => (
                           <Card key={member.id} delay={index * 0.1}>
                             <div className={`p-6 ${member.isOptimistic ? "opacity-75" : ""}`}>
@@ -440,7 +470,7 @@ const CommitteeMembers = () => {
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                         Committee Members
                       </h2>
-                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {committeeMembers.map((member, index) => (
                           <Card key={member.id} delay={index * 0.1}>
                             <div className={`p-6 ${member.isOptimistic ? "opacity-75" : ""}`}>
@@ -707,6 +737,48 @@ const CommitteeMembers = () => {
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="+91 XXXXXXXXXX"
             />
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Biography / Short Intro
+              </label>
+              <textarea
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                rows={3}
+                placeholder="A brief introduction about the member..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              <Input
+                label="LinkedIn Profile"
+                value={formData.linkedin}
+                onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                placeholder="linkedin.com/in/username"
+              />
+              <Input
+                label="GitHub Profile"
+                value={formData.github}
+                onChange={(e) => setFormData({ ...formData, github: e.target.value })}
+                placeholder="github.com/username"
+              />
+              <Input
+                label="Portfolio/Website"
+                value={formData.portfolio}
+                onChange={(e) => setFormData({ ...formData, portfolio: e.target.value })}
+                placeholder="portfolio-url.com"
+              />
+              <Input
+                label="Other Link"
+                value={formData.otherLink}
+                onChange={(e) => setFormData({ ...formData, otherLink: e.target.value })}
+                placeholder="e.g. Instagram, X, etc."
+              />
+            </div>
           </div>
 
           <div className="flex gap-4">
