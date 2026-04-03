@@ -17,7 +17,7 @@ const LocalEnergyBackground = () => {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute top-[-10%] left-[-10%] w-[60%] h-[70%] rounded-full blur-[100px] md:blur-[180px] bg-blue-600/20 dark:bg-blue-500/15"
+        className="absolute top-[-10%] left-[-10%] w-[60%] h-[70%] rounded-full bg-[radial-gradient(circle_at_center,_rgba(37,99,235,0.2)_0%,_transparent_70%)] dark:bg-[radial-gradient(circle_at_center,_rgba(59,130,246,0.15)_0%,_transparent_70%)] blur-2xl md:blur-[180px] will-change-transform"
       />
 
       {/* Secondary Energy Layer - Divine Purple/Pink Node */}
@@ -34,7 +34,7 @@ const LocalEnergyBackground = () => {
           ease: "easeInOut",
           delay: 2,
         }}
-        className="absolute bottom-[-15%] right-[-10%] w-[60%] h-[70%] rounded-full blur-[100px] md:blur-[180px] bg-purple-600/20 dark:bg-purple-600/15"
+        className="absolute bottom-[-15%] right-[-10%] w-[60%] h-[70%] rounded-full bg-[radial-gradient(circle_at_center,_rgba(147,51,234,0.2)_0%,_transparent_70%)] dark:bg-[radial-gradient(circle_at_center,_rgba(147,51,234,0.15)_0%,_transparent_70%)] blur-2xl md:blur-[180px] will-change-transform"
       />
 
       {/* Accent Layer - Intense Energy Core */}
@@ -48,7 +48,7 @@ const LocalEnergyBackground = () => {
           repeat: Infinity,
           ease: "linear",
         }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full blur-[120px] md:blur-[220px] bg-gradient-to-tr from-cyan-400/10 via-transparent to-pink-500/10 opacity-30"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full bg-[radial-gradient(circle_at_center,_rgba(34,211,238,0.1)_0%,_rgba(236,72,153,0.05)_40%,_transparent_70%)] blur-2xl md:blur-[220px] mix-blend-screen will-change-transform opacity-50"
       />
 
       {/* Static Noise Texture Overlay (Premium Detail) */}

@@ -864,19 +864,19 @@ const HomePage = () => {
               animate={{ scale: 1, opacity: 1, y: 0, rotateX: 0 }}
               exit={{ scale: 0.5, opacity: 0, y: 100, filter: "brightness(0) blur(20px)" }}
               transition={{ type: "spring", damping: 30, stiffness: 200 }}
-              className="relative w-[95%] sm:w-[90%] md:max-w-5xl max-h-[90vh] flex flex-col bg-white/95 dark:bg-[#080808]/95 backdrop-blur-[50px] rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.1),_0_0_100px_rgba(0,102,255,0.15)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5),_0_0_100px_rgba(0,102,255,0.15)] border-2 border-blue-500/20 z-[120]"
+              className="relative w-[95%] sm:w-[90%] md:max-w-5xl max-h-[85vh] md:max-h-[90vh] flex flex-col bg-white/95 dark:bg-[#080808]/95 backdrop-blur-2xl md:backdrop-blur-[50px] rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.1),_0_0_100px_rgba(0,102,255,0.15)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5),_0_0_100px_rgba(0,102,255,0.15)] border-2 border-blue-500/20 z-[120]"
             >
-              {/* Orbiting Energy Orbs Behind Container Content */}
-              <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
+              {/* Orbiting Energy Orbs Behind Container Content - Disabled on Mobile for Perf */}
+              <div className="hidden md:block absolute inset-0 z-0 opacity-20 pointer-events-none">
                 <motion.div
                   animate={{ x: [-200, 200, -200], y: [-150, 150, -150] }}
                   transition={{ duration: 45, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                  className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-red-600/20 blur-[150px] rounded-full"
+                  className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[radial-gradient(circle_at_center,_rgba(220,38,38,0.2)_0%,_transparent_70%)] blur-[100px] rounded-full"
                 />
                 <motion.div
                   animate={{ x: [200, -200, 200], y: [150, -150, 200] }}
                   transition={{ duration: 40, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-blue-600/20 blur-[150px] rounded-full"
+                  className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[radial-gradient(circle_at_center,_rgba(37,99,235,0.2)_0%,_transparent_70%)] blur-[100px] rounded-full"
                 />
               </div>
 
@@ -895,7 +895,7 @@ const HomePage = () => {
 
               <button
                 onClick={() => setSelectedMember(null)}
-                className="absolute top-4 right-4 md:top-6 md:right-6 p-3 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-red-500 hover:text-white transition-all z-50 group hover:rotate-90 backdrop-blur-md shadow-md"
+                className="absolute top-4 right-4 md:top-6 md:right-6 p-2 md:p-3 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-red-500 hover:text-white transition-all z-50 group hover:rotate-90 backdrop-blur-md shadow-md"
               >
                 <X className="w-5 h-5 md:w-6 md:h-6 text-gray-800 dark:text-white/80 group-hover:text-white" />
               </button>
@@ -904,17 +904,17 @@ const HomePage = () => {
               <div className="flex flex-col md:flex-row w-full h-full overflow-y-auto overflow-x-hidden z-10 relative custom-scrollbar">
                 
                 {/* Image Section - The "Hero" Stage */}
-                <div className="w-full md:w-5/12 relative bg-[#f8fafc]/80 dark:bg-[#010101]/80 flex items-center justify-center p-8 md:p-12 overflow-hidden min-h-[350px] md:min-h-auto flex-shrink-0">
-                  {/* Position-Shifting Energy Plasma */}
+                <div className="w-full md:w-5/12 relative bg-[#f8fafc]/80 dark:bg-[#010101]/80 flex items-center justify-center p-6 md:p-12 overflow-hidden min-h-[200px] sm:min-h-[300px] md:min-h-auto flex-shrink-0">
+                  {/* Position-Shifting Energy Plasma - Blur reduced for performance */}
                   <motion.div
-                    animate={{ x: [0, 50, -50, 0], y: [0, -30, 30, 0], opacity: [0.2, 0.4, 0.2] }}
+                    animate={{ x: [0, 30, -30, 0], y: [0, -20, 20, 0], opacity: [0.2, 0.4, 0.2] }}
                     transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-[-50%] bg-[radial-gradient(circle_at_center,_rgba(255,77,77,0.2)_0%,_transparent_70%)] blur-[80px]"
+                    className="absolute inset-[-50%] bg-[radial-gradient(circle_at_center,_rgba(255,77,77,0.2)_0%,_transparent_70%)] blur-xl md:blur-[80px] will-change-transform"
                   />
                   <motion.div
-                    animate={{ x: [0, -50, 50, 0], y: [0, 30, -30, 0], opacity: [0.1, 0.3, 0.1] }}
-                    transition={{ duration: 90, repeat: Infinity, ease: "linear", delay: 1 }}
-                    className="absolute inset-[-50%] bg-[radial-gradient(circle_at_center,_rgba(0,102,255,0.2)_0%,_transparent_70%)] blur-[80px]"
+                    animate={{ x: [0, -30, 30, 0], y: [0, 20, -20, 0], opacity: [0.1, 0.3, 0.1] }}
+                    transition={{ duration: 30, repeat: Infinity, ease: "linear", delay: 1 }}
+                    className="absolute inset-[-50%] bg-[radial-gradient(circle_at_center,_rgba(0,102,255,0.2)_0%,_transparent_70%)] blur-xl md:blur-[80px] will-change-transform"
                   />
 
                   {/* Persistent Photo-Source Aura */}
@@ -922,18 +922,18 @@ const HomePage = () => {
 
                   <motion.div
                     animate={{ rotate: -360 }}
-                    transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                    className="absolute w-[240px] md:w-[310px] h-[240px] md:h-[310px] border-2 border-blue-500/20 rounded-full"
+                    transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                    className="absolute w-[180px] sm:w-[240px] md:w-[310px] h-[180px] sm:h-[240px] md:h-[310px] border-2 border-blue-500/20 rounded-full hidden sm:block will-change-transform"
                   />
 
                   {/* Profile Photo Stage */}
                   <motion.div
-                    animate={{ y: [0, -10, 0], scale: [1, 1.02, 1] }}
+                    animate={{ y: [0, -5, 0], scale: [1, 1.02, 1] }}
                     transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                    className="relative w-48 h-48 md:w-64 md:h-64 z-10 group mt-4 md:mt-0"
+                    className="relative w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 z-10 group mt-2 md:mt-0 will-change-transform"
                   >
-                    <div className="absolute -inset-6 bg-white/40 dark:bg-white/20 blur-3xl opacity-30 group-hover:opacity-100 transition-opacity" />
-                    <div className="w-full h-full rounded-xl md:rounded-3xl overflow-hidden border-2 border-gray-300 dark:border-white/30 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(255,255,255,0.2)]">
+                    <div className="absolute -inset-4 md:-inset-6 bg-white/40 dark:bg-white/20 blur-xl md:blur-3xl opacity-30 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-full h-full rounded-2xl md:rounded-3xl overflow-hidden border-2 border-gray-300 dark:border-white/30 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(255,255,255,0.2)]">
                       {selectedMember.photoUrl ? (
                         <img
                           src={selectedMember.photoUrl}
@@ -941,7 +941,7 @@ const HomePage = () => {
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center text-gray-500 dark:text-white text-5xl md:text-6xl font-black">
+                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center text-gray-500 dark:text-white text-4xl md:text-6xl font-black">
                           {selectedMember.name?.charAt(0)}
                         </div>
                       )}
@@ -951,15 +951,15 @@ const HomePage = () => {
 
                 {/* Details Section - Content Stage */}
                 <div className="w-full md:w-7/12 p-6 sm:p-8 md:p-12 bg-gradient-to-b md:bg-gradient-to-r from-transparent to-gray-100/50 dark:to-white/5 flex flex-col justify-center">
-                  <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
+                  <motion.div initial={{ x: 10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
                     
-                    <div className="mb-10 text-center md:text-left pt-2 md:pt-0">
-                      <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white leading-tight tracking-tight mb-4 drop-shadow-sm">
+                    <div className="mb-8 md:mb-10 text-center md:text-left pt-2 md:pt-0">
+                      <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white leading-tight tracking-tight mb-3 md:mb-4 drop-shadow-sm">
                         {selectedMember.name}
                       </h2>
-                      <div className="flex items-center justify-center md:justify-start gap-4">
-                        <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} className="px-5 py-2 bg-blue-100 dark:bg-blue-400/10 border border-blue-200 dark:border-blue-500/20 rounded-full backdrop-blur-md shadow-sm">
-                          <p className="font-black text-[10px] md:text-xs uppercase tracking-[0.4em] md:tracking-[0.5em] text-blue-700 dark:text-blue-400 leading-none">
+                      <div className="flex items-center justify-center md:justify-start gap-3">
+                        <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} className="px-4 md:px-5 py-2 bg-blue-100 dark:bg-blue-400/10 border border-blue-200 dark:border-blue-500/20 rounded-full backdrop-blur-md shadow-sm">
+                          <p className="font-black text-[9px] md:text-xs uppercase tracking-[0.4em] md:tracking-[0.5em] text-blue-700 dark:text-blue-400 leading-none">
                             {selectedMember.role}
                           </p>
                         </motion.div>
@@ -968,23 +968,23 @@ const HomePage = () => {
 
                     {/* High-End Detail Chips */}
                     {selectedMember.category !== 'faculty' && (
-                      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-10">
-                        <div className="group relative px-6 py-6 bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl transition-all hover:border-blue-500/50 flex flex-col justify-center shadow-sm dark:shadow-none">
-                          <span className="block text-[9px] md:text-[10px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-[0.3em] mb-2 opacity-80">Academic Year</span>
-                          <span className="text-xl md:text-2xl font-black text-gray-900 dark:text-white leading-tight">{selectedMember.year || 'N/A'}</span>
+                      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="grid grid-cols-1 gap-3 md:gap-6 md:grid-cols-2 mb-8 md:mb-10">
+                        <div className="group relative px-5 py-4 md:px-6 md:py-6 bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl transition-all hover:border-blue-500/50 flex flex-col justify-center shadow-sm dark:shadow-none">
+                          <span className="block text-[8px] md:text-[10px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-[0.3em] mb-1.5 md:mb-2 opacity-80">Academic Year</span>
+                          <span className="text-lg md:text-2xl font-black text-gray-900 dark:text-white leading-tight">{selectedMember.year || 'N/A'}</span>
                         </div>
-                        <div className="group relative px-6 py-6 bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl transition-all hover:border-purple-500/50 flex flex-col justify-center shadow-sm dark:shadow-none">
-                          <span className="block text-[9px] md:text-[10px] font-black text-purple-600 dark:text-purple-500 uppercase tracking-[0.3em] mb-2 opacity-80">Branch</span>
-                          <span className="text-xl md:text-2xl font-black text-gray-900 dark:text-white leading-tight whitespace-pre-wrap">{selectedMember.branch || 'N/A'}</span>
+                        <div className="group relative px-5 py-4 md:px-6 md:py-6 bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl transition-all hover:border-purple-500/50 flex flex-col justify-center shadow-sm dark:shadow-none">
+                          <span className="block text-[8px] md:text-[10px] font-black text-purple-600 dark:text-purple-500 uppercase tracking-[0.3em] mb-1.5 md:mb-2 opacity-80">Branch</span>
+                          <span className="text-lg md:text-2xl font-black text-gray-900 dark:text-white leading-tight whitespace-pre-wrap">{selectedMember.branch || 'N/A'}</span>
                         </div>
                       </motion.div>
                     )}
 
                     {selectedMember.bio && (
-                      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="mb-12 max-w-2xl">
-                        <h4 className="text-[10px] md:text-xs font-black text-gray-500 dark:text-white/40 uppercase tracking-[0.5em] md:tracking-[0.6em] mb-6 text-center md:text-left">The Narrative</h4>
-                        <p className="text-gray-800 dark:text-gray-300 leading-relaxed font-medium text-lg md:text-xl text-center md:text-left">
-                          <span className="text-5xl md:text-6xl font-black mr-2 text-blue-600 dark:text-blue-400 float-left leading-[0.7] mt-1 pr-1">{selectedMember.bio.charAt(0)}</span>
+                      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="mb-8 md:mb-12 max-w-2xl">
+                        <h4 className="text-[9px] md:text-xs font-black text-gray-500 dark:text-white/40 uppercase tracking-[0.5em] md:tracking-[0.6em] mb-4 md:mb-6 text-center md:text-left">The Narrative</h4>
+                        <p className="text-gray-800 dark:text-gray-300 leading-relaxed font-medium text-base md:text-xl text-center md:text-left">
+                          <span className="text-4xl md:text-6xl font-black mr-2 text-blue-600 dark:text-blue-400 float-left leading-[0.7] mt-1 pr-1">{selectedMember.bio.charAt(0)}</span>
                           {selectedMember.bio.slice(1)}
                         </p>
                       </motion.div>
