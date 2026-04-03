@@ -63,15 +63,31 @@ const EventDetailPage = () => {
       <div className="absolute top-[40%] -left-32 w-[500px] h-[500px] bg-purple-500/5 dark:bg-purple-600/5 blur-[100px] rounded-full pointer-events-none z-0" />
       <div className="absolute bottom-[10%] -right-32 w-[500px] h-[500px] bg-pink-500/5 dark:bg-pink-600/5 blur-[120px] rounded-full pointer-events-none z-0" />
 
-      {/* Clean Banner Section - Large Full-Width Visual */}
-      <section className="relative h-[85vh] w-full overflow-hidden bg-gray-950 border-b border-gray-100 dark:border-gray-900 z-10">
-        <div className="absolute inset-0 z-0">
+      {/* Clean Banner Section - Full-View Visual */}
+      <section className="relative w-full overflow-hidden bg-gray-950 border-b border-gray-100 dark:border-gray-900 z-10 flex items-center justify-center group">
+        
+        {/* Floating Back Button (Top Left) */}
+        <Link 
+          to="/events" 
+          className="absolute top-6 left-6 md:top-8 md:left-8 z-50 flex items-center justify-center w-12 h-12 bg-black/40 hover:bg-blue-600 backdrop-blur-md border border-white/10 hover:border-transparent rounded-full text-white transition-all duration-300 hover:scale-110 shadow-2xl"
+          title="Return to Events"
+        >
+          <FiArrowLeft className="w-6 h-6" />
+        </Link>
+
+        {/* Blurred backdrop image to fill empty space */}
+        <div className="absolute inset-0 z-0 opacity-40 blur-3xl scale-110">
+           <img src={meta?.imageUrl} alt="" className="w-full h-full object-cover" />
+        </div>
+        
+        {/* Main Full-Size Image */}
+        <div className="relative z-10 w-full flex justify-center">
            <img 
              src={meta?.imageUrl} 
-             alt="" 
-             className="w-full h-full object-cover opacity-70"
+             alt="Event Banner" 
+             className="w-full h-auto max-h-[85vh] object-contain drop-shadow-2xl"
            />
-           <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-gray-950 via-transparent to-transparent" />
+           <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-gray-950 via-transparent to-transparent pointer-events-none" />
         </div>
       </section>
 
@@ -376,9 +392,9 @@ const EventDetailPage = () => {
                    {meta.impact}
                 </p>
                 <div className="pt-8">
-                   <button className="px-12 py-5 bg-white text-gray-950 text-xs font-black uppercase tracking-widest rounded-full hover:scale-105 transition-transform shadow-2xl">
+                   <Link to="/join" className="inline-block px-12 py-5 bg-white text-gray-950 text-xs font-black uppercase tracking-widest rounded-full hover:scale-105 transition-transform shadow-2xl">
                      Join the Impact
-                   </button>
+                   </Link>
                 </div>
              </div>
           </AnimatedSection>
@@ -388,7 +404,7 @@ const EventDetailPage = () => {
         <div className="pt-20 border-t border-gray-100 dark:border-gray-900 flex flex-col md:flex-row justify-between items-center gap-8">
            <Link to="/events" className="group flex items-center gap-4 bg-gray-50 dark:bg-gray-900 px-8 py-4 rounded-3xl hover:bg-blue-600 transition-all transition-duration-500">
               <FiArrowLeft className="w-5 h-5 group-hover:-translate-x-2 transition-transform group-hover:text-white" />
-              <span className="text-xs font-black uppercase tracking-[0.3em] text-gray-900 dark:text-white group-hover:text-white">Return to Ecosystem</span>
+              <span className="text-xs font-black uppercase tracking-[0.3em] text-gray-900 dark:text-white group-hover:text-white">Return to Events</span>
            </Link>
            <div className="flex flex-col items-center md:items-end gap-1">
               <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400">HITAM AI Club © 2026</span>

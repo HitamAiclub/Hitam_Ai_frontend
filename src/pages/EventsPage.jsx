@@ -84,19 +84,33 @@ const EventsPage = () => {
           {events.filter(event => activeFilter === "all" || event.meta?.type === activeFilter).map((event) => (
             <Card key={event.id} className="group relative flex flex-col h-full bg-white dark:bg-gray-800 border-none shadow-xl hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] overflow-hidden">
                <Link to={`/events/${event.id}`} className="absolute inset-0 z-10" />
-               <div className="relative h-64 overflow-hidden bg-gray-900">
-                  <img src={event.meta?.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={event.meta?.title} />
+               <div className="relative h-64 sm:h-72 overflow-hidden bg-gray-950 group">
+                  {/* Blurred backdrop image to drop empty space */}
+                  <div className="absolute inset-0 z-0 opacity-40 blur-xl scale-110">
+                    <img src={event.meta?.imageUrl} className="w-full h-full object-cover" alt="" />
+                  </div>
+                  {/* Main Full-Size Image */}
+                  <div className="relative z-10 w-full h-full flex items-center justify-center">
+                    <img src={event.meta?.imageUrl} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 drop-shadow-2xl" alt={event.meta?.title} />
+                  </div>
                   <div className="absolute top-4 right-4 z-20">
-                     <span className="px-4 py-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg">
+                     <span className="px-4 py-1.5 bg-blue-600/90 text-white backdrop-blur-md text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg">
                         {event.meta?.type}
                      </span>
                   </div>
                </div>
                <div className="p-8 flex flex-col flex-grow">
-                  <div className="flex items-center text-blue-600 dark:text-blue-400 font-black mb-4 text-xs tracking-[0.2em] uppercase">
-                    <Calendar className="w-4 h-4 mr-2" />
+                  {/* TITLE UP IN BLUE */}
+                  <h3 className="text-2xl font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter leading-[1.1] mb-3">
+                     {event.meta?.title}
+                  </h3>
+
+                  {/* DATE DOWN IN BLACK */}
+                  <div className="flex items-center text-gray-950 dark:text-white font-bold mb-6 text-xs tracking-[0.2em] uppercase">
+                    <Calendar className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                     {event.meta?.startDate ? new Date(event.meta.startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'DATE TBD'}
                   </div>
+
                   <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                        <ExternalLink className="w-3 h-3" /> Explore Details
