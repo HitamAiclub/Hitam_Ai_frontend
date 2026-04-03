@@ -283,32 +283,77 @@ const EventDetailPage = () => {
 
         {/* Section: Activities / Engagement Flow */}
         {meta?.activities?.length > 0 && (
-          <AnimatedSection className="space-y-16">
+          <AnimatedSection className="space-y-16 pt-10">
             <div className="text-center space-y-4">
-               <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-600">Event Timeline</h4>
-               <h3 className="text-5xl md:text-6xl font-black text-gray-950 dark:text-white tracking-tighter uppercase">Activities</h3>
+               <h4 className="text-[10px] md:text-xs font-black uppercase tracking-[0.6em] text-blue-600 dark:text-blue-400">Event Timeline</h4>
+               <h3 className="text-4xl md:text-6xl font-black text-gray-950 dark:text-white tracking-tighter uppercase relative inline-block drop-shadow-sm">
+                  Activities
+                  <div className="absolute -top-10 -right-16 w-32 h-32 bg-blue-500/10 dark:bg-blue-500/20 blur-3xl rounded-full pointer-events-none" />
+               </h3>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-               {meta.activities.map((a, i) => (
-                 <div key={i} className="group relative p-10 bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-white/5 rounded-[3rem] shadow-[0_20px_40px_-15px_rgba(37,99,235,0.1)] dark:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.2)] hover:bg-blue-600 dark:hover:bg-blue-600 hover:shadow-[0_32px_64px_-16px_rgba(37,99,235,0.4)] transition-all duration-700 overflow-hidden">
-                    <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 pointer-events-none" />
-                    <span className="relative z-10 block text-[10px] font-black text-gray-400 group-hover:text-blue-100 uppercase tracking-widest mb-6">Phase 0{i + 1}</span>
-                    <h3 className="relative z-10 text-2xl font-black text-gray-950 dark:text-white group-hover:text-white tracking-tight uppercase leading-none">{a}</h3>
-                 </div>
-               ))}
+
+            <div className="max-w-4xl mx-auto px-4 md:px-0">
+               <div className="flex flex-col gap-6 md:gap-10">
+                 {meta.activities.map((a, i) => (
+                   <div key={i} className="group relative flex items-stretch gap-4 md:gap-10 transition-all duration-700">
+                      
+                      {/* Tracker Axis */}
+                      <div className="relative flex flex-col items-center mt-[44px] md:mt-[60px] flex-shrink-0">
+                         {/* Axis Node Base */}
+                         <div className="z-20 w-3 h-3 md:w-5 md:h-5 rounded-full bg-gray-200 dark:bg-gray-800 border-[3px] md:border-[4px] border-white dark:border-[#080808] shadow-[0_0_0_2px_rgba(229,231,235,1)] dark:shadow-[0_0_0_2px_rgba(31,41,55,1)] group-hover:bg-blue-500 group-hover:shadow-[0_0_0_4px_rgba(59,130,246,0.3),_0_0_20px_rgba(59,130,246,0.6)] transition-all duration-500" />
+                         
+                         {/* Connecting Line Vector */}
+                         {i !== meta.activities.length - 1 && (
+                            <div className="absolute top-[12px] md:top-[20px] bottom-[-24px] md:bottom-[-40px] w-[2px] bg-gradient-to-b from-gray-200 dark:from-gray-800 to-transparent group-hover:from-blue-500/50 transition-colors duration-700" />
+                         )}
+                      </div>
+                      
+                      {/* Activity Slab */}
+                      <div className="relative z-10 flex-grow p-8 md:p-12 bg-white/80 dark:bg-white/[0.02] backdrop-blur-3xl border border-gray-100 dark:border-white/5 rounded-[2rem] md:rounded-[3rem] shadow-[0_20px_40px_-20px_rgba(0,0,0,0.05)] dark:shadow-none hover:shadow-[0_30px_60px_-15px_rgba(59,130,246,0.15)] hover:border-blue-500/20 dark:hover:border-blue-500/30 hover:bg-white dark:hover:bg-white/[0.05] transition-all duration-700 group-hover:-translate-y-2 overflow-hidden w-full">
+                         
+                         {/* Ethereal Phase Number Background Watermark */}
+                         <div className="absolute -right-6 -bottom-6 md:-right-8 md:-bottom-12 text-[100px] md:text-[180px] font-black text-gray-50/80 dark:text-gray-800/20 group-hover:text-blue-50/50 dark:group-hover:text-blue-900/20 leading-none tracking-tighter transition-colors duration-700 pointer-events-none select-none z-0">
+                            {String(i + 1).padStart(2, '0')}
+                         </div>
+                         
+                         {/* Highlight Sweep */}
+                         <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/5 dark:via-blue-500/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-[1500ms] ease-in-out pointer-events-none" />
+                         
+                         <div className="relative z-10">
+                            <h3 className="text-xl md:text-3xl lg:text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-500 max-w-[90%] break-words">
+                               {a}
+                            </h3>
+                         </div>
+                      </div>
+                   </div>
+                 ))}
+               </div>
             </div>
           </AnimatedSection>
         )}
 
         {/* Section: Support Network (Sponsors) */}
         {meta?.sponsors?.length > 0 && (
-           <AnimatedSection className="space-y-12">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.6em] text-center text-gray-400 border-t border-gray-100 dark:border-gray-900 pt-16">{meta?.sponsorLabel || "Sponsors (or Supported By / Partners)"}</h4>
-              <div className="flex flex-wrap justify-center items-center gap-16 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
+           <AnimatedSection className="py-16 md:py-24 border-t border-gray-100 dark:border-gray-900/50">
+              <div className="text-center space-y-4 mb-12 md:mb-16 relative">
+                 <h4 className="text-[10px] md:text-xs font-black uppercase tracking-[0.6em] text-blue-600 dark:text-blue-400">Collaboration</h4>
+                 <h3 className="text-4xl md:text-5xl font-black text-gray-950 dark:text-white tracking-tighter uppercase inline-block relative">
+                    {meta?.sponsorLabel || "Sponsors"}
+                    <div className="absolute -top-6 -left-10 w-24 h-24 bg-purple-500/10 blur-3xl rounded-full pointer-events-none" />
+                 </h3>
+              </div>
+              <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 max-w-5xl mx-auto px-6">
                  {meta.sponsors.map((s, i) => (
-                    <div key={i} className="flex flex-col items-center gap-4">
-                       <img src={s.logoUrl} alt={s.name} className="h-10 object-contain" />
-                       <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{s.name}</span>
+                    <div key={i} className="group flex flex-col items-center gap-4 md:gap-6 p-4 md:p-6 rounded-[2rem] hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-500">
+                       <img 
+                          src={s.logoUrl} 
+                          alt={s.name} 
+                          className="h-16 sm:h-20 md:h-28 object-contain opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 max-w-[150px] md:max-w-[250px] dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" 
+                          style={{ filter: "drop-shadow(0px 10px 20px rgba(0,0,0,0.05))" }}
+                       />
+                       <span className="text-[10px] font-black text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 uppercase tracking-[0.3em] transition-colors duration-500 text-center">
+                          {s.name}
+                       </span>
                     </div>
                  ))}
               </div>

@@ -336,6 +336,63 @@ const EventEditModal = ({ isOpen, onClose, editingEvent, onSuccess }) => {
              />
           </div>
 
+          {/* Sponsors Section */}
+          <div className="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-800">
+             <div className="flex justify-between items-center">
+               <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Sponsors & Partners</label>
+             </div>
+             
+             <Input label="Custom Sponsor Label (e.g. Supported By / Powered By)" value={formData.sponsorLabel} onChange={(e) => setFormData({ ...formData, sponsorLabel: e.target.value })} />
+             
+             {/* Existing Sponsors List */}
+             {formData.sponsors.length > 0 && (
+                <div className="flex flex-wrap gap-4 mt-2">
+                   {formData.sponsors.map((s, i) => (
+                      <div key={i} className="relative p-4 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl flex items-center gap-4 shadow-sm">
+                         <img src={s.logoUrl} alt={s.name} className="w-10 h-10 object-contain" />
+                         <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">{s.name}</span>
+                         <X className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 transition-colors text-white rounded-full p-1 cursor-pointer shadow-md" onClick={() => setFormData({ ...formData, sponsors: formData.sponsors.filter((_, idx) => idx !== i) })} />
+                      </div>
+                   ))}
+                </div>
+             )}
+
+             {/* Pending New Sponsors */}
+             {sponsorLogos.length > 0 && (
+                <div className="flex flex-wrap gap-4 mt-2">
+                   {sponsorLogos.map((s, i) => (
+                      <div key={i} className="relative p-3 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-2xl flex items-center gap-2 text-xs font-semibold">
+                         <span>{s.name}</span> <span className="opacity-60 italic">(Pending Upload)</span>
+                         <X className="w-4 h-4 cursor-pointer text-red-500 ml-2 hover:scale-110 transition-transform" onClick={() => setSponsorLogos(sponsorLogos.filter((_, idx) => idx !== i))} />
+                      </div>
+                   ))}
+                </div>
+             )}
+
+             {/* Add New Sponsor Field */}
+             <div className="p-5 border border-gray-200 dark:border-gray-700 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 flex flex-col md:flex-row gap-4 items-end shadow-sm">
+                <div className="flex-1 w-full relative">
+                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">New Sponsor Name</label>
+                   <input type="text" id="new-sponsor-name" className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 outline-none focus:border-blue-500 transition-colors" placeholder="e.g. Hitam Core" />
+                </div>
+                <div className="flex-1 w-full">
+                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Sponsor Logo Image</label>
+                   <input type="file" id="new-sponsor-file" accept="image/*" className="w-full text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all dark:file:bg-blue-900/30 dark:file:text-blue-400" />
+                </div>
+                <Button type="button" className="w-full md:w-auto px-8" onClick={() => {
+                   const nameInput = document.getElementById("new-sponsor-name");
+                   const fileInput = document.getElementById("new-sponsor-file");
+                   if (nameInput.value && fileInput.files[0]) {
+                      setSponsorLogos([...sponsorLogos, { name: nameInput.value, file: fileInput.files[0] }]);
+                      nameInput.value = "";
+                      fileInput.value = "";
+                   } else {
+                      alert("Please provide both a name and a logo file for the sponsor.");
+                   }
+                }}>Add</Button>
+             </div>
+          </div>
+
           {/* Social Media Links */}
           <div className="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-800">
              <h3 className="text-xs font-black uppercase tracking-[0.3em] text-blue-600 flex items-center gap-2">
