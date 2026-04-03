@@ -9,6 +9,7 @@ import Footer from "./components/layout/Footer.jsx";
 import ParticleBackground from "./components/particles/ParticaleBackground.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import EventsPage from "./pages/EventsPage.jsx";
+import EventDetailPage from "./pages/EventDetailPage.jsx";
 import UpcomingActivities from "./pages/UpcomingActivities.jsx";
 import FormPage from "./pages/FormPage.jsx";
 import JoinClub from "./pages/JoinClub.jsx";
@@ -86,6 +87,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/events" element={<EventsPage />} />
+                <Route path="/events/:id" element={<EventDetailPage />} />
                 <Route path="/upcoming" element={<UpcomingActivities />} />
                 <Route path="/form/:formId" element={<FormPage />} />
                 <Route

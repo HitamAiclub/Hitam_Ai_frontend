@@ -1,217 +1,46 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import { uploadEventImage } from "../utils/cloudinary";
 import { useAuth } from "../contexts/AuthContext";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
-import Modal from "../components/ui/Modal";
-import Input from "../components/ui/Input";
-import ImageManager from "../components/ImageManager";
-import { Calendar, User, Plus, Edit, Trash2, Image as ImageIcon } from "lucide-react";
+import { Calendar, Edit, Plus, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
+import EventEditModal from "../components/events/EventEditModal";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
-  const [filteredEvents, setFilteredEvents] = useState([]);
   const [activeFilter, setActiveFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    startDate: "",
-    endDate: "",
-    sessionBy: "",
-    type: "event"
-  });
-  const [imageFile, setImageFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [optimisticEvents, setOptimisticEvents] = useState([]);
   const { user } = useAuth();
 
   useEffect(() => {
-    // Real-time listener for events with error handling
-    const unsubscribe = onSnapshot(
-      collection(db, "events"),
-      (snapshot) => {
-        const eventsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })).sort((a, b) => new Date(b.meta.startDate) - new Date(a.meta.startDate));
-        setEvents(eventsData);
-        setOptimisticEvents(eventsData);
-        setLoading(false);
-      },
-      (error) => {
-        console.warn("Events listener error:", error.message);
-        setEvents([]);
-        setOptimisticEvents([]);
-        setLoading(false);
-      }
-    );
-
+    const unsubscribe = onSnapshot(collection(db, "events"), (snapshot) => {
+      const eventsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })).sort((a, b) => new Date(b.meta?.startDate || 0) - new Date(a.meta?.startDate || 0));
+      setEvents(eventsData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Snapshot error:", error);
+      setLoading(false);
+    });
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    filterEvents();
-  }, [events, activeFilter]);
-
-  const fetchEvents = async () => {
-    try {
-      const eventsSnapshot = await getDocs(collection(db, "events"));
-      const eventsData = eventsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })).sort((a, b) => new Date(b.meta.startDate) - new Date(a.meta.startDate));
-      setEvents(eventsData);
-    } catch (error) {
-      console.error("Error fetching events:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterEvents = () => {
-    if (activeFilter === "all") {
-      setFilteredEvents(events);
-    } else {
-      setFilteredEvents(events.filter(event => event.meta?.type === activeFilter));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setUploading(true);
-
-    // Optimistic update
-    const tempId = Date.now().toString();
-    const optimisticEvent = {
-      id: editingEvent?.id || tempId,
-      meta: {
-        ...formData,
-        imageUrl: imageFile ? URL.createObjectURL(imageFile) : editingEvent?.meta?.imageUrl || "",
-        createdAt: editingEvent?.meta?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      isOptimistic: !editingEvent
-    };
-
-    if (editingEvent) {
-      setOptimisticEvents(prev =>
-        prev.map(event =>
-          event.id === editingEvent.id ? optimisticEvent : event
-        )
-      );
-    } else {
-      setOptimisticEvents(prev => [...prev, optimisticEvent]);
-    }
-
-    // Close modal immediately
-    setShowModal(false);
-    resetForm();
-
-    try {
-      let imageUrl = editingEvent?.meta?.imageUrl || "";
-      let imageStoragePath = editingEvent?.meta?.imageStoragePath || "";
-
-      if (imageFile) {
-        // Upload to Cloudinary
-        const uploadResult = await uploadEventImage(imageFile);
-        imageUrl = uploadResult.url;
-        imageStoragePath = uploadResult.publicId; // Store Cloudinary public ID instead of storage path
-      }
-
-      const eventData = {
-        meta: {
-          ...formData,
-          imageUrl,
-          imageStoragePath,
-          createdAt: editingEvent?.meta?.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      };
-
-      if (editingEvent) {
-        await updateDoc(doc(db, "events", editingEvent.id), eventData);
-      } else {
-        await addDoc(collection(db, "events"), eventData);
-      }
-
-    } catch (error) {
-      console.error("Error saving event:", error);
-      // Revert optimistic update on error
-      if (editingEvent) {
-        setOptimisticEvents(prev =>
-          prev.map(event =>
-            event.id === editingEvent.id ? editingEvent : event
-          )
-        );
-      } else {
-        setOptimisticEvents(prev => prev.filter(event => event.id !== tempId));
-      }
-      alert("Failed to save event. Please try again.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleEdit = (event) => {
     setEditingEvent(event);
-    setFormData({
-      title: event.meta?.title || "",
-      description: event.meta?.description || "",
-      startDate: event.meta?.startDate || "",
-      endDate: event.meta?.endDate || "",
-      sessionBy: event.meta?.sessionBy || "",
-      type: event.meta?.type || "event"
-    });
     setShowModal(true);
   };
 
-  const handleDelete = async (eventId) => {
-    setDeleteConfirm(eventId);
-  };
-
-  const confirmDelete = async () => {
-    const eventId = deleteConfirm;
-    setDeleteConfirm(null);
-
-    // Optimistic delete
-    const eventToDelete = optimisticEvents.find(e => e.id === eventId);
-    setOptimisticEvents(prev => prev.filter(event => event.id !== eventId));
-
-    try {
-      // Delete image from storage if exists
-      if (eventToDelete?.meta?.imageStoragePath) {
-        const imageRef = storageRef(storage, eventToDelete.meta.imageStoragePath);
-        await deleteObject(imageRef);
-      }
-      await deleteDoc(doc(db, "events", eventId));
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      // Revert optimistic delete on error
-      if (eventToDelete) {
-        setOptimisticEvents(prev => [...prev, eventToDelete]);
-      }
-      alert("Failed to delete event. Please try again.");
-    }
-  };
-
-  const resetForm = () => {
+  const handleCloseModal = () => {
+    setShowModal(false);
     setEditingEvent(null);
-    setFormData({
-      title: "",
-      description: "",
-      startDate: "",
-      endDate: "",
-      sessionBy: "",
-      type: "event"
-    });
-    setImageFile(null);
   };
 
   const filters = [
@@ -220,277 +49,78 @@ const EventsPage = () => {
     { key: "workshop", label: "Workshops" }
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pt-16">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Events & Workshops
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Discover our upcoming events and workshops
-          </p>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
+          <h1 className="text-5xl font-black text-gray-900 dark:text-white mb-4 tracking-tighter uppercase">Events & Workshops</h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 font-medium tracking-wide">Premium Club Activities & Technical Sessions</p>
         </motion.div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap justify-center gap-4 mb-8">
-          {filters.map((filter) => (
-            <Button
-              key={filter.key}
-              variant={activeFilter === filter.key ? "primary" : "outline"}
-              onClick={() => setActiveFilter(filter.key)}
-            >
-              {filter.label}
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-12">
+          <div className="flex gap-2">
+            {filters.map((filter) => (
+              <Button key={filter.key} variant={activeFilter === filter.key ? "primary" : "outline"} onClick={() => setActiveFilter(filter.key)} className="rounded-full px-6">
+                {filter.label}
+              </Button>
+            ))}
+          </div>
+          {user && (
+            <Button onClick={() => { setEditingEvent(null); setShowModal(true); }} className="rounded-full">
+              <Plus className="w-4 h-4 mr-2" /> New Event
             </Button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {events.filter(event => activeFilter === "all" || event.meta?.type === activeFilter).map((event) => (
+            <Card key={event.id} className="group relative flex flex-col h-full bg-white dark:bg-gray-800 border-none shadow-xl hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] overflow-hidden">
+               <Link to={`/events/${event.id}`} className="absolute inset-0 z-10" />
+               <div className="relative h-64 overflow-hidden bg-gray-900">
+                  <img src={event.meta?.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={event.meta?.title} />
+                  <div className="absolute top-4 right-4 z-20">
+                     <span className="px-4 py-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg">
+                        {event.meta?.type}
+                     </span>
+                  </div>
+               </div>
+               <div className="p-8 flex flex-col flex-grow">
+                  <div className="flex items-center text-blue-600 dark:text-blue-400 font-black mb-4 text-xs tracking-[0.2em] uppercase">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    {event.meta?.startDate ? new Date(event.meta.startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'DATE TBD'}
+                  </div>
+                  <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                       <ExternalLink className="w-3 h-3" /> Explore Details
+                    </span>
+                    {user && (
+                      <div className="flex gap-2 z-20 relative">
+                        <button onClick={(e) => { e.preventDefault(); handleEdit(event); }} className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-all">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+               </div>
+            </Card>
           ))}
         </div>
-
-        {/* Admin Controls */}
-        {user && (
-          <div className="flex justify-end mb-8">
-            <Button
-              onClick={() => {
-                resetForm();
-                setShowModal(true);
-              }}
-              className="flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Event
-            </Button>
-          </div>
-        )}
-
-        {/* Events Grid */}
-        {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl h-64"></div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {optimisticEvents.filter(event =>
-              activeFilter === "all" || event.meta?.type === activeFilter
-            ).map((event, index) => (
-              <Card key={event.id} delay={index * 0.1} className="group h-full flex flex-col">
-                <div className="relative h-56 overflow-hidden bg-gray-900">
-                  {/* Blurred Background Image */}
-                  <div
-                    className="absolute inset-0 bg-cover bg-center blur-md opacity-50 scale-110"
-                    style={{ backgroundImage: `url(${event.meta?.imageUrl || "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=800"})` }}
-                  />
-
-                  {/* Main Image */}
-                  <img
-                    src={event.meta?.imageUrl || "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=800"}
-                    alt={event.meta?.title}
-                    className="relative w-full h-full object-contain z-10 transition-transform duration-500 group-hover:scale-105"
-                  />
-
-                  {/* Type Badge */}
-                  <div className="absolute top-4 left-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider shadow-md ${event.meta?.type === "workshop"
-                      ? "bg-purple-500 text-white"
-                      : "bg-blue-500 text-white"
-                      }`}>
-                      {event.meta?.type === "workshop" ? "Workshop" : "Event"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex-1">
-                    <div className="mb-4">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {event.meta?.title}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 leading-relaxed">
-                        {event.meta?.description}
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 mb-6">
-                      {event.meta?.sessionBy && (
-                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg">
-                          <User className="w-4 h-4 mr-2 text-blue-500" />
-                          <span className="font-medium">By {event.meta.sessionBy}</span>
-                        </div>
-                      )}
-
-
-                    </div>
-                  </div>
-
-                  {user && (
-                    <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(event)}
-                        className="flex-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                        disabled={event.isOptimistic}
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(event.id)}
-                        className="flex-1 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
-                        disabled={event.isOptimistic}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </Card>
-
-            ))}
-          </div>
-        )}
-
-        {optimisticEvents.filter(event =>
-          activeFilter === "all" || event.meta?.type === activeFilter
-        ).length === 0 && !loading && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">
-                No events found for the selected filter.
-              </p>
-            </div>
-          )}
       </div>
 
-      {/* Add/Edit Event Modal */}
-      <Modal
+      <EventEditModal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={editingEvent ? "Edit Event" : "Add Event"}
-        size="lg"
-      >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Input
-            label="Title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            required
-          />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <Input
-              label="Start Date"
-              type="date"
-              value={formData.startDate}
-              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              required
-            />
-            <Input
-              label="End Date"
-              type="date"
-              value={formData.endDate}
-              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-            />
-          </div>
-
-          <Input
-            label="Session By"
-            value={formData.sessionBy}
-            onChange={(e) => setFormData({ ...formData, sessionBy: e.target.value })}
-          />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Type
-            </label>
-            <select
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="event">Event</option>
-              <option value="workshop">Workshop</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Image
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImageFile(e.target.files[0])}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex gap-4">
-            <Button type="submit" loading={uploading} className="flex-1">
-              {editingEvent ? "Update" : "Create"} Event
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowModal(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        title="Confirm Delete"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-300">
-            Are you sure you want to delete this event? This action cannot be undone.
-          </p>
-          <div className="flex gap-4">
-            <Button
-              variant="danger"
-              onClick={confirmDelete}
-              className="flex-1"
-            >
-              Delete
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteConfirm(null)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    </div >
+        onClose={handleCloseModal}
+        editingEvent={editingEvent}
+      />
+    </div>
   );
 };
 
