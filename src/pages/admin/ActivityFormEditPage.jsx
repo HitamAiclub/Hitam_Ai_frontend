@@ -7,6 +7,8 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { FiArrowLeft, FiSave, FiUpload } from 'react-icons/fi';
+import { Mail } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { uploadUpcomingActivityFile } from '../../utils/cloudinary';
 
 function ActivityFormEditPage() {
@@ -26,6 +28,11 @@ function ActivityFormEditPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingQr, setUploadingQr] = useState(false);
+  const [autoConfirmEmail, setAutoConfirmEmail] = useState(false);
+  const [emailFieldId, setEmailFieldId] = useState('');
+  const [nameFieldId, setNameFieldId] = useState('');
+  const [welcomeEmailSubject, setWelcomeEmailSubject] = useState('');
+  const [welcomeEmailBody, setWelcomeEmailBody] = useState('');
 
   // Create payment section with current payment details
   const createPaymentSection = (customFee = null, customUrl = null, customQrUrl = null, customInstructions = null, existingFields = []) => {
@@ -191,6 +198,29 @@ function ActivityFormEditPage() {
         setJoinLink(activityData.postRegistration?.joinLink || '');
         setJoinLinkMessage(activityData.postRegistration?.joinLinkMessage || '');
         setJoinLinkLabel(activityData.postRegistration?.joinLinkLabel || '');
+        setAutoConfirmEmail(activityData.postRegistration?.autoConfirmEmail || false);
+        setEmailFieldId(activityData.postRegistration?.emailFieldId || '');
+        setNameFieldId(activityData.postRegistration?.nameFieldId || '');
+        setWelcomeEmailSubject(activityData.postRegistration?.welcomeEmailSubject || `Registration Confirmed: ${activityData.title}`);
+        setWelcomeEmailBody(activityData.postRegistration?.welcomeEmailBody || `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+    <h2 style="color: #10b981;">Registration Received! 🎉</h2>
+    <p>Hello <strong>[Participant Name]</strong>,</p>
+    <p>Thank you for registering for the event <strong>'[Event Name]'</strong>. This email confirms that we have successfully received your information.</p>
+    
+    <div style="background: #f0fdf4; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #bbf7d0;">
+        <p style="margin: 0; color: #166534;"><strong>What's Next?</strong></p>
+        <ul style="margin-top: 10px; color: #166534; padding-left: 20px;">
+            <li>Our team will review your registration details.</li>
+            <li>You will receive your <strong>official entry ticket</strong> with a QR code closer to the event day.</li>
+            <li>Keep an eye on this email address for further updates!</li>
+        </ul>
+    </div>
+
+    <p>If you have any questions, feel free to contact us.</p>
+    <br>
+    <p>Best Regards,</p>
+    <p><strong>The HITAM AI Team</strong></p>
+</div>`);
 
         // If isPaid is true and no payment section exists, create it after a short delay
         if (activityData.isPaid) {
@@ -278,7 +308,12 @@ function ActivityFormEditPage() {
         postRegistration: {
           joinLink: joinLink,
           joinLinkMessage: joinLinkMessage,
-          joinLinkLabel: joinLinkLabel
+          joinLinkLabel: joinLinkLabel,
+          autoConfirmEmail: autoConfirmEmail,
+          emailFieldId: emailFieldId,
+          nameFieldId: nameFieldId,
+          welcomeEmailSubject: welcomeEmailSubject,
+          welcomeEmailBody: welcomeEmailBody
         },
         updatedAt: new Date().toISOString()
       });
@@ -496,33 +531,129 @@ function ActivityFormEditPage() {
             Configure what happens after a student successfully registers.
           </p>
 
-          <div className="space-y-6 p-6 bg-green-50/50 dark:bg-green-900/10 rounded-xl border border-green-100 dark:border-green-800/50">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Input
-                label="Join Link (WhatsApp/Discord/etc.)"
-                value={joinLink}
-                onChange={(e) => setJoinLink(e.target.value)}
-                placeholder="https://chat.whatsapp.com/..."
-              />
-              <Input
-                label="Join Button Label"
-                value={joinLinkLabel}
-                onChange={(e) => setJoinLinkLabel(e.target.value)}
-                placeholder="Join WhatsApp Group"
-              />
+          <div className="space-y-6">
+            <div className="p-6 bg-green-50/50 dark:bg-green-900/10 rounded-xl border border-green-100 dark:border-green-800/50">
+              <div className="grid md:grid-cols-2 gap-6">
+                <Input
+                  label="Join Link (WhatsApp/Discord/etc.)"
+                  value={joinLink}
+                  onChange={(e) => setJoinLink(e.target.value)}
+                  placeholder="https://chat.whatsapp.com/..."
+                />
+                <Input
+                  label="Join Button Label"
+                  value={joinLinkLabel}
+                  onChange={(e) => setJoinLinkLabel(e.target.value)}
+                  placeholder="Join WhatsApp Group"
+                />
+              </div>
+
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Success Message
+                </label>
+                <textarea
+                  value={joinLinkMessage}
+                  onChange={(e) => setJoinLinkMessage(e.target.value)}
+                  rows={3}
+                  placeholder="Message displayed after registration (e.g. Join our group for updates!)"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Success Message
-              </label>
-              <textarea
-                value={joinLinkMessage}
-                onChange={(e) => setJoinLinkMessage(e.target.value)}
-                rows={3}
-                placeholder="Message displayed after registration (e.g. Join our group for updates!)"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+            {/* Confirmation Email Settings */}
+            <div className="p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <Mail className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Email Confirmation</h4>
+                  <p className="text-xs text-gray-500">Send an instant "Registration Received" email to participants.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${autoConfirmEmail ? 'text-blue-600' : 'text-gray-400'}`}>
+                    {autoConfirmEmail ? 'Enabled' : 'Disabled'}
+                  </span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoConfirmEmail}
+                      onChange={(e) => setAutoConfirmEmail(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+              </div>
+
+              {autoConfirmEmail && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-blue-100 dark:border-blue-800/50"
+                >
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                      Recipient Name Field
+                    </label>
+                    <select
+                      value={nameFieldId}
+                      onChange={(e) => setNameFieldId(e.target.value)}
+                      className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    >
+                      <option value="">Select field...</option>
+                      {formSchema.map(f => (
+                        <option key={f.id} value={f.label}>{f.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                      Recipient Email Field
+                    </label>
+                    <select
+                      value={emailFieldId}
+                      onChange={(e) => setEmailFieldId(e.target.value)}
+                      className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    >
+                      <option value="">Select field...</option>
+                      {formSchema.map(f => (
+                        <option key={f.id} value={f.label}>{f.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2 space-y-4 pt-4 border-t border-blue-100 dark:border-blue-800/50">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                        Email Subject
+                      </label>
+                      <input
+                        type="text"
+                        value={welcomeEmailSubject}
+                        onChange={(e) => setWelcomeEmailSubject(e.target.value)}
+                        placeholder="Registration Confirmed: [Event Name]"
+                        className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                        Email Body (HTML)
+                        <span className="ml-2 normal-case font-normal text-gray-400">Placeholders: [Participant Name], [Event Name]</span>
+                      </label>
+                      <textarea
+                        value={welcomeEmailBody}
+                        onChange={(e) => setWelcomeEmailBody(e.target.value)}
+                        rows={8}
+                        className="w-full px-3 py-2 text-sm font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="<h1>Hello [Participant Name]!</h1>..."
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, addDoc, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, where, getDocs, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -1152,20 +1152,63 @@ function ActivityRegistrationPage() {
         submittedAt: new Date().toISOString(),
         ...dataWithLabels, // Spread data with labels as keys directly into submissionData
         files: filesWithLabels,
-        status: (hasPaymentFields || hasPaymentFiles) ? "pending_payment" : "confirmed",
+        status: (hasPaymentFields || hasPaymentFiles) ? "pending_review" : "pending",
+        welcomeEmailSent: false,
+        ticketSent: false,
         // Keep field mapping for reference
         _fieldMapping: fieldIdToLabelMap
       };
 
       // Payment fields are now handled as regular form fields, no special handling needed
 
-      await addDoc(collection(db, 'allRegistrations'), submissionData);
+      const docRefGlobal = await addDoc(collection(db, 'allRegistrations'), submissionData);
 
       // Also save to activity-specific collection
+      let docRefActivity = null;
       try {
-        await addDoc(collection(db, 'upcomingActivities', id, 'registrations'), submissionData);
+        docRefActivity = await addDoc(collection(db, 'upcomingActivities', id, 'registrations'), submissionData);
       } catch (error) {
         console.warn('Could not save to activity-specific collection:', error);
+      }
+
+      // Handle Auto-Welcome Email
+      if (activity.postRegistration?.autoConfirmEmail) {
+        console.log('Auto-welcome enabled. Triggering email...');
+        try {
+          const nameFieldLabel = activity.postRegistration.nameFieldId; // This is the label
+          const emailFieldLabel = activity.postRegistration.emailFieldId; // This is the label
+          const customSubject = activity.postRegistration.welcomeEmailSubject;
+          const customHtml = activity.postRegistration.welcomeEmailBody;
+          
+          const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
+          console.log(`[DEBUG] Attempting to send welcome email via: ${apiUrl}/api/send-welcome`);
+          
+          const response = await fetch(`${apiUrl}/api/send-welcome`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              activity: { title: activity.title },
+              participant: submissionData, // Already has Labels as keys!
+              nameColumn: nameFieldLabel,
+              emailColumn: emailFieldLabel,
+              customSubject: customSubject,
+              customHtml: customHtml
+            })
+          });
+
+          if (response.ok) {
+            const resData = await response.json();
+            console.log('[SUCCESS] Auto-welcome email sent:', resData);
+            const updateFlags = { welcomeEmailSent: true };
+            if (docRefGlobal) await updateDoc(docRefGlobal, updateFlags).catch(e => console.error("Update global error", e));
+            if (docRefActivity) await updateDoc(docRefActivity, updateFlags).catch(e => console.error("Update activity error", e));
+          } else {
+            const errData = await response.json().catch(() => ({ error: 'Unknown server error' }));
+            console.error('[ERROR] Welcome email failed:', response.status, errData);
+          }
+        } catch (mailError) {
+          console.error('[CRITICAL] Auto-welcome flow error:', mailError);
+        }
       }
 
       setSubmitted(true);
