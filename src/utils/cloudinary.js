@@ -69,6 +69,37 @@ export const uploadToCloudinary = async (file, folder = 'hitam_ai') => {
     // Ensure folder starts with 'hitam_ai/' if not already
     const targetFolder = folder.startsWith('hitam_ai/') || folder === 'hitam_ai' ? folder : `hitam_ai/${folder}`;
 
+    // Fix for PDF and raw documents which fail with unsigned preset uploads
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf') || file.type.includes('document')) {
+      const base64Str = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+      
+      let response = await fetch(`${API_URL}/api/cloudinary/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file: base64Str,
+          folder: targetFolder,
+          filename: file.name
+        })
+      });
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(`Backend upload failed: ${errData.error || response.statusText}`);
+      }
+      
+      const backendData = await response.json();
+      return {
+        ...backendData,
+        size: file.size, // add file size dynamically
+        originalName: file.name
+      };
+    }
 
     const formData = new FormData();
     formData.append('file', file);

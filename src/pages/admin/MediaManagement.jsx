@@ -261,11 +261,34 @@ const MediaManagement = () => {
 
   // -- UI Helpers --
 
+  const handleViewFile = (file) => {
+    const urlExt = file.url ? file.url.split('.').pop().split('?')[0].toLowerCase() : '';
+    const ext = file.format || (file.name && file.name.includes('.') ? file.name.split('.').pop() : urlExt);
+    const officeExtensions = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'csv'];
+
+    if (officeExtensions.includes(ext.toLowerCase())) {
+      // Route Office files through Google Docs Viewer so they open inline instead of downloading
+      const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(file.url)}&embedded=false`;
+      window.open(viewerUrl, '_blank');
+    } else {
+      // Images, videos, and PDFs render natively in the browser tab
+      window.open(file.url, '_blank');
+    }
+  };
+
+  const isPdfFile = (file) => {
+    const urlExt = file.url ? file.url.split('.').pop().split('?')[0].toLowerCase() : '';
+    return file.format === 'pdf' || urlExt === 'pdf' || (file.name && file.name.toLowerCase().endsWith('.pdf'));
+  };
+
   const getFileIcon = (file) => {
-    if (file.resourceType === 'image') return <img src={file.url} alt={file.name} className="w-full h-full object-cover transition-transform group-hover:scale-105" />;
+    const isPdf = isPdfFile(file);
+    const isImageResource = file.resourceType === 'image' && !isPdf;
+    if (isImageResource) return <img src={file.url} alt={file.name} className="w-full h-full object-cover transition-transform group-hover:scale-105" />;
     if (file.resourceType === 'video') return <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white"><FiVideo className="w-12 h-12" /></div>;
 
-    const ext = file.format || (file.name.includes('.') ? file.name.split('.').pop() : '');
+    const urlExt = file.url ? file.url.split('.').pop().split('?')[0].toLowerCase() : '';
+    const ext = file.format || (file.name && file.name.includes('.') ? file.name.split('.').pop() : urlExt);
 
     switch (ext.toLowerCase()) {
       case 'pdf': return <div className="w-full h-full flex items-center justify-center bg-red-100 text-red-600"><FiFileText className="w-12 h-12" /><span className="absolute bottom-2 text-xs font-bold">PDF</span></div>;
@@ -594,10 +617,12 @@ const MediaManagement = () => {
                       <div className="aspect-square w-full bg-gray-100 dark:bg-gray-900 relative">
                         {getFileIcon(file)}
 
-                        {/* Overlay Actions */}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <button onClick={() => window.open(file.url, '_blank')} className="p-1.5 bg-white/90 rounded-full hover:bg-white text-gray-800" title="View">
+                          <button onClick={() => handleViewFile(file)} className="p-1.5 bg-white/90 rounded-full hover:bg-white text-gray-800 shadow-sm" title="View">
                             <FiLink />
+                          </button>
+                          <button onClick={() => window.open(file.url.replace('/upload/', '/upload/fl_attachment/'), '_blank')} className="p-1.5 bg-white/90 rounded-full hover:bg-white text-blue-600 shadow-sm" title="Download">
+                            <FiDownload />
                           </button>
                         </div>
                       </div>
@@ -615,11 +640,11 @@ const MediaManagement = () => {
                     <div className="flex items-center p-3 gap-4">
                       <div className="w-10 h-10 rounded bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
                         {/* Small Icon for List */}
-                        {file.resourceType === 'image' ? <img src={file.url} className="w-full h-full object-cover" /> : <FiFile className="text-gray-500" />}
+                        {file.resourceType === 'image' && !isPdfFile(file) ? <img src={file.url} className="w-full h-full object-cover" /> : <FiFile className="text-gray-500" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
-                        <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB • {new Date(file.createdAt)?.toLocaleDateString()} • {file.format}</p>
+                        <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB • {new Date(file.createdAt)?.toLocaleDateString()} • {file.format || (file.url ? file.url.split('.').pop().split('?')[0].toUpperCase() : '')}</p>
                       </div>
                     </div>
                   )}
@@ -648,10 +673,10 @@ const MediaManagement = () => {
               <div className="p-4 space-y-6">
                 <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center">
                   {/* Large Preview */}
-                  {selectedFile.resourceType === 'image' ? <img src={selectedFile.url} className="w-full h-full object-contain" /> :
+                  {selectedFile.resourceType === 'image' && !isPdfFile(selectedFile) ? <img src={selectedFile.url} className="w-full h-full object-contain" /> :
                     <div className="text-center p-4">
-                      <FiFileText className="w-16 h-16 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500 uppercase">{selectedFile.format} File</p>
+                      {isPdfFile(selectedFile) ? <FiFileText className="w-16 h-16 mx-auto text-red-500 mb-2" /> : <FiFileText className="w-16 h-16 mx-auto text-gray-400 mb-2" />}
+                      <p className="text-sm text-gray-500 uppercase">{selectedFile.format || (selectedFile.url ? selectedFile.url.split('.').pop().split('?')[0] : 'File')} File</p>
                     </div>
                   }
                 </div>
@@ -683,13 +708,16 @@ const MediaManagement = () => {
                   </div>
                   <div>
                     <label className="text-xs font-medium text-gray-500 uppercase">URL</label>
-                    <p className="text-xs font-mono text-blue-600 dark:text-blue-400 break-all cursor-pointer hover:underline" onClick={() => window.open(selectedFile.url)}>
+                    <p className="text-xs font-mono text-blue-600 dark:text-blue-400 break-all cursor-pointer hover:underline" onClick={() => handleViewFile(selectedFile)}>
                       {selectedFile.url}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => window.open(selectedFile.url.replace('/upload/', '/upload/fl_attachment/'), '_blank')}>
+                    <FiDownload className="mr-2" /> Download File
+                  </Button>
                   <Button variant="outline" className="w-full justify-start" onClick={() => { setNewName(selectedFile.name); setShowRenameModal(true); }}>
                     <FiEdit3 className="mr-2" /> Rename
                   </Button>

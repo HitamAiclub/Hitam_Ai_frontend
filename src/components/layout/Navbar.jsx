@@ -24,6 +24,7 @@ const Navbar = () => {
     { name: "Home", path: "/" },
     { name: "Events & Workshops", path: "/events" },
     { name: "Upcoming Activities", path: "/upcoming" },
+    { name: "Network", path: "/network" },
     { name: "Join the Club", path: "/join" },
   ];
 
@@ -31,9 +32,10 @@ const Navbar = () => {
     { name: "Home", path: "/" },
     { name: "Events & Workshops", path: "/events" },
     { name: "Upcoming Activities", path: "/upcoming" },
+    { name: "Network", path: "/network" },
     { name: "Committee Members", path: "/admin/committee" },
     { name: "Form Submissions", path: "/admin/submissions" },
-    { name: "Community Members", path: "/admin/community" },
+    { name: "Community & Connections", path: "/admin/community" },
     { name: "Media Management", path: "/admin/media" },
     { name: "Highlights", path: "/admin/highlights" },
   ];

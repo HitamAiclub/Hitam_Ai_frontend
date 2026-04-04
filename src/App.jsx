@@ -13,6 +13,7 @@ import EventDetailPage from "./pages/EventDetailPage.jsx";
 import UpcomingActivities from "./pages/UpcomingActivities.jsx";
 import FormPage from "./pages/FormPage.jsx";
 import JoinClub from "./pages/JoinClub.jsx";
+import NetworkPage from "./pages/NetworkPage.jsx";
 import AdminLogin from "./pages/AdminLogin.jsx";
 import AdminHome from "./pages/admin/AdminHome.jsx";
 import CommitteeMembers from "./pages/admin/CommitteeMembers.jsx";
@@ -99,6 +100,7 @@ function App() {
                   }
                 />
                 <Route path="/join" element={<JoinClub />} />
+                <Route path="/network" element={<NetworkPage />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
 
                 <Route
