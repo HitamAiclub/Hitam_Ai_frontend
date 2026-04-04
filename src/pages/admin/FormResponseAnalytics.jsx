@@ -186,6 +186,7 @@ const FormResponseAnalytics = () => {
     const [ticketTime, setTicketTime] = useState('');
     const [participantsToMail, setParticipantsToMail] = useState([]);
     const [selectedSubIds, setSelectedSubIds] = useState([]);
+    const [emailCc, setEmailCc] = useState(''); // New state for CC emails
 
 
     const [selectedExportColumns, setSelectedExportColumns] = useState([]);
@@ -578,7 +579,8 @@ const FormResponseAnalytics = () => {
                     emailColumn: selectedEmailColumn,
                     nameColumn: selectedNameColumn,
                     venue: ticketVenue,
-                    time: ticketTime
+                    time: ticketTime,
+                    cc: emailCc // Pass CC to backend
                 })
             });
 
@@ -645,7 +647,8 @@ const FormResponseAnalytics = () => {
                     customSubject: activity.postRegistration?.welcomeEmailSubject,
                     customHtml: activity.postRegistration?.welcomeEmailBody,
                     venue: ticketVenue,
-                    time: ticketTime
+                    time: ticketTime,
+                    cc: emailCc // Pass CC to backend (uses current state value)
                 })
             });
 
@@ -1503,6 +1506,17 @@ const FormResponseAnalytics = () => {
                             type="text"
                             value={emailSubject}
                             onChange={(e) => setEmailSubject(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CC Email (Optional)</label>
+                        <input
+                            type="text"
+                            value={emailCc}
+                            onChange={(e) => setEmailCc(e.target.value)}
+                            placeholder="e.g. admin@hitam.ai, info@hitam.ai"
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
                     </div>
