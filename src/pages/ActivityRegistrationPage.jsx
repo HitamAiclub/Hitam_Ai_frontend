@@ -1215,10 +1215,10 @@ function ActivityRegistrationPage() {
           const emailFieldLabel = activity.postRegistration.emailFieldId; // This is the label
           const customSubject = activity.postRegistration.welcomeEmailSubject;
           const customHtml = activity.postRegistration.welcomeEmailBody;
-          
+
           const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
           console.log(`[DEBUG] Attempting to send welcome email via: ${apiUrl}/api/send-welcome`);
-          
+
           const response = await fetch(`${apiUrl}/api/send-welcome`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1228,8 +1228,7 @@ function ActivityRegistrationPage() {
               nameColumn: nameFieldLabel,
               emailColumn: emailFieldLabel,
               customSubject: customSubject,
-              customHtml: customHtml,
-              cc: activity.postRegistration.welcomeEmailCc
+              customHtml: customHtml
             })
           });
 

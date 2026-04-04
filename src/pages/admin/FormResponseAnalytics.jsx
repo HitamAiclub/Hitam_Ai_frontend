@@ -7,53 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { Download, ArrowLeft, Filter, Table, Save, Search, Eye, ChevronDown, Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Frown, Meh, X, Mail, CheckCircle2, AlertCircle, Clock, Code } from 'lucide-react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import { Download, ArrowLeft, Filter, Table, Save, Search, Eye, ChevronDown, Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Frown, Meh, X, Mail, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Modal from '../../components/ui/Modal';
 import XLSX from 'xlsx-js-style';
 import { useAuth } from '../../contexts/AuthContext';
-
-const QUILL_MODULES = {
-  toolbar: [
-    [{ 'header': [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ 'color': [] }, { 'background': [] }],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-    ['link', 'clean'],
-  ],
-};
-
-const THEMED_BOXES = {
-  green: {
-    name: 'Next Steps (Green)',
-    class: 'bg-green-50 text-green-800 border-green-200',
-    html: `<div style="margin: 25px 0; padding: 24px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;">
-        <p style="margin: 0 0 10px 0; color: #166534; font-weight: bold; font-size: 16px;">What's Next?</p>
-        <ul style="margin: 0; color: #166534; padding-left: 20px;">
-            <li>Step 1 description here...</li>
-            <li>Step 2 description here...</li>
-        </ul>
-    </div>`
-  },
-  blue: {
-    name: 'General Info (Blue)',
-    class: 'bg-blue-50 text-blue-800 border-blue-200',
-    html: `<div style="margin: 25px 0; padding: 24px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
-        <p style="margin: 0 0 10px 0; color: #1e40af; font-weight: bold; font-size: 16px;">Important Information</p>
-        <p style="margin: 0; color: #1e40af; font-size: 14px;">Enter your informational text about the event details or logistics here.</p>
-    </div>`
-  },
-  orange: {
-    name: 'Quick Note (Orange)',
-    class: 'bg-orange-50 text-orange-800 border-orange-200',
-    html: `<div style="margin: 25px 0; padding: 20px; background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; text-align: center; color: #c2410c; font-size: 14px;">
-        <strong>Note:</strong> Enter a quick disclaimer or rule here.
-    </div>`
-  }
-};
 
 const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
@@ -225,10 +184,8 @@ const FormResponseAnalytics = () => {
     const [selectedNameColumn, setSelectedNameColumn] = useState('');
     const [ticketVenue, setTicketVenue] = useState('');
     const [ticketTime, setTicketTime] = useState('');
-    const [emailCc, setEmailCc] = useState('');
     const [participantsToMail, setParticipantsToMail] = useState([]);
     const [selectedSubIds, setSelectedSubIds] = useState([]);
-    const [emailEditorMode, setEmailEditorMode] = useState('visual');
 
 
     const [selectedExportColumns, setSelectedExportColumns] = useState([]);
@@ -561,17 +518,17 @@ const FormResponseAnalytics = () => {
         // Final fallback: use all visible (getFilteredSubmissions)
         let dataToSend = [];
         if (participants && !participants.nativeEvent) {
-             dataToSend = participants;
+            dataToSend = participants;
         } else if (selectedSubIds.length > 0) {
-             dataToSend = submissions.filter(s => selectedSubIds.includes(s.id));
+            dataToSend = submissions.filter(s => selectedSubIds.includes(s.id));
         } else {
-             dataToSend = getFilteredSubmissions;
+            dataToSend = getFilteredSubmissions;
         }
 
         if (!dataToSend.length) return alert("No participants to send tickets to. Please select rows or check your filters.");
-        
+
         setParticipantsToMail(dataToSend);
-        
+
         // Try to auto-detect email column
         const guessEmailCol = baseAnalytics.formFields?.find(f => f.label?.toLowerCase().includes('email'))?.id || '';
         setSelectedEmailColumn(guessEmailCol);
@@ -601,14 +558,14 @@ const FormResponseAnalytics = () => {
 
     const handleSendTickets = async () => {
         if (!participantsToMail.length) return alert("No participants to send tickets to.");
-        
+
         const confirmSend = window.confirm(`Are you sure you want to send tickets to ${participantsToMail.length} participant(s)?\nEmails will be sent to matched email addresses.`);
         if (!confirmSend) return;
 
         try {
             setSendingTickets(true);
             const token = await user?.getIdToken(); // Optional: if protected
-            
+
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             const response = await fetch(`${apiUrl}/api/send-tickets`, {
                 method: 'POST',
@@ -621,32 +578,31 @@ const FormResponseAnalytics = () => {
                     emailColumn: selectedEmailColumn,
                     nameColumn: selectedNameColumn,
                     venue: ticketVenue,
-                    time: ticketTime,
-                    cc: emailCc
+                    time: ticketTime
                 })
             });
 
             const result = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to send tickets');
             }
 
             // Update flags in Firestore for each participant who succeeded
             try {
-                const updateFlags = { 
+                const updateFlags = {
                     ticketSent: true,
                     status: 'confirmed'
                 };
-                
+
                 for (const participant of participantsToMail) {
                     const globalRef = doc(db, 'allRegistrations', participant.id);
                     const activityRef = doc(db, 'upcomingActivities', activityId, 'registrations', participant.id);
-                    
-                    await updateDoc(globalRef, updateFlags).catch(() => {});
-                    await updateDoc(activityRef, updateFlags).catch(() => {});
+
+                    await updateDoc(globalRef, updateFlags).catch(() => { });
+                    await updateDoc(activityRef, updateFlags).catch(() => { });
                 }
-                
+
                 // Refresh data locally
                 setSubmissions(prev => prev.map(sub => {
                     const isSent = participantsToMail.some(p => p.id === sub.id);
@@ -658,7 +614,7 @@ const FormResponseAnalytics = () => {
 
             alert(result.message || `Successfully sent tickets to ${result.results?.success} users.`);
             setEmailModalOpen(false);
-            
+
         } catch (err) {
             console.error("Failed to send tickets:", err);
             alert(`Error: ${err.message}`);
@@ -669,11 +625,11 @@ const FormResponseAnalytics = () => {
 
     const handleSendManualWelcome = async (sub) => {
         if (!window.confirm("Do you want to send the welcome email to this participant now?")) return;
-        
+
         try {
             setLoading(true);
             const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
-            
+
             // Use configured labels or try common defaults
             const nameCol = activity.postRegistration?.nameFieldId || '';
             const emailCol = activity.postRegistration?.emailFieldId || '';
@@ -689,17 +645,16 @@ const FormResponseAnalytics = () => {
                     customSubject: activity.postRegistration?.welcomeEmailSubject,
                     customHtml: activity.postRegistration?.welcomeEmailBody,
                     venue: ticketVenue,
-                    time: ticketTime,
-                    cc: emailCc
+                    time: ticketTime
                 })
             });
 
             if (response.ok) {
                 // Update Firestore
                 const flags = { welcomeEmailSent: true };
-                await updateDoc(doc(db, 'allRegistrations', sub.id), flags).catch(() => {});
-                await updateDoc(doc(db, 'upcomingActivities', activityId, 'registrations', sub.id), flags).catch(() => {});
-                
+                await updateDoc(doc(db, 'allRegistrations', sub.id), flags).catch(() => { });
+                await updateDoc(doc(db, 'upcomingActivities', activityId, 'registrations', sub.id), flags).catch(() => { });
+
                 // Update local state
                 setSubmissions(prev => prev.map(s => s.id === sub.id ? { ...s, ...flags } : s));
                 alert("Welcome email sent successfully!");
@@ -804,8 +759,8 @@ const FormResponseAnalytics = () => {
                     </div>
                     <div className="flex gap-2">
                         {/* Send Tickets Button */}
-                        <Button 
-                            onClick={() => openEmailModal()} 
+                        <Button
+                            onClick={() => openEmailModal()}
                             disabled={sendingTickets}
                             className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
                         >
@@ -1172,8 +1127,8 @@ const FormResponseAnalytics = () => {
                                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                         <tr>
                                             <th className="px-6 py-3 whitespace-nowrap w-4 text-center">
-                                                <input 
-                                                    type="checkbox" 
+                                                <input
+                                                    type="checkbox"
                                                     className="rounded border-gray-300"
                                                     checked={selectedSubIds.length === getFilteredSubmissions.length && getFilteredSubmissions.length > 0}
                                                     onChange={(e) => {
@@ -1239,15 +1194,15 @@ const FormResponseAnalytics = () => {
                                         {getFilteredSubmissions.map((sub) => (
                                             <tr key={sub.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                                 <td className="px-6 py-4 text-center">
-                                                    <input 
-                                                        type="checkbox" 
+                                                    <input
+                                                        type="checkbox"
                                                         className="rounded border-gray-300 transition-all cursor-pointer"
                                                         checked={selectedSubIds.includes(sub.id)}
                                                         onChange={() => {
-                                                            setSelectedSubIds(prev => 
-                                                                prev.includes(sub.id) 
-                                                                ? prev.filter(id => id !== sub.id) 
-                                                                : [...prev, sub.id]
+                                                            setSelectedSubIds(prev =>
+                                                                prev.includes(sub.id)
+                                                                    ? prev.filter(id => id !== sub.id)
+                                                                    : [...prev, sub.id]
                                                             );
                                                         }}
                                                     />
@@ -1257,9 +1212,9 @@ const FormResponseAnalytics = () => {
                                                         <Button variant="ghost" size="sm" onClick={() => setSelectedSubmission(sub)} title="View Details">
                                                             <Eye className="w-4 h-4 text-blue-500" />
                                                         </Button>
-                                                        <Button 
-                                                            variant="ghost" 
-                                                            size="sm" 
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
                                                             onClick={() => {
                                                                 setParticipantsToMail([sub]);
                                                                 setEmailModalOpen(true);
@@ -1277,7 +1232,7 @@ const FormResponseAnalytics = () => {
                                                     {sub.welcomeEmailSent ? (
                                                         <CheckCircle2 className="w-4 h-4 text-green-500 mx-auto" />
                                                     ) : (
-                                                        <button 
+                                                        <button
                                                             onClick={() => handleSendManualWelcome(sub)}
                                                             className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors group"
                                                             title="Manually send welcome email"
@@ -1502,186 +1457,103 @@ const FormResponseAnalytics = () => {
             </Modal>
             {/* Email Customization Modal */}
             <Modal
-                isOpen={emailEditorMode && emailModalOpen}
+                isOpen={emailModalOpen}
                 onClose={() => setEmailModalOpen(false)}
                 title="Customize Ticket Email"
-                size="xl"
             >
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-h-[80vh] overflow-y-auto pr-2">
-                    {/* Settings Column */}
-                    <div className="space-y-4">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Customize the email content. Use templates or highlight boxes for a professional look.
-                            <br/><code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">[Participant Name]</code> 
-                            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded ml-2">[Event Name]</code>
-                        </p>
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Customize the email subject and body before sending. You can use the following placeholders:
+                        <br /><code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">[Participant Name]</code>
+                        <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded ml-2">[Event Name]</code>
+                        <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded ml-2">[Registration ID]</code>
+                    </p>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Name Column</label>
-                                <select
-                                    value={selectedNameColumn}
-                                    onChange={(e) => setSelectedNameColumn(e.target.value)}
-                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
-                                >
-                                    <option value="">Auto-Detect</option>
-                                    {baseAnalytics.formFields.map(f => (
-                                        <option key={f.id} value={f.id}>{f.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Email Column</label>
-                                <select
-                                    value={selectedEmailColumn}
-                                    onChange={(e) => setSelectedEmailColumn(e.target.value)}
-                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
-                                >
-                                    <option value="">Auto-Detect</option>
-                                    {baseAnalytics.formFields.map(f => (
-                                        <option key={f.id} value={f.id}>{f.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recipient Name Data Column</label>
+                        <select
+                            value={selectedNameColumn}
+                            onChange={(e) => setSelectedNameColumn(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        >
+                            <option value="">-- Let System Auto-Detect (Fallback) --</option>
+                            {baseAnalytics.formFields.map(f => (
+                                <option key={f.id} value={f.id}>{f.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recipient Email Data Column</label>
+                        <select
+                            value={selectedEmailColumn}
+                            onChange={(e) => setSelectedEmailColumn(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        >
+                            <option value="">-- Let System Auto-Detect (Fallback) --</option>
+                            {baseAnalytics.formFields.map(f => (
+                                <option key={f.id} value={f.id}>{f.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+                        <input
+                            type="text"
+                            value={emailSubject}
+                            onChange={(e) => setEmailSubject(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Venue (on Ticket)</label>
                             <input
                                 type="text"
-                                value={emailSubject}
-                                onChange={(e) => setEmailSubject(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                                placeholder="e.g. Auditorium"
+                                value={ticketVenue}
+                                onChange={(e) => setTicketVenue(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                             />
                         </div>
-
-                        <div className="flex items-center justify-between mb-1">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Body</label>
-                            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
-                                <button
-                                    type="button"
-                                    onClick={() => setEmailEditorMode('visual')}
-                                    className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
-                                        emailEditorMode === 'visual' 
-                                        ? 'bg-white dark:bg-gray-700 text-purple-600 shadow-sm' 
-                                        : 'text-gray-500'
-                                    }`}
-                                >
-                                    <Eye size={12} /> VISUAL
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setEmailEditorMode('html')}
-                                    className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
-                                        emailEditorMode === 'html' 
-                                        ? 'bg-white dark:bg-gray-700 text-purple-600 shadow-sm' 
-                                        : 'text-gray-500'
-                                    }`}
-                                >
-                                    <Code size={12} /> HTML
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 mb-2">
-                            {Object.entries(THEMED_BOXES).map(([key, box]) => (
-                                <button
-                                    key={key}
-                                    onClick={() => setEmailBody(prev => prev + box.html)}
-                                    className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all hover:shadow-md ${box.class}`}
-                                >
-                                    + {box.name}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="border border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden bg-white dark:bg-gray-800">
-                            {emailEditorMode === 'visual' ? (
-                                <ReactQuill
-                                    theme="snow"
-                                    value={emailBody}
-                                    onChange={setEmailBody}
-                                    modules={QUILL_MODULES}
-                                    className="h-[300px]"
-                                />
-                            ) : (
-                                <textarea
-                                    value={emailBody}
-                                    onChange={(e) => setEmailBody(e.target.value)}
-                                    rows={15}
-                                    className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none"
-                                />
-                            )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Venue (on Ticket)</label>
-                                <input
-                                    type="text"
-                                    value={ticketVenue}
-                                    onChange={(e) => setTicketVenue(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase text-gray-500 mb-1">Time (on Ticket)</label>
-                                <input
-                                    type="text"
-                                    value={ticketTime}
-                                    onChange={(e) => setTicketTime(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
-                            <Button variant="ghost" onClick={() => setEmailModalOpen(false)}>Cancel</Button>
-                            <Button
-                                onClick={handleSendTickets}
-                                disabled={sendingTickets}
-                                className="bg-purple-600 hover:bg-purple-700 text-white"
-                            >
-                                {sendingTickets ? 'Sending...' : `Send to ${participantsToMail.length} Recipient(s)`}
-                            </Button>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time (on Ticket)</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. 10:00 AM"
+                                value={ticketTime}
+                                onChange={(e) => setTicketTime(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            />
                         </div>
                     </div>
 
-                    {/* Preview Column (Mobile Shell) */}
-                    <div className="hidden lg:block sticky top-0">
-                        <label className="block text-[10px] font-bold uppercase text-gray-400 mb-3 tracking-widest text-center">Mobile Preview</label>
-                        <div className="mx-auto w-[320px] h-[640px] border-[8px] border-gray-900 dark:border-gray-800 rounded-[40px] shadow-2xl overflow-hidden relative bg-gray-100">
-                            {/* Mobile Header */}
-                            <div className="bg-white dark:bg-gray-900 px-4 pt-8 pb-3 border-b border-gray-200 dark:border-gray-800 flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">H</div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-900 dark:text-white leading-none">HITAM AI CLUB</p>
-                                    <p className="text-[8px] text-gray-500">to [Participant Name]</p>
-                                </div>
-                            </div>
-                            
-                            {/* Mobile Email Content */}
-                            <div className="h-full overflow-y-auto bg-[#f8fafc] p-3 pb-20">
-                                <div className="bg-white rounded-lg shadow-sm p-4 min-h-[400px]">
-                                    <div className="prose prose-sm max-w-none text-[12px]" dangerouslySetInnerHTML={{ __html: emailBody.replace('[Participant Name]', 'Arif').replace('[Event Name]', activity?.title || 'Event Name').replace('[Registration ID]', 'REG-88219') }} />
-                                    
-                                    {/* Mock Ticket Section */}
-                                    <div className="mt-6 pt-6 border-t border-dashed border-gray-200">
-                                        <div className="bg-gray-50 rounded-lg p-3 text-center border border-gray-100">
-                                            <p className="text-[8px] font-bold text-gray-400 mb-2">OFFICIAL TICKET ATTACHED</p>
-                                            <div className="w-24 h-24 bg-white border border-gray-200 mx-auto rounded-lg flex items-center justify-center mb-2">
-                                                <div className="w-16 h-16 bg-gray-200 rounded opacity-50 flex items-center justify-center italic text-[8px]">QR CODE</div>
-                                            </div>
-                                            <p className="text-[9px] font-bold text-gray-900">{activity?.title}</p>
-                                            <p className="text-[8px] text-gray-500">{ticketVenue || 'Main Auditorium'} • {ticketTime || '10:00 AM'}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Body (HTML Supported)</label>
+                        <textarea
+                            value={emailBody}
+                            onChange={(e) => setEmailBody(e.target.value)}
+                            rows={10}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono text-sm leading-relaxed"
+                        />
+                    </div>
 
-                            {/* Home Indicator */}
-                            <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-24 h-1 bg-gray-400 rounded-full" />
-                        </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setEmailModalOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSendTickets}
+                            disabled={sendingTickets}
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                        >
+                            {sendingTickets ? 'Sending...' : 'Confirm & Send'}
+                        </Button>
                     </div>
                 </div>
             </Modal>
