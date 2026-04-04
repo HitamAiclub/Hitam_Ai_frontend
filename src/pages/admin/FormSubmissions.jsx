@@ -61,7 +61,14 @@ const FormSubmissions = () => {
         })
       );
 
-      setActivities(activitiesData);
+      // Sort by most recent first
+      const sortedActivities = activitiesData.sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt || a.timestamp || 0);
+        const dateB = new Date(b.updatedAt || b.createdAt || b.timestamp || 0);
+        return dateB - dateA;
+      });
+
+      setActivities(sortedActivities);
     } catch (error) {
       console.error("Error fetching submissions:", error);
       setError(error.message);

@@ -282,6 +282,9 @@ const FormResponseAnalytics = () => {
             // Normalize Data Keys (Merge Legacy/Alternates)
             const normalizedData = normalizeSubmissions(submissionsData, activityData.formSections);
 
+            // Sort by most recent first
+            normalizedData.sort((a, b) => new Date(b.submittedAt || b.timestamp || 0) - new Date(a.submittedAt || a.timestamp || 0));
+
             setSubmissions(normalizedData);
 
             // COMPUTE INITIAL ANALYTICS

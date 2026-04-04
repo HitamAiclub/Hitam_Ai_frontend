@@ -219,7 +219,7 @@ function ActivityFormEditPage() {
     <p>If you have any questions, feel free to contact us.</p>
     <br>
     <p>Best Regards,</p>
-    <p><strong>The HITAM AI Team</strong></p>
+    <p><strong>The HITAM AI CLUB Team</strong></p>
 </div>`);
 
         // If isPaid is true and no payment section exists, create it after a short delay
