@@ -1670,13 +1670,27 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                         className="min-h-[200px]"
                       />
                     ) : (
-                      <textarea
-                        value={editingFieldDraft.content || ""}
-                        onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, content: e.target.value })}
-                        placeholder={editingFieldDraft.contentType === "markdown" ? "Use [link text](https://example.com) for links" : "Enter your content here..."}
-                        rows={6}
-                        className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none"
-                      />
+                      <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
+                        <textarea
+                          value={editingFieldDraft.content || ""}
+                          onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, content: e.target.value })}
+                          placeholder={editingFieldDraft.contentType === "markdown" ? "Use [link text](https://example.com) for links" : "Enter your content here..."}
+                          rows={8}
+                          className="flex-1 px-3 py-2 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none resize-none"
+                        />
+                        <div className="flex-1 p-4 overflow-y-auto max-h-[300px] bg-gray-50 dark:bg-gray-900/50">
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Editor Preview</div>
+                          <div 
+                            className="prose prose-sm dark:prose-invert max-w-none"
+                            style={editingFieldDraft.contentType === "html" ? { fontFamily: "'Segoe UI', sans-serif" } : {}}
+                            dangerouslySetInnerHTML={{ 
+                              __html: editingFieldDraft.contentType === "markdown" 
+                                ? renderMarkdownLinks(editingFieldDraft.content || "") 
+                                : editingFieldDraft.content || '<p className="text-gray-400 font-italic italic text-xs">No content to preview</p>' 
+                            }} 
+                          />
+                        </div>
+                      </div>
                     )}
                   </div>
                   

@@ -662,25 +662,34 @@ function ActivityFormEditPage() {
                     ))}
                   </div>
                   
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-800">
-                    {instructionsEditorMode === 'visual' ? (
-                      <ReactQuill
-                        theme="snow"
-                        value={instructions}
-                        onChange={setInstructions}
-                        modules={QUILL_MODULES}
-                        className="min-h-[150px]"
-                      />
-                    ) : (
-                      <textarea
-                        value={instructions}
-                        onChange={(e) => setInstructions(e.target.value)}
-                        rows={6}
-                        className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none"
-                        placeholder="Instructions for payment..."
-                      />
-                    )}
-                  </div>
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+                      {instructionsEditorMode === 'visual' ? (
+                        <ReactQuill
+                          theme="snow"
+                          value={instructions}
+                          onChange={setInstructions}
+                          modules={QUILL_MODULES}
+                          className="min-h-[150px]"
+                        />
+                      ) : (
+                        <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
+                          <textarea
+                            value={instructions}
+                            onChange={(e) => setInstructions(e.target.value)}
+                            rows={8}
+                            className="flex-1 px-3 py-2 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none resize-none"
+                            placeholder="Instructions for payment..."
+                          />
+                          <div className="flex-1 p-4 overflow-y-auto max-h-[300px] bg-gray-50 dark:bg-gray-900/50">
+                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Live Preview</div>
+                            <div 
+                              className="prose prose-sm dark:prose-invert max-w-none"
+                              dangerouslySetInnerHTML={{ __html: instructions || '<p className="text-gray-400 font-italic italic text-xs">No content to preview</p>' }} 
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                 </div>
               </div>
             </div>
@@ -771,13 +780,22 @@ function ActivityFormEditPage() {
                         className="min-h-[150px]"
                       />
                     ) : (
-                      <textarea
-                        value={joinLinkMessage}
-                        onChange={(e) => setJoinLinkMessage(e.target.value)}
-                        rows={6}
-                        className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none"
-                        placeholder="Message displayed after registration..."
-                      />
+                      <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
+                        <textarea
+                          value={joinLinkMessage}
+                          onChange={(e) => setJoinLinkMessage(e.target.value)}
+                          rows={8}
+                          className="flex-1 px-3 py-2 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none resize-none"
+                          placeholder="Message displayed after registration..."
+                        />
+                        <div className="flex-1 p-4 overflow-y-auto max-h-[300px] bg-gray-50 dark:bg-gray-900/50">
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Live Preview</div>
+                          <div 
+                            className="prose prose-sm dark:prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ __html: joinLinkMessage || '<p className="text-gray-400 font-italic italic text-xs">No content to preview</p>' }} 
+                          />
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1010,13 +1028,30 @@ function ActivityFormEditPage() {
                                 />
                               </div>
                             ) : (
-                              <textarea
-                                value={welcomeEmailBody}
-                                onChange={(e) => setWelcomeEmailBody(e.target.value)}
-                                rows={20}
-                                className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 selection:bg-blue-100"
-                                placeholder="<h1>Hello [Participant Name]!</h1>..."
-                              />
+                              <div className="flex flex-col divide-y divide-gray-100">
+                                <div className="p-4 bg-gray-50 border-b border-gray-100 italic text-[10px] text-gray-400 flex items-center justify-between">
+                                  <span>HTML Code Editor</span>
+                                  <span className="flex items-center gap-1"><Code size={10} /> Live Preview Rendering Below</span>
+                                </div>
+                                <textarea
+                                  value={welcomeEmailBody}
+                                  onChange={(e) => setWelcomeEmailBody(e.target.value)}
+                                  rows={12}
+                                  className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 selection:bg-blue-100 resize-none"
+                                  placeholder="<h1>Hello [Participant Name]!</h1>..."
+                                />
+                                <div className="p-4 bg-blue-50/30">
+                                  <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                                    Visual Result (Live)
+                                  </div>
+                                  <div 
+                                    className="p-6 bg-white rounded-xl border border-blue-100 shadow-inner min-h-[200px]"
+                                    style={{ fontFamily: "'Segoe UI', sans-serif" }}
+                                    dangerouslySetInnerHTML={{ __html: welcomeEmailBody }} 
+                                  />
+                                </div>
+                              </div>
                             )}
                           </div>
 

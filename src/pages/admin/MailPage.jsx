@@ -575,12 +575,27 @@ const MailPage = () => {
                                     ) : (
                                         <div className="bg-[#fceef0] dark:bg-gray-900 p-4 sm:p-8 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-2xl relative min-h-[700px] flex flex-col">
                                              <div className="max-w-[600px] mx-auto bg-white shadow-xl rounded-[24px] overflow-hidden border border-gray-100/50 flex-1 flex flex-col">
+                                                <div className="p-4 bg-gray-50 border-b border-gray-100 italic text-[10px] text-gray-400 flex items-center justify-between">
+                                                    <span>HTML Code Editor</span>
+                                                    <span className="flex items-center gap-1"><Code size={10} /> Live Preview Rendering Below</span>
+                                                </div>
                                                 <textarea
                                                     value={emailBody}
                                                     onChange={(e) => setEmailBody(e.target.value)}
                                                     rows={16}
-                                                    className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 flex-1"
+                                                    className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 flex-1 resize-none"
                                                 />
+                                                <div className="p-4 bg-blue-50/30 border-t border-blue-50">
+                                                    <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                                                        Visual Result (Live)
+                                                    </div>
+                                                    <div 
+                                                        className="p-6 bg-white rounded-xl border border-blue-100 shadow-inner min-h-[200px]"
+                                                        style={{ fontFamily: "'Segoe UI', sans-serif" }}
+                                                        dangerouslySetInnerHTML={{ __html: emailBody }} 
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     )}
