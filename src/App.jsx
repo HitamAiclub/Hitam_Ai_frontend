@@ -25,6 +25,7 @@ import MediaManagement from "./pages/admin/MediaManagement.jsx";
 import HighlightsManager from "./pages/admin/HighlightsManager.jsx";
 import FormListPage from "./pages/admin/FormListPage.jsx";
 import FormEditPage from "./pages/admin/FormEditPage.jsx";
+import MailPage from "./pages/admin/MailPage.jsx";
 import ActivityFormEditPage from "./pages/admin/ActivityFormEditPage.jsx";
 import ActivityRegistrationPage from "./pages/ActivityRegistrationPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -172,6 +173,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <HighlightsManager />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/mail"
+                  element={
+                    <ProtectedRoute>
+                      <MailPage />
                     </ProtectedRoute>
                   }
                 />

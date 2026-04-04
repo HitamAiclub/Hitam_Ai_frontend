@@ -1,7 +1,48 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, GripVertical, Eye, Settings, Link, Image as ImageIcon, Type, Copy, ArrowUp, ArrowDown, ArrowRight, Download, Play, CheckCircle, Info, Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Meh, Frown } from "lucide-react";
+import { Plus, Trash2, GripVertical, Eye, Settings, Link, Image as ImageIcon, Type, Copy, ArrowUp, ArrowDown, ArrowRight, Download, Play, CheckCircle, Info, Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Meh, Frown, Code } from "lucide-react";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { uploadFormBuilderImage, uploadFormFiles } from "../../utils/cloudinary";
+
+const QUILL_MODULES = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+    ['link', 'clean'],
+  ],
+};
+
+const THEMED_BOXES = {
+  green: {
+    name: 'Next Steps (Green)',
+    class: 'bg-green-50 text-green-800 border-green-200',
+    html: `<div style="margin: 25px 0; padding: 24px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;">
+        <p style="margin: 0 0 10px 0; color: #166534; font-weight: bold; font-size: 16px;">What's Next?</p>
+        <ul style="margin: 0; color: #166534; padding-left: 20px;">
+            <li>Step 1 description here...</li>
+            <li>Step 2 description here...</li>
+        </ul>
+    </div>`
+  },
+  blue: {
+    name: 'General Info (Blue)',
+    class: 'bg-blue-50 text-blue-800 border-blue-200',
+    html: `<div style="margin: 25px 0; padding: 24px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
+        <p style="margin: 0 0 10px 0; color: #1e40af; font-weight: bold; font-size: 16px;">Important Information</p>
+        <p style="margin: 0; color: #1e40af; font-size: 14px;">Enter your informational text about the event details or logistics here.</p>
+    </div>`
+  },
+  orange: {
+    name: 'Quick Note (Orange)',
+    class: 'bg-orange-50 text-orange-800 border-orange-200',
+    html: `<div style="margin: 25px 0; padding: 20px; background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; text-align: center; color: #c2410c; font-size: 14px;">
+        <strong>Note:</strong> Enter a quick disclaimer or rule here.
+    </div>`
+  }
+};
 
 import Button from "../ui/Button";
 import Input from "../ui/Input";
@@ -55,6 +96,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
     return initSections[0]?.id || null;
   });
   const [editingSection, setEditingSection] = useState(null);
+  const [fieldEditorMode, setFieldEditorMode] = useState('visual'); // 'visual' or 'html'
   const isInternalUpdateRef = React.useRef(false);
 
   // Update sections when formSchema prop changes externally
@@ -1556,10 +1598,35 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
             {/* Content Fields Settings */}
             {editingFieldDraft.type === "label" && (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Content Type
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Content Type
+                    </label>
+                    <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <button
+                        type="button"
+                        onClick={() => setFieldEditorMode('visual')}
+                        className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                          fieldEditorMode === 'visual' 
+                          ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' 
+                          : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        <Eye size={12} /> VISUAL
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFieldEditorMode('html')}
+                        className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                          fieldEditorMode === 'html' 
+                          ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' 
+                          : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        <Code size={12} /> HTML
+                      </button>
+                    </div>
+                  </div>
                   <select
                     value={editingFieldDraft.contentType || "text"}
                     onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, contentType: e.target.value })}
@@ -1567,21 +1634,52 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                   >
                     <option value="text">Plain Text</option>
                     <option value="markdown">Markdown (with links)</option>
-                    <option value="html">HTML</option>
+                    <option value="html">Rich HTML (Visual Editor)</option>
                   </select>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Content Text
                   </label>
-                  <textarea
-                    value={editingFieldDraft.content || ""}
-                    onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, content: e.target.value })}
-                    placeholder="Enter your content here. For markdown, you can use [link text](https://example.com)"
-                    rows={4}
-                    className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  
+                  {editingFieldDraft.contentType === "html" && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {Object.entries(THEMED_BOXES).map(([key, box]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setEditingFieldDraft({
+                            ...editingFieldDraft,
+                            content: (editingFieldDraft.content || "") + box.html
+                          })}
+                          className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all hover:shadow-md ${box.class}`}
+                        >
+                          + {box.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="border border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+                    {editingFieldDraft.contentType === "html" && fieldEditorMode === 'visual' ? (
+                      <ReactQuill
+                        theme="snow"
+                        value={editingFieldDraft.content || ""}
+                        onChange={(val) => setEditingFieldDraft({ ...editingFieldDraft, content: val })}
+                        modules={QUILL_MODULES}
+                        className="min-h-[200px]"
+                      />
+                    ) : (
+                      <textarea
+                        value={editingFieldDraft.content || ""}
+                        onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, content: e.target.value })}
+                        placeholder={editingFieldDraft.contentType === "markdown" ? "Use [link text](https://example.com) for links" : "Enter your content here..."}
+                        rows={6}
+                        className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none"
+                      />
+                    )}
+                  </div>
+                  
                   {editingFieldDraft.contentType === "markdown" && (
                     <p className="text-xs text-gray-500 mt-1">
                       💡 Use [link text](https://example.com) to create clickable links

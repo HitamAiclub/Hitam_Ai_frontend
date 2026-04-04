@@ -38,6 +38,7 @@ const Navbar = () => {
     { name: "Community & Connections", path: "/admin/community" },
     { name: "Media Management", path: "/admin/media" },
     { name: "Highlights", path: "/admin/highlights" },
+    { name: "Mail Center", path: "/admin/mail" },
   ];
 
   const navItems = user ? adminNavItems : publicNavItems;

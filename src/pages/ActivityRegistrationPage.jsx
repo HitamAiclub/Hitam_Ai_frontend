@@ -1228,7 +1228,8 @@ function ActivityRegistrationPage() {
               nameColumn: nameFieldLabel,
               emailColumn: emailFieldLabel,
               customSubject: customSubject,
-              customHtml: customHtml
+              customHtml: customHtml,
+              cc: activity.postRegistration.welcomeEmailCc
             })
           });
 

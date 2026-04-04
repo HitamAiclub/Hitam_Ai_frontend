@@ -1,9 +1,11 @@
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BarChart3, Users, Calendar, TrendingUp } from "lucide-react";
+import { BarChart3, Users, Calendar, TrendingUp, Mail } from "lucide-react";
 import { useEvents, useClubMembers, useCommunityMembers } from "../../hooks/useFirebaseData";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
 const AdminHome = () => {
+  const navigate = useNavigate();
   const { data: eventsData, loading: eventsLoading } = useEvents();
   const { data: clubMembersData, loading: clubLoading } = useClubMembers();
   const { data: communityData, loading: communityLoading } = useCommunityMembers();
@@ -176,14 +178,15 @@ const AdminHome = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {[
-            { title: "Create Event", description: "Add a new event to the calendar", color: "from-blue-500 to-purple-500" },
-            { title: "Manage Members", description: "View and manage community members", color: "from-purple-500 to-pink-500" },
-            { title: "Export Data", description: "Download reports and analytics", color: "from-green-500 to-teal-500" }
+            { title: "Create Event", description: "Add a new event to the calendar", color: "from-blue-500 to-purple-500", path: "/events" },
+            { title: "Manage Members", description: "View and manage community members", color: "from-purple-500 to-pink-500", path: "/admin/community" },
+            { title: "Mail Center", description: "Send bulk emails to members", color: "from-green-500 to-teal-500", path: "/admin/mail" }
           ].map((action, index) => (
             <motion.div
               key={action.title}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => navigate(action.path)}
               className={`bg-gradient-to-br ${action.color} rounded-2xl p-6 text-white cursor-pointer`}
             >
               <h3 className="text-xl font-bold mb-2">{action.title}</h3>

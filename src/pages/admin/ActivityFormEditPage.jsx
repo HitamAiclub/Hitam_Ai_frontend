@@ -10,6 +10,136 @@ import { FiArrowLeft, FiSave, FiUpload } from 'react-icons/fi';
 import { Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { uploadUpcomingActivityFile } from '../../utils/cloudinary';
+import { Zap, Shield, Info, Smile, Type, Eye, Code, ArrowLeft, Star, Archive, Trash, Mail as MailIcon, MoreVertical, ChevronDown } from 'lucide-react';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+
+const QUILL_MODULES = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+    ['link', 'clean'],
+  ],
+};
+
+const MAIL_TEMPLATES = [
+  {
+    id: 'standard',
+    name: 'Standard',
+    icon: Type,
+    subject: 'Registration Received: [Event Name]',
+    body: `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+    <h2 style="color: #10b981;">Registration Received! 🎉</h2>
+    <p>Hello <strong>[Participant Name]</strong>,</p>
+    <p>Thank you for registering for <strong>'[Event Name]'</strong>. We have successfully received your information.</p>
+    <div style="background: #f0fdf4; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #bbf7d0;">
+        <p style="margin: 0; color: #166534;"><strong>What's Next?</strong></p>
+    <div style="margin: 25px 0; padding: 24px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;">
+        <p style="margin: 0 0 10px 0; color: #166534; font-weight: bold; font-size: 16px;">What's Next?</p>
+        <ul style="margin: 0; color: #166534; padding-left: 20px;">
+            <li>Our team will review your details.</li>
+            <li>Official entry tickets will be sent closer to the event.</li>
+        </ul>
+    </div>
+    <p>Best Regards,<br><strong>The HITAM AI CLUB Team</strong></p>
+</div>`
+  },
+  {
+    id: 'hype',
+    name: 'Exciting',
+    icon: Zap,
+    subject: 'YOU ARE IN! 🚀 [Event Name] Registration',
+    body: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; max-width: 600px; margin: 0 auto; border: 2px solid #3b82f6; border-radius: 20px; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px; text-align: center; color: white;">
+        <h1 style="margin: 0; font-size: 28px;">GET READY! 🚀</h1>
+    </div>
+    <div style="padding: 30px; background: white;">
+        <p style="font-size: 18px;">Hey <strong>[Participant Name]</strong>!</p>
+        <p>Your spot for <strong>[Event Name]</strong> is officially secured. We are super excited to have you join us for this high-energy session!</p>
+        <div style="margin: 30px 0; padding: 24px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
+            <p style="margin: 0; font-weight: bold; color: #1e40af;">Don't forget to:</p>
+            <ul style="margin-top: 10px; color: #1e40af; padding-left: 20px;">
+                <li>Bring your laptop & charger</li>
+                <li>Invite your friends</li>
+                <li>Stay curious!</li>
+            </ul>
+        </div>
+        <p style="text-align: center; margin-top: 30px;">See you at the event! 🔥</p>
+    </div>
+</div>`
+  },
+  {
+    id: 'instructions',
+    name: 'Instructions',
+    icon: Info,
+    subject: 'Important Steps: [Event Name] Registration',
+    body: `<div style="font-family: sans-serif; color: #4b5563; max-width: 600px; margin: 0 auto; padding: 40px; border: 1px solid #e5e7eb; border-radius: 24px; background: white;">
+    <h2 style="color: #4f46e5; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; margin-bottom: 24px;">Registration Confirmed</h2>
+    <p>Hello [Participant Name],</p>
+    <p>We've received your registration for <strong>[Event Name]</strong>. Please follow these important steps to ensure a smooth experience:</p>
+    
+    <div style="margin: 24px 0; padding: 24px; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 16px;">
+        <p style="margin: 0; color: #5b21b6; font-weight: bold;">Step 1: Join the Community</p>
+        <p style="margin: 5px 0 15px 0; font-size: 13px;">Click the link in the registration success page to join our official WhatsApp/Discord group.</p>
+        
+        <p style="margin: 0; color: #5b21b6; font-weight: bold;">Step 2: Check Pre-requisites</p>
+        <p style="margin: 5px 0 0 0; font-size: 13px;">Review the activity description for any software, tools, or prior knowledge you need.</p>
+    </div>
+
+    <div style="background: #fff7ed; padding: 15px; border-radius: 8px; border: 1px solid #fdba74; color: #c2410c; font-size: 13px; text-align: center;">
+        <strong>Entry Note:</strong> Entry will be granted only to registered participants.
+    </div>
+</div>`
+  },
+  {
+    id: 'professional',
+    name: 'Professional',
+    icon: Shield,
+    subject: 'Official Confirmation: [Event Name]',
+    body: `<div style="font-family: 'Times New Roman', Times, serif; color: #000; max-width: 650px; margin: 0 auto; padding: 40px; border: 1px solid #000;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h2 style="text-transform: uppercase; letter-spacing: 2px;">HITAM AI CLUB</h2>
+        <div style="width: 100px; height: 1px; background: #000; margin: 10px auto;"></div>
+    </div>
+    <p>Dear [Participant Name],</p>
+    <p>This is an official confirmation regarding your registration for the session titled <strong>"[Event Name]"</strong>.</p>
+    <p>We have documented your participation request. Further logistical details, including session timings and venue specifications (if applicable), will be formally communicated through this email channel.</p>
+    <p>Should you require any scholarly assistance or have administrative inquiries, please do not hesitate to contact our secretariat.</p>
+    <p style="margin-top: 40px;">Sincerely,<br><strong>Administrative Division</strong><br>HITAM AI CLUB</p>
+</div>`
+  }
+];
+
+const THEMED_BOXES = {
+  green: {
+    name: 'Next Steps (Green)',
+    class: 'bg-green-50 text-green-800 border-green-200',
+    html: `<div style="margin: 25px 0; padding: 24px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;">
+        <p style="margin: 0 0 10px 0; color: #166534; font-weight: bold; font-size: 16px;">What's Next?</p>
+        <ul style="margin: 0; color: #166534; padding-left: 20px;">
+            <li>Step 1 description here...</li>
+            <li>Step 2 description here...</li>
+        </ul>
+    </div>`
+  },
+  blue: {
+    name: 'General Info (Blue)',
+    class: 'bg-blue-50 text-blue-800 border-blue-200',
+    html: `<div style="margin: 25px 0; padding: 24px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
+        <p style="margin: 0 0 10px 0; color: #1e40af; font-weight: bold; font-size: 16px;">Important Information</p>
+        <p style="margin: 0; color: #1e40af; font-size: 14px;">Enter your informational text about the event details or logistics here.</p>
+    </div>`
+  },
+  orange: {
+    name: 'Quick Note (Orange)',
+    class: 'bg-orange-50 text-orange-800 border-orange-200',
+    html: `<div style="margin: 25px 0; padding: 20px; background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; text-align: center; color: #c2410c; font-size: 14px;">
+        <strong>Note:</strong> Enter a quick disclaimer or rule here.
+    </div>`
+  }
+};
 
 function ActivityFormEditPage() {
   const { id } = useParams();
@@ -33,6 +163,10 @@ function ActivityFormEditPage() {
   const [nameFieldId, setNameFieldId] = useState('');
   const [welcomeEmailSubject, setWelcomeEmailSubject] = useState('');
   const [welcomeEmailBody, setWelcomeEmailBody] = useState('');
+  const [welcomeEmailCc, setWelcomeEmailCc] = useState('');
+  const [editorMode, setEditorMode] = useState('visual'); // 'visual' or 'html' for Welcome Email
+  const [instructionsEditorMode, setInstructionsEditorMode] = useState('visual');
+  const [successEditorMode, setSuccessEditorMode] = useState('visual');
 
   // Create payment section with current payment details
   const createPaymentSection = (customFee = null, customUrl = null, customQrUrl = null, customInstructions = null, existingFields = []) => {
@@ -202,25 +336,8 @@ function ActivityFormEditPage() {
         setEmailFieldId(activityData.postRegistration?.emailFieldId || '');
         setNameFieldId(activityData.postRegistration?.nameFieldId || '');
         setWelcomeEmailSubject(activityData.postRegistration?.welcomeEmailSubject || `Registration Confirmed: ${activityData.title}`);
-        setWelcomeEmailBody(activityData.postRegistration?.welcomeEmailBody || `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-    <h2 style="color: #10b981;">Registration Received! 🎉</h2>
-    <p>Hello <strong>[Participant Name]</strong>,</p>
-    <p>Thank you for registering for the event <strong>'[Event Name]'</strong>. This email confirms that we have successfully received your information.</p>
-    
-    <div style="background: #f0fdf4; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #bbf7d0;">
-        <p style="margin: 0; color: #166534;"><strong>What's Next?</strong></p>
-        <ul style="margin-top: 10px; color: #166534; padding-left: 20px;">
-            <li>Our team will review your registration details.</li>
-            <li>You will receive your <strong>official entry ticket</strong> with a QR code closer to the event day.</li>
-            <li>Keep an eye on this email address for further updates!</li>
-        </ul>
-    </div>
-
-    <p>If you have any questions, feel free to contact us.</p>
-    <br>
-    <p>Best Regards,</p>
-    <p><strong>The HITAM AI CLUB Team</strong></p>
-</div>`);
+        setWelcomeEmailBody(activityData.postRegistration?.welcomeEmailBody || MAIL_TEMPLATES[0].body);
+        setWelcomeEmailCc(activityData.postRegistration?.welcomeEmailCc || '');
 
         // If isPaid is true and no payment section exists, create it after a short delay
         if (activityData.isPaid) {
@@ -313,7 +430,8 @@ function ActivityFormEditPage() {
           emailFieldId: emailFieldId,
           nameFieldId: nameFieldId,
           welcomeEmailSubject: welcomeEmailSubject,
-          welcomeEmailBody: welcomeEmailBody
+          welcomeEmailBody: welcomeEmailBody,
+          welcomeEmailCc: welcomeEmailCc
         },
         updatedAt: new Date().toISOString()
       });
@@ -502,16 +620,68 @@ function ActivityFormEditPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
                   Payment Instructions
+                  <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <button
+                      type="button"
+                      onClick={() => setInstructionsEditorMode('visual')}
+                      className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                        instructionsEditorMode === 'visual' 
+                        ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' 
+                        : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <Eye size={12} /> VISUAL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInstructionsEditorMode('html')}
+                      className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                        instructionsEditorMode === 'html' 
+                        ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' 
+                        : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <Code size={12} /> HTML
+                    </button>
+                  </div>
                 </label>
-                <textarea
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  rows={4}
-                  placeholder="Instructions for payment (e.g., scan QR code, enter UPI ID, etc.)"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                
+                <div className="mb-4">
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {Object.entries(THEMED_BOXES).map(([key, box]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setInstructions(prev => prev + box.html)}
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all hover:shadow-md ${box.class}`}
+                      >
+                        + {box.name}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+                    {instructionsEditorMode === 'visual' ? (
+                      <ReactQuill
+                        theme="snow"
+                        value={instructions}
+                        onChange={setInstructions}
+                        modules={QUILL_MODULES}
+                        className="min-h-[150px]"
+                      />
+                    ) : (
+                      <textarea
+                        value={instructions}
+                        onChange={(e) => setInstructions(e.target.value)}
+                        rows={6}
+                        className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none"
+                        placeholder="Instructions for payment..."
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -549,16 +719,68 @@ function ActivityFormEditPage() {
               </div>
 
               <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
                   Success Message
+                  <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <button
+                      type="button"
+                      onClick={() => setSuccessEditorMode('visual')}
+                      className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                        successEditorMode === 'visual' 
+                        ? 'bg-white dark:bg-gray-700 text-green-600 shadow-sm' 
+                        : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <Eye size={12} /> VISUAL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSuccessEditorMode('html')}
+                      className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                        successEditorMode === 'html' 
+                        ? 'bg-white dark:bg-gray-700 text-green-600 shadow-sm' 
+                        : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      <Code size={12} /> HTML
+                    </button>
+                  </div>
                 </label>
-                <textarea
-                  value={joinLinkMessage}
-                  onChange={(e) => setJoinLinkMessage(e.target.value)}
-                  rows={3}
-                  placeholder="Message displayed after registration (e.g. Join our group for updates!)"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                
+                <div className="mb-4">
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {Object.entries(THEMED_BOXES).map(([key, box]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setJoinLinkMessage(prev => prev + box.html)}
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all hover:shadow-md ${box.class}`}
+                      >
+                        + {box.name}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div className="border border-green-200 dark:border-green-800 rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+                    {successEditorMode === 'visual' ? (
+                      <ReactQuill
+                        theme="snow"
+                        value={joinLinkMessage}
+                        onChange={setJoinLinkMessage}
+                        modules={QUILL_MODULES}
+                        className="min-h-[150px]"
+                      />
+                    ) : (
+                      <textarea
+                        value={joinLinkMessage}
+                        onChange={(e) => setJoinLinkMessage(e.target.value)}
+                        rows={6}
+                        className="w-full px-3 py-2 border-0 bg-transparent text-gray-900 dark:text-white font-mono text-sm focus:outline-none"
+                        placeholder="Message displayed after registration..."
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -640,16 +862,179 @@ function ActivityFormEditPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-                        Email Body (HTML)
-                        <span className="ml-2 normal-case font-normal text-gray-400">Placeholders: [Participant Name], [Event Name]</span>
+                        Welcome Email CC (comma separated)
                       </label>
-                      <textarea
-                        value={welcomeEmailBody}
-                        onChange={(e) => setWelcomeEmailBody(e.target.value)}
-                        rows={8}
-                        className="w-full px-3 py-2 text-sm font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="<h1>Hello [Participant Name]!</h1>..."
+                      <input
+                        type="text"
+                        value={welcomeEmailCc}
+                        onChange={(e) => setWelcomeEmailCc(e.target.value)}
+                        placeholder="admin@example.com, info@example.com"
+                        className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                        <div>
+                          Email Body
+                          <span className="ml-2 normal-case font-normal text-gray-400">Placeholders: [Participant Name], [Event Name]</span>
+                        </div>
+                        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <button
+                            type="button"
+                            onClick={() => setEditorMode('visual')}
+                            className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                              editorMode === 'visual' 
+                              ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' 
+                              : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                          >
+                            <Eye size={12} /> VISUAL
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditorMode('html')}
+                            className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                              editorMode === 'html' 
+                              ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' 
+                              : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                          >
+                            <Code size={12} /> HTML
+                          </button>
+                        </div>
+                      </label>
+
+                      {/* Theme Selector */}
+                      <div className="mb-6">
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Quick Design Gallery</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {MAIL_TEMPLATES.map((tmpl) => (
+                            <button
+                              key={tmpl.id}
+                              type="button"
+                              onClick={() => {
+                                if (welcomeEmailBody && !window.confirm("Selecting a template will replace your current email body. Continue?")) return;
+                                setWelcomeEmailBody(tmpl.body);
+                                if (tmpl.subject) setWelcomeEmailSubject(tmpl.subject.replace('[Event Name]', activity.title));
+                              }}
+                              className="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all text-center group"
+                            >
+                              <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
+                                <tmpl.icon size={18} className="text-gray-500 dark:text-gray-400 group-hover:text-blue-500" />
+                              </div>
+                              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{tmpl.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Element Inserter */}
+                      <div className="mb-6">
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Insert Highlight Elements</label>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(THEMED_BOXES).map(([key, box]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => {
+                                setWelcomeEmailBody(prev => prev + box.html);
+                              }}
+                              className={`px-4 py-2 rounded-full text-xs font-bold border transition-all hover:shadow-md active:scale-95 ${box.class}`}
+                            >
+                              + {box.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Realistic Mobile Shell Backdrop */}
+                      <div className="bg-[#fceef0] dark:bg-gray-950 p-4 sm:p-8 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-2xl relative min-h-[700px] flex flex-col">
+                        
+                        {/* Mock Mobile App Header */}
+                        <div className="flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-300">
+                          <div className="flex items-center gap-6">
+                            <ArrowLeft size={20} />
+                            <div className="w-8 h-8 flex items-center justify-center">
+                              <Zap size={22} className="text-gray-400" />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-6">
+                            <Archive size={18} />
+                            <Trash size={18} />
+                            <MailIcon size={18} />
+                            <MoreVertical size={18} />
+                          </div>
+                        </div>
+
+                        {/* Sender Info Row */}
+                        <div className="px-5 py-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center overflow-hidden border border-gray-100 shadow-sm">
+                              <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm font-bold text-gray-900 dark:text-white">HITAM AI CLUB</span>
+                                <span className="text-xs text-gray-400">6:16 PM</span>
+                              </div>
+                              <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">
+                                to me <ChevronDown size={14} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-5 text-gray-400">
+                            <Smile size={18} />
+                            <ArrowLeft size={18} className="rotate-180" /> {/* Reply icon mock */}
+                            <MoreVertical size={18} />
+                          </div>
+                        </div>
+
+                        {/* The Email Card (600px) */}
+                        <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-4">
+                          <div className="max-w-[600px] mx-auto bg-white shadow-xl rounded-[24px] overflow-hidden border border-gray-100/50">
+                            {editorMode === 'visual' ? (
+                              <div className="min-h-[500px]">
+                                <style>
+                                  {`.ql-container.ql-snow { border: none !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+                                    .ql-toolbar.ql-snow { border: none !important; border-bottom: 1px solid #f9fafb !important; background: #fff !important; padding: 12px 20px !important; }
+                                    .ql-editor { min-height: 500px; padding: 35px !important; color: #111827 !important; line-height: 1.6; }
+                                    .ql-editor p { margin-bottom: 14px; }
+                                    .ql-editor h2 { color: #10b981 !important; font-weight: 700 !important; font-size: 24px !important; margin-bottom: 20px !important; }`}
+                                </style>
+                                <ReactQuill
+                                  theme="snow"
+                                  value={welcomeEmailBody}
+                                  onChange={setWelcomeEmailBody}
+                                  modules={QUILL_MODULES}
+                                  className="dark:text-gray-900"
+                                />
+                              </div>
+                            ) : (
+                              <textarea
+                                value={welcomeEmailBody}
+                                onChange={(e) => setWelcomeEmailBody(e.target.value)}
+                                rows={20}
+                                className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 selection:bg-blue-100"
+                                placeholder="<h1>Hello [Participant Name]!</h1>..."
+                              />
+                            )}
+                          </div>
+
+                          {/* Quick Actions (Reply/Forward) */}
+                          <div className="max-w-[600px] mx-auto grid grid-cols-2 gap-4 mt-6">
+                            <button className="flex items-center justify-center gap-2 py-3 px-6 bg-gray-900/5 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-bold text-gray-700 dark:text-gray-300">
+                              <ArrowLeft size={16} /> Reply
+                            </button>
+                            <button className="flex items-center justify-center gap-2 py-3 px-6 bg-gray-900/5 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-bold text-gray-700 dark:text-gray-300">
+                              <ArrowLeft size={16} className="rotate-180" /> Forward
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                           <div className="w-8 h-1 bg-gray-400/20 rounded-full" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -657,6 +1042,7 @@ function ActivityFormEditPage() {
             </div>
           </div>
         </div>
+
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-end">
