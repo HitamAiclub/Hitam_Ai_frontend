@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, addDoc, query, where, getDocs, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, where, getDocs, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -1146,6 +1146,35 @@ function ActivityRegistrationPage() {
         key.toLowerCase().includes('payment')
       );
 
+      // PREVENT DUPLICATES: Check by Email or Roll Number before proceeding
+      try {
+        const emailFieldKey = Object.keys(dataWithLabels).find(k => k.includes('email'));
+        const rollFieldKey = Object.keys(dataWithLabels).find(k => k.includes('roll') || k.includes('regd'));
+
+        let isDuplicate = false;
+        if (emailFieldKey) {
+          const qEmail = query(collection(db, 'upcomingActivities', id, 'registrations'), where(emailFieldKey, '==', dataWithLabels[emailFieldKey]));
+          const snap = await getDocs(qEmail);
+          if (!snap.empty) isDuplicate = true;
+        }
+
+        if (!isDuplicate && rollFieldKey) {
+          const qRoll = query(collection(db, 'upcomingActivities', id, 'registrations'), where(rollFieldKey, '==', dataWithLabels[rollFieldKey]));
+          const snap = await getDocs(qRoll);
+          if (!snap.empty) isDuplicate = true;
+        }
+
+        if (isDuplicate) {
+          setValidationErrors(["Duplicate Entry: You are already registered for this event! Please check your email for the ticket."]);
+          setShowErrorModal(true);
+          setSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        console.warn("Duplicate check warning:", err);
+        // Continue if check fails (safety for cases where indexes aren't ready)
+      }
+
       const submissionData = {
         activityId: id,
         activityTitle: activity.title,
@@ -1161,12 +1190,19 @@ function ActivityRegistrationPage() {
 
       // Payment fields are now handled as regular form fields, no special handling needed
 
-      const docRefGlobal = await addDoc(collection(db, 'allRegistrations'), submissionData);
+      // GENERATE A SINGLE UNIQUE ID FOR BOTH COLLECTIONS
+      const docRefGlobal = doc(collection(db, 'allRegistrations'));
+      const registrationId = docRefGlobal.id;
 
-      // Also save to activity-specific collection
+      // Save to Global Collection
+      await setDoc(docRefGlobal, submissionData);
+
+      // Also save to Activity-Specific Collection with the EXACT SAME ID
       let docRefActivity = null;
       try {
-        docRefActivity = await addDoc(collection(db, 'upcomingActivities', id, 'registrations'), submissionData);
+        const activityDocRef = doc(db, 'upcomingActivities', id, 'registrations', registrationId);
+        await setDoc(activityDocRef, submissionData);
+        docRefActivity = { id: registrationId }; // Match the expected format for later use
       } catch (error) {
         console.warn('Could not save to activity-specific collection:', error);
       }

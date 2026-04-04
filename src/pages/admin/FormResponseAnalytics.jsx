@@ -35,6 +35,8 @@ const computeAnalytics = (data, formSections, existingFields = null) => {
         existingFields.forEach(f => seenFieldIds.add(f.id.toLowerCase()));
     } else {
         // Discovery Mode (for Base Analytics)
+        allFields.push({ id: 'id', label: 'Registration ID', type: 'text', isSystem: true });
+        seenFieldIds.add('id');
         if (formSections && Array.isArray(formSections)) {
             formSections.forEach(section => {
                 if (section.fields) {
@@ -180,6 +182,8 @@ const FormResponseAnalytics = () => {
     const [emailBody, setEmailBody] = useState('');
     const [selectedEmailColumn, setSelectedEmailColumn] = useState('');
     const [selectedNameColumn, setSelectedNameColumn] = useState('');
+    const [ticketVenue, setTicketVenue] = useState('');
+    const [ticketTime, setTicketTime] = useState('');
     const [participantsToMail, setParticipantsToMail] = useState([]);
     const [selectedSubIds, setSelectedSubIds] = useState([]);
 
@@ -569,7 +573,9 @@ const FormResponseAnalytics = () => {
                     customSubject: emailSubject,
                     customHtml: emailBody,
                     emailColumn: selectedEmailColumn,
-                    nameColumn: selectedNameColumn
+                    nameColumn: selectedNameColumn,
+                    venue: ticketVenue,
+                    time: ticketTime
                 })
             });
 
@@ -634,7 +640,9 @@ const FormResponseAnalytics = () => {
                     nameColumn: nameCol,
                     emailColumn: emailCol,
                     customSubject: activity.postRegistration?.welcomeEmailSubject,
-                    customHtml: activity.postRegistration?.welcomeEmailBody
+                    customHtml: activity.postRegistration?.welcomeEmailBody,
+                    venue: ticketVenue,
+                    time: ticketTime
                 })
             });
 
@@ -1494,6 +1502,29 @@ const FormResponseAnalytics = () => {
                             onChange={(e) => setEmailSubject(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Venue (on Ticket)</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Auditorium"
+                                value={ticketVenue}
+                                onChange={(e) => setTicketVenue(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time (on Ticket)</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. 10:00 AM"
+                                value={ticketTime}
+                                onChange={(e) => setTicketTime(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            />
+                        </div>
                     </div>
                     
                     <div>
