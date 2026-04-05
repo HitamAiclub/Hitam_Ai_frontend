@@ -1075,7 +1075,7 @@ function ActivityRegistrationPage() {
         if (!isUnique) {
           // If the check failed (returned false), it might be a duplicate OR a permission error
           // The alert in checkUniqueValue will show the technical error
-          validationErrors.push(`Unique check failed for ${field.label}. It may be a duplicate or a system error.`);
+          validationErrors.push(`${field.label}: This value is already taken. It may be a duplicate entry.`);
         }
       }
     }
@@ -1165,7 +1165,7 @@ function ActivityRegistrationPage() {
         }
 
         if (isDuplicate) {
-          setValidationErrors(["Duplicate Entry: You are already registered for this event! Please check your email for the ticket."]);
+          setValidationErrors([{ field: "Duplicate Registration", message: "You are already registered for this event! Please check your email for the ticket." }]);
           setShowErrorModal(true);
           setSubmitting(false);
           return;
