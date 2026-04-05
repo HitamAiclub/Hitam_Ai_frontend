@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import FormBuilder from '../../components/FormBuilder/FormBuilder';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -12,7 +12,37 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { uploadUpcomingActivityFile } from '../../utils/cloudinary';
 import { Zap, Shield, Info, Smile, Type, Eye, Code, ArrowLeft, Star, Archive, Trash, Mail as MailIcon, MoreVertical, ChevronDown } from 'lucide-react';
 import ReactQuill from 'react-quill';
+const Quill = ReactQuill.Quill;
 import 'react-quill/dist/quill.snow.css';
+
+import { MAIL_TEMPLATES, THEMED_BOXES } from '../../config/mailTemplates';
+
+// --- ADVANCED QUILL PERMISSIVE CONFIGURATION ---
+if (Quill) {
+  // Register standard styles so Quill doesn't strip them during Visual/HTML mode switching
+  const BackgroundStyle = Quill.import('attributors/style/background');
+  const ColorStyle = Quill.import('attributors/style/color');
+  const SizeStyle = Quill.import('attributors/style/size');
+  const AlignStyle = Quill.import('attributors/style/align');
+  const FontStyle = Quill.import('attributors/style/font');
+  const DirectionStyle = Quill.import('attributors/style/direction');
+
+  // Register DIV as a valid block tag to prevent Quill from stripping structural containers
+  const Block = Quill.import('blots/block');
+  if (Block) {
+    class CustomDivBlock extends Block {}
+    CustomDivBlock.tagName = 'div';
+    CustomDivBlock.className = 'ql-custom-div'; 
+    Quill.register(CustomDivBlock, true);
+  }
+
+  Quill.register(BackgroundStyle, true);
+  Quill.register(ColorStyle, true);
+  Quill.register(SizeStyle, true);
+  Quill.register(AlignStyle, true);
+  Quill.register(FontStyle, true);
+  Quill.register(DirectionStyle, true);
+}
 
 const QUILL_MODULES = {
   toolbar: [
@@ -22,123 +52,6 @@ const QUILL_MODULES = {
     [{ 'list': 'ordered' }, { 'list': 'bullet' }],
     ['link', 'clean'],
   ],
-};
-
-const MAIL_TEMPLATES = [
-  {
-    id: 'standard',
-    name: 'Standard',
-    icon: Type,
-    subject: 'Registration Received: [Event Name]',
-    body: `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-    <h2 style="color: #10b981;">Registration Received! 🎉</h2>
-    <p>Hello <strong>[Participant Name]</strong>,</p>
-    <p>Thank you for registering for <strong>'[Event Name]'</strong>. We have successfully received your information.</p>
-    <div style="background: #f0fdf4; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #bbf7d0;">
-        <p style="margin: 0; color: #166534;"><strong>What's Next?</strong></p>
-    <div style="margin: 25px 0; padding: 24px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;">
-        <p style="margin: 0 0 10px 0; color: #166534; font-weight: bold; font-size: 16px;">What's Next?</p>
-        <ul style="margin: 0; color: #166534; padding-left: 20px;">
-            <li>Our team will review your details.</li>
-            <li>Official entry tickets will be sent closer to the event.</li>
-        </ul>
-    </div>
-    <p>Best Regards,<br><strong>The HITAM AI CLUB Team</strong></p>
-</div>`
-  },
-  {
-    id: 'hype',
-    name: 'Exciting',
-    icon: Zap,
-    subject: 'YOU ARE IN! 🚀 [Event Name] Registration',
-    body: `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; max-width: 600px; margin: 0 auto; border: 2px solid #3b82f6; border-radius: 20px; overflow: hidden;">
-    <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px; text-align: center; color: white;">
-        <h1 style="margin: 0; font-size: 28px;">GET READY! 🚀</h1>
-    </div>
-    <div style="padding: 30px; background: white;">
-        <p style="font-size: 18px;">Hey <strong>[Participant Name]</strong>!</p>
-        <p>Your spot for <strong>[Event Name]</strong> is officially secured. We are super excited to have you join us for this high-energy session!</p>
-        <div style="margin: 30px 0; padding: 24px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
-            <p style="margin: 0; font-weight: bold; color: #1e40af;">Don't forget to:</p>
-            <ul style="margin-top: 10px; color: #1e40af; padding-left: 20px;">
-                <li>Bring your laptop & charger</li>
-                <li>Invite your friends</li>
-                <li>Stay curious!</li>
-            </ul>
-        </div>
-        <p style="text-align: center; margin-top: 30px;">See you at the event! 🔥</p>
-    </div>
-</div>`
-  },
-  {
-    id: 'instructions',
-    name: 'Instructions',
-    icon: Info,
-    subject: 'Important Steps: [Event Name] Registration',
-    body: `<div style="font-family: sans-serif; color: #4b5563; max-width: 600px; margin: 0 auto; padding: 40px; border: 1px solid #e5e7eb; border-radius: 24px; background: white;">
-    <h2 style="color: #4f46e5; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; margin-bottom: 24px;">Registration Confirmed</h2>
-    <p>Hello [Participant Name],</p>
-    <p>We've received your registration for <strong>[Event Name]</strong>. Please follow these important steps to ensure a smooth experience:</p>
-    
-    <div style="margin: 24px 0; padding: 24px; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 16px;">
-        <p style="margin: 0; color: #5b21b6; font-weight: bold;">Step 1: Join the Community</p>
-        <p style="margin: 5px 0 15px 0; font-size: 13px;">Click the link in the registration success page to join our official WhatsApp/Discord group.</p>
-        
-        <p style="margin: 0; color: #5b21b6; font-weight: bold;">Step 2: Check Pre-requisites</p>
-        <p style="margin: 5px 0 0 0; font-size: 13px;">Review the activity description for any software, tools, or prior knowledge you need.</p>
-    </div>
-
-    <div style="background: #fff7ed; padding: 15px; border-radius: 8px; border: 1px solid #fdba74; color: #c2410c; font-size: 13px; text-align: center;">
-        <strong>Entry Note:</strong> Entry will be granted only to registered participants.
-    </div>
-</div>`
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    icon: Shield,
-    subject: 'Official Confirmation: [Event Name]',
-    body: `<div style="font-family: 'Times New Roman', Times, serif; color: #000; max-width: 650px; margin: 0 auto; padding: 40px; border: 1px solid #000;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <h2 style="text-transform: uppercase; letter-spacing: 2px;">HITAM AI CLUB</h2>
-        <div style="width: 100px; height: 1px; background: #000; margin: 10px auto;"></div>
-    </div>
-    <p>Dear [Participant Name],</p>
-    <p>This is an official confirmation regarding your registration for the session titled <strong>"[Event Name]"</strong>.</p>
-    <p>We have documented your participation request. Further logistical details, including session timings and venue specifications (if applicable), will be formally communicated through this email channel.</p>
-    <p>Should you require any scholarly assistance or have administrative inquiries, please do not hesitate to contact our secretariat.</p>
-    <p style="margin-top: 40px;">Sincerely,<br><strong>Administrative Division</strong><br>HITAM AI CLUB</p>
-</div>`
-  }
-];
-
-const THEMED_BOXES = {
-  green: {
-    name: 'Next Steps (Green)',
-    class: 'bg-green-50 text-green-800 border-green-200',
-    html: `<div style="margin: 25px 0; padding: 24px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;">
-        <p style="margin: 0 0 10px 0; color: #166534; font-weight: bold; font-size: 16px;">What's Next?</p>
-        <ul style="margin: 0; color: #166534; padding-left: 20px;">
-            <li>Step 1 description here...</li>
-            <li>Step 2 description here...</li>
-        </ul>
-    </div>`
-  },
-  blue: {
-    name: 'General Info (Blue)',
-    class: 'bg-blue-50 text-blue-800 border-blue-200',
-    html: `<div style="margin: 25px 0; padding: 24px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
-        <p style="margin: 0 0 10px 0; color: #1e40af; font-weight: bold; font-size: 16px;">Important Information</p>
-        <p style="margin: 0; color: #1e40af; font-size: 14px;">Enter your informational text about the event details or logistics here.</p>
-    </div>`
-  },
-  orange: {
-    name: 'Quick Note (Orange)',
-    class: 'bg-orange-50 text-orange-800 border-orange-200',
-    html: `<div style="margin: 25px 0; padding: 20px; background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; text-align: center; color: #c2410c; font-size: 14px;">
-        <strong>Note:</strong> Enter a quick disclaimer or rule here.
-    </div>`
-  }
 };
 
 function ActivityFormEditPage() {
@@ -164,6 +77,8 @@ function ActivityFormEditPage() {
   const [welcomeEmailSubject, setWelcomeEmailSubject] = useState('');
   const [welcomeEmailBody, setWelcomeEmailBody] = useState('');
   const [welcomeEmailCc, setWelcomeEmailCc] = useState('');
+  const [welcomeEmailVenue, setWelcomeEmailVenue] = useState('');
+  const [welcomeEmailTime, setWelcomeEmailTime] = useState('');
   const [editorMode, setEditorMode] = useState('visual'); // 'visual' or 'html' for Welcome Email
   const [instructionsEditorMode, setInstructionsEditorMode] = useState('visual');
   const [successEditorMode, setSuccessEditorMode] = useState('visual');
@@ -296,34 +211,7 @@ function ActivityFormEditPage() {
         const activityData = { id: docSnap.id, ...docSnap.data() };
         setActivity(activityData);
 
-        // Load sections if they exist, otherwise convert formSchema to sections
-        if (activityData.formSections && activityData.formSections.length > 0) {
-          setFormSections(activityData.formSections);
-          // Also set formSchema for backward compatibility
-          const fields = activityData.formSections.flatMap(s => s.fields || []);
-          setFormSchema(fields);
-        } else if (activityData.formSchema && activityData.formSchema.length > 0) {
-          // Convert flat formSchema to sections
-          const sections = [{
-            id: `section_${Date.now()}`,
-            title: "Section 1",
-            description: "",
-            fields: activityData.formSchema,
-            conditional: { enabled: false, fieldId: null, optionValue: null, showSections: [] }
-          }];
-          setFormSections(sections);
-          setFormSchema(activityData.formSchema);
-        } else {
-          const defaultSections = [{
-            id: `section_${Date.now()}`,
-            title: "Section 1",
-            description: "",
-            fields: getDefaultFormSchema(),
-            conditional: { enabled: false, fieldId: null, optionValue: null, showSections: [] }
-          }];
-          setFormSections(defaultSections);
-          setFormSchema(getDefaultFormSchema());
-        }
+        // Load settings
         setIsPaid(activityData.isPaid || false);
         setFee(activityData.fee || '');
         setPaymentUrl(activityData.paymentDetails?.paymentUrl || '');
@@ -335,28 +223,68 @@ function ActivityFormEditPage() {
         setAutoConfirmEmail(activityData.postRegistration?.autoConfirmEmail || false);
         setEmailFieldId(activityData.postRegistration?.emailFieldId || '');
         setNameFieldId(activityData.postRegistration?.nameFieldId || '');
-        setWelcomeEmailSubject(activityData.postRegistration?.welcomeEmailSubject || `Registration Confirmed: ${activityData.title}`);
-        setWelcomeEmailBody(activityData.postRegistration?.welcomeEmailBody || MAIL_TEMPLATES[0].body);
-        setWelcomeEmailCc(activityData.postRegistration?.welcomeEmailCc || '');
-
-        // If isPaid is true and no payment section exists, create it after a short delay
-        if (activityData.isPaid) {
-          setTimeout(() => {
-            setFormSections(prev => {
-              const hasPaymentSection = prev.some(s => s.id?.startsWith('section_payment_'));
-              if (!hasPaymentSection && prev.length > 0) {
-                const paymentSection = createPaymentSection(
-                  activityData.fee,
-                  activityData.paymentDetails?.paymentUrl,
-                  activityData.paymentDetails?.qrCodeUrl,
-                  activityData.paymentDetails?.instructions
-                );
-                return [...prev, paymentSection];
-              }
-              return prev;
-            });
-          }, 100);
+        
+        // --- RESTORED MISSING STATES ---
+        const postReg = activityData.postRegistration || {};
+        const titleLine = `Registration Confirmed: ${activityData.title || ''}`;
+        
+        setWelcomeEmailSubject(postReg.welcomeEmailSubject || titleLine);
+        setWelcomeEmailCc(postReg.welcomeEmailCc || '');
+        setWelcomeEmailVenue(postReg.welcomeEmailVenue !== undefined ? postReg.welcomeEmailVenue : (activityData.location || ''));
+        setWelcomeEmailTime(postReg.welcomeEmailTime || '');
+        
+        const savedBody = activityData.postRegistration?.welcomeEmailBody;
+        const isCustomLayout = activityData.postRegistration?.isCustomLayout;
+        
+        // PERSISTENCE FIX: If isCustomLayout is true, or if the field exists, HONOR IT.
+        // We only use defaults if it's a brand new activity with no registration settings.
+        if (isCustomLayout || (savedBody !== undefined && savedBody !== null)) {
+            setWelcomeEmailBody(savedBody || '');
+        } else {
+            setWelcomeEmailBody(MAIL_TEMPLATES[0].body);
         }
+
+        // --- CONSOLIDATED SECTION MANAGEMENT ---
+        // 1. Process Sections
+        let processedSections = [];
+        if (activityData.formSections && activityData.formSections.length > 0) {
+          processedSections = activityData.formSections;
+        } else if (activityData.formSchema && activityData.formSchema.length > 0) {
+          processedSections = [{
+            id: `section_${Date.now()}`,
+            title: "Section 1",
+            description: "",
+            fields: activityData.formSchema,
+            conditional: { enabled: false, fieldId: null, optionValue: null, showSections: [] }
+          }];
+        } else {
+          processedSections = [{
+            id: `section_${Date.now()}`,
+            title: "Section 1",
+            description: "",
+            fields: getDefaultFormSchema(),
+            conditional: { enabled: false, fieldId: null, optionValue: null, showSections: [] }
+          }];
+        }
+
+        // 2. Handle Payment Section (Self-Correction on Load)
+        if (activityData.isPaid) {
+          const hasPaymentSection = processedSections.some(s => s.id?.startsWith('section_payment_'));
+          if (!hasPaymentSection && processedSections.length > 0) {
+            const paymentSection = createPaymentSection(
+              activityData.fee,
+              activityData.paymentDetails?.paymentUrl,
+              activityData.paymentDetails?.qrCodeUrl,
+              activityData.paymentDetails?.instructions
+            );
+            processedSections = [...processedSections, paymentSection];
+          }
+        }
+        
+        // 3. Final State Commit
+        setFormSections(processedSections);
+        setFormSchema(processedSections.flatMap(s => s.fields || []));
+        setLoading(false);
       } else {
         alert('Activity not found');
         navigate('/upcoming');
@@ -412,35 +340,108 @@ function ActivityFormEditPage() {
       const sanitizedSections = sanitizeForFirestore(formSections);
       const sanitizedSchema = sanitizeForFirestore(allFields);
 
-      await updateDoc(doc(db, 'upcomingActivities', id), {
+      // Using granular dot notation for nested fields ensures other fields in 
+      // the same object are NOT overwritten (Standard Firebase best practice).
+      const updateData = {
         formSchema: sanitizedSchema,
         formSections: sanitizedSections,
         isPaid: isPaid,
         fee: isPaid ? fee : '',
-        paymentDetails: {
-          paymentUrl: isPaid ? paymentUrl : '',
-          qrCodeUrl: isPaid ? qrCodeUrl : '',
-          instructions: isPaid ? instructions : ''
-        },
-        postRegistration: {
-          joinLink: joinLink,
-          joinLinkMessage: joinLinkMessage,
-          joinLinkLabel: joinLinkLabel,
-          autoConfirmEmail: autoConfirmEmail,
-          emailFieldId: emailFieldId,
-          nameFieldId: nameFieldId,
-          welcomeEmailSubject: welcomeEmailSubject,
-          welcomeEmailBody: welcomeEmailBody,
-          welcomeEmailCc: welcomeEmailCc
-        },
-        updatedAt: new Date().toISOString()
-      });
+        'paymentDetails.paymentUrl': isPaid ? paymentUrl : '',
+        'paymentDetails.qrCodeUrl': isPaid ? qrCodeUrl : '',
+        'paymentDetails.instructions': isPaid ? instructions : '',
+        'postRegistration.joinLink': joinLink || '',
+        'postRegistration.joinLinkMessage': joinLinkMessage || '',
+        'postRegistration.joinLinkLabel': joinLinkLabel || '',
+        'postRegistration.autoConfirmEmail': autoConfirmEmail || false,
+        'postRegistration.emailFieldId': emailFieldId || '',
+        'postRegistration.nameFieldId': nameFieldId || '',
+        'postRegistration.welcomeEmailSubject': welcomeEmailSubject || '',
+        'postRegistration.welcomeEmailBody': welcomeEmailBody || '',
+        'postRegistration.welcomeEmailCc': welcomeEmailCc || '',
+        'postRegistration.welcomeEmailVenue': welcomeEmailVenue || '',
+        'postRegistration.welcomeEmailTime': welcomeEmailTime || '',
+        'postRegistration.isCustomLayout': true, // Mark as custom to prevent auto-overwrites
+        'updatedAt': new Date().toISOString()
+      };
+
+      await updateDoc(doc(db, 'upcomingActivities', id), updateData);
 
       alert('Registration form & payment settings saved successfully!');
       navigate('/upcoming');
     } catch (error) {
       console.error('Error saving form:', error);
       alert('Error saving form. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveEmailTemplate = async () => {
+    setSaving(true);
+    try {
+      const docRef = doc(db, 'upcomingActivities', id);
+      const templateData = {
+        'postRegistration.welcomeEmailSubject': welcomeEmailSubject,
+        'postRegistration.welcomeEmailBody': welcomeEmailBody,
+        'postRegistration.welcomeEmailCc': welcomeEmailCc,
+        'postRegistration.welcomeEmailVenue': welcomeEmailVenue,
+        'postRegistration.welcomeEmailTime': welcomeEmailTime,
+        'postRegistration.isCustomLayout': true, // Lock this design
+        'updatedAt': new Date().toISOString()
+      };
+      await updateDoc(docRef, templateData);
+      
+      // Update local state to stay synced without reload
+      setActivity(prev => ({
+        ...prev,
+        postRegistration: {
+            ...(prev.postRegistration || {}),
+            welcomeEmailSubject,
+            welcomeEmailBody,
+            welcomeEmailCc,
+            welcomeEmailVenue,
+            welcomeEmailTime,
+            isCustomLayout: true
+        }
+      }));
+
+      alert('Email template saved successfully!');
+    } catch (err) {
+      console.error('Error saving template:', err);
+      alert('Failed to save template: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveSuccessMessage = async () => {
+    setSaving(true);
+    try {
+      const docRef = doc(db, 'upcomingActivities', id);
+      const messageData = {
+        'postRegistration.joinLink': joinLink,
+        'postRegistration.joinLinkLabel': joinLinkLabel,
+        'postRegistration.joinLinkMessage': joinLinkMessage,
+        'updatedAt': new Date().toISOString()
+      };
+      await updateDoc(docRef, messageData);
+      
+      // Update local state to stay synced without reload
+      setActivity(prev => ({
+        ...prev,
+        postRegistration: {
+            ...(prev.postRegistration || {}),
+            joinLink,
+            joinLinkLabel,
+            joinLinkMessage
+        }
+      }));
+
+      alert('Success message settings saved successfully!');
+    } catch (err) {
+      console.error('Error saving success message:', err);
+      alert('Failed to save message: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -711,7 +712,26 @@ function ActivityFormEditPage() {
           </p>
 
           <div className="space-y-6">
-            <div className="p-6 bg-green-50/50 dark:bg-green-900/10 rounded-xl border border-green-100 dark:border-green-800/50">
+            <div className="p-6 bg-purple-50/50 dark:bg-purple-900/10 rounded-xl border border-purple-100 dark:border-purple-800/50 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <FiArrowLeft className="w-5 h-5 text-purple-600 rotate-180" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Success Message & Links</h4>
+                  <p className="text-xs text-gray-500">Configure what participants see immediately after they submit the form.</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSaveSuccessMessage}
+                  loading={saving}
+                  className="text-[10px] h-8 border-purple-200 text-purple-600 hover:bg-purple-50"
+                  icon={<FiSave size={12} />}
+                >
+                  Save Message Settings
+                </Button>
+              </div>
               <div className="grid md:grid-cols-2 gap-6">
                 <Input
                   label="Join Link (WhatsApp/Discord/etc.)"
@@ -812,19 +832,31 @@ function ActivityFormEditPage() {
                   <h4 className="font-semibold text-gray-900 dark:text-white">Email Confirmation</h4>
                   <p className="text-xs text-gray-500">Send an instant "Registration Received" email to participants.</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium ${autoConfirmEmail ? 'text-blue-600' : 'text-gray-400'}`}>
-                    {autoConfirmEmail ? 'Enabled' : 'Disabled'}
-                  </span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={autoConfirmEmail}
-                      onChange={(e) => setAutoConfirmEmail(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                  </label>
+                <div className="flex items-center gap-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSaveEmailTemplate}
+                    loading={saving}
+                    className="text-[10px] h-8 border-blue-200 text-blue-600 hover:bg-blue-50"
+                    icon={<FiSave size={12} />}
+                  >
+                    Save Template
+                  </Button>
+                  <div className="flex items-center gap-2 border-l border-blue-100 dark:border-blue-800/50 pl-4">
+                    <span className={`text-xs font-medium ${autoConfirmEmail ? 'text-blue-600' : 'text-gray-400'}`}>
+                      {autoConfirmEmail ? 'Enabled' : 'Disabled'}
+                    </span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={autoConfirmEmail}
+                        onChange={(e) => setAutoConfirmEmail(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -887,9 +919,11 @@ function ActivityFormEditPage() {
                         value={welcomeEmailCc}
                         onChange={(e) => setWelcomeEmailCc(e.target.value)}
                         placeholder="admin@example.com, info@example.com"
-                        className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
                       />
                     </div>
+                    
+
                     <div>
                       <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 flex items-center justify-between">
                         <div>
@@ -1009,7 +1043,7 @@ function ActivityFormEditPage() {
 
                         {/* The Email Card (600px) */}
                         <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-4">
-                          <div className="max-w-[600px] mx-auto bg-white shadow-xl rounded-[24px] overflow-hidden border border-gray-100/50">
+                          <div className="max-w-[600px] mx-auto flex flex-col bg-white shadow-xl rounded-[24px] overflow-hidden border border-gray-100/50">
                             {editorMode === 'visual' ? (
                               <div className="min-h-[500px]">
                                 <style>
@@ -1022,7 +1056,13 @@ function ActivityFormEditPage() {
                                 <ReactQuill
                                   theme="snow"
                                   value={welcomeEmailBody}
-                                  onChange={setWelcomeEmailBody}
+                                  onChange={(content, delta, source) => {
+                                    // PERSISTENCE FIX: Only update state if the user manually typed.
+                                    // This stops Quill from "Cleaning" (mangling) your HTML on mount.
+                                    if (source === 'user') {
+                                      setWelcomeEmailBody(content);
+                                    }
+                                  }}
                                   modules={QUILL_MODULES}
                                   className="dark:text-gray-900"
                                 />
@@ -1031,28 +1071,30 @@ function ActivityFormEditPage() {
                               <div className="flex flex-col divide-y divide-gray-100">
                                 <div className="p-4 bg-gray-50 border-b border-gray-100 italic text-[10px] text-gray-400 flex items-center justify-between">
                                   <span>HTML Code Editor</span>
-                                  <span className="flex items-center gap-1"><Code size={10} /> Live Preview Rendering Below</span>
+                                  <span className="flex items-center gap-1"><Code size={10} /> Raw Structure Mode</span>
                                 </div>
                                 <textarea
                                   value={welcomeEmailBody}
                                   onChange={(e) => setWelcomeEmailBody(e.target.value)}
                                   rows={12}
-                                  className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 selection:bg-blue-100 resize-none"
+                                  className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 selection:bg-blue-100 resize-none h-[500px]"
                                   placeholder="<h1>Hello [Participant Name]!</h1>..."
                                 />
-                                <div className="p-4 bg-blue-50/30">
-                                  <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
-                                    Visual Result (Live)
-                                  </div>
-                                  <div 
-                                    className="p-6 bg-white rounded-xl border border-blue-100 shadow-inner min-h-[200px]"
-                                    style={{ fontFamily: "'Segoe UI', sans-serif" }}
-                                    dangerouslySetInnerHTML={{ __html: welcomeEmailBody }} 
-                                  />
-                                </div>
                               </div>
                             )}
+                            
+                            {/* GLOBAL LIVE PREVIEW (Always visible) */}
+                            <div className="p-4 bg-blue-50/30 border-t border-blue-50">
+                              <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                                Visual Result (Live)
+                              </div>
+                              <div 
+                                className="p-6 bg-white rounded-xl border border-blue-100 shadow-inner min-h-[200px]"
+                                style={{ fontFamily: "'Segoe UI', sans-serif" }}
+                                dangerouslySetInnerHTML={{ __html: welcomeEmailBody }} 
+                              />
+                            </div>
                           </div>
 
                           {/* Quick Actions (Reply/Forward) */}

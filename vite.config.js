@@ -35,7 +35,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    strictPort: false, // Allow Vite to find an available port
+    strictPort: false,
     proxy: proxyConfig,
   },
 })

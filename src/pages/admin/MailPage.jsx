@@ -1,8 +1,26 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Users, Send, CheckCircle, AlertCircle, Search, Filter, Loader2, ChevronRight, Info, X, Edit3, Paperclip, FileText, Trash2, Eye, Code, ArrowLeft, Star, Archive, Trash, Mail as MailIcon, MoreVertical, ChevronDown, Smile, Zap } from 'lucide-react';
+import { Mail, Users, Send, CheckCircle, AlertCircle, Search, Filter, Loader2, ChevronRight, Info, X, Edit3, Paperclip, FileText, Trash2, Eye, Code, ArrowLeft, Star, Archive, Trash, Mail as MailIcon, MoreVertical, ChevronDown, Smile, Zap, Save } from 'lucide-react';
 import ReactQuill from 'react-quill';
+const Quill = ReactQuill.Quill;
 import 'react-quill/dist/quill.snow.css';
+
+// --- QUILL PERMISSIVE CONFIGURATION ---
+if (Quill) {
+  const BackgroundStyle = Quill.import('attributors/style/background');
+  const ColorStyle = Quill.import('attributors/style/color');
+  const SizeStyle = Quill.import('attributors/style/size');
+  const AlignStyle = Quill.import('attributors/style/align');
+  const FontStyle = Quill.import('attributors/style/font');
+  const DirectionStyle = Quill.import('attributors/style/direction');
+
+  Quill.register(BackgroundStyle, true);
+  Quill.register(ColorStyle, true);
+  Quill.register(SizeStyle, true);
+  Quill.register(AlignStyle, true);
+  Quill.register(FontStyle, true);
+  Quill.register(DirectionStyle, true);
+}
 
 const QUILL_MODULES = {
   toolbar: [
@@ -14,36 +32,9 @@ const QUILL_MODULES = {
   ],
 };
 
-const THEMED_BOXES = {
-  green: {
-    name: 'Next Steps (Green)',
-    class: 'bg-green-50 text-green-800 border-green-200',
-    html: `<div style="margin: 25px 0; padding: 24px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;">
-        <p style="margin: 0 0 10px 0; color: #166534; font-weight: bold; font-size: 16px;">What's Next?</p>
-        <ul style="margin: 0; color: #166534; padding-left: 20px;">
-            <li>Step 1 description here...</li>
-            <li>Step 2 description here...</li>
-        </ul>
-    </div>`
-  },
-  blue: {
-    name: 'General Info (Blue)',
-    class: 'bg-blue-50 text-blue-800 border-blue-200',
-    html: `<div style="margin: 25px 0; padding: 24px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
-        <p style="margin: 0 0 10px 0; color: #1e40af; font-weight: bold; font-size: 16px;">Important Information</p>
-        <p style="margin: 0; color: #1e40af; font-size: 14px;">Enter your informational text about the event details or logistics here.</p>
-    </div>`
-  },
-  orange: {
-    name: 'Quick Note (Orange)',
-    class: 'bg-orange-50 text-orange-800 border-orange-200',
-    html: `<div style="margin: 25px 0; padding: 20px; background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; text-align: center; color: #c2410c; font-size: 14px;">
-        <strong>Note:</strong> Enter a quick disclaimer or rule here.
-    </div>`
-  }
-};
+import { MAIL_TEMPLATES, THEMED_BOXES } from '../../config/mailTemplates';
 
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useClubMembers, useCommunityMembers } from '../../hooks/useFirebaseData';
 import Button from '../../components/ui/Button';
@@ -62,7 +53,7 @@ const MailPage = () => {
     const [audienceType, setAudienceType] = useState('club'); // club, activity, custom
     const [selectedRecipients, setSelectedRecipients] = useState([]);
     const [emailSubject, setEmailSubject] = useState('');
-    const [emailBody, setEmailBody] = useState('<div style="font-family: sans-serif; line-height: 1.6; color: #333;">\n  <h2>Hello [Name],</h2>\n  <p>Update from HITAM AI CLUB...</p>\n</div>');
+    const [emailBody, setEmailBody] = useState(MAIL_TEMPLATES[0].body);
     const [emailCc, setEmailCc] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [customEmailsRaw, setCustomEmailsRaw] = useState(''); // New state for manual entry
@@ -92,6 +83,29 @@ const MailPage = () => {
     const fetchParticipants = async (activityId) => {
         setLoadingParticipants(true);
         try {
+            // 1. Fetch Activity Details for Template
+            const activityRef = doc(db, 'upcomingActivities', activityId);
+            const activitySnap = await getDoc(activityRef);
+            
+            if (activitySnap.exists()) {
+                const activityData = activitySnap.data();
+                const postReg = activityData.postRegistration || {};
+                const savedSubject = postReg.welcomeEmailSubject;
+                const savedBody = postReg.welcomeEmailBody;
+                const isCustomLayout = postReg.isCustomLayout;
+
+                setEmailSubject(savedSubject !== undefined ? savedSubject : `Message regarding ${activityData.title}`);
+                if (postReg.welcomeEmailCc) setEmailCc(postReg.welcomeEmailCc);
+
+                // PERSISTENCE FIX: If isCustomLayout is true, or if the field exists, HONOR IT.
+                if (isCustomLayout || (savedBody !== undefined && savedBody !== null)) {
+                    setEmailBody(savedBody || '');
+                } else {
+                    setEmailBody(MAIL_TEMPLATES[0].body);
+                }
+            }
+
+            // 2. Fetch Registrations
             const q = collection(db, 'upcomingActivities', activityId, 'registrations');
             const snap = await getDocs(q);
             const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -136,6 +150,34 @@ const MailPage = () => {
             setSelectedRecipients(parsed);
         }
     }, [audienceType, selectedActivity, clubMembers, communityMembers, customEmailsRaw]);
+
+    const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+    const handleSaveTemplate = async () => {
+        if (audienceType !== 'activity' || !selectedActivity) {
+            alert("Please select an activity first to save a template.");
+            return;
+        }
+
+        setIsSavingTemplate(true);
+        try {
+            const docRef = doc(db, 'upcomingActivities', selectedActivity);
+            const templateData = {
+                'postRegistration.welcomeEmailSubject': emailSubject,
+                'postRegistration.welcomeEmailBody': emailBody,
+                'postRegistration.isCustomLayout': true, // Lock this design
+                'updatedAt': new Date().toISOString()
+            };
+            
+            await updateDoc(docRef, templateData);
+            alert('Email template saved successfully to Activity settings!');
+        } catch (err) {
+            console.error('Error saving template:', err);
+            alert('Failed to save template: ' + err.message);
+        } finally {
+            setIsSavingTemplate(false);
+        }
+    };
 
     const handleSendBulk = async () => {
         if (!emailSubject || !emailBody) return alert("Please fill subject and body.");
@@ -548,7 +590,7 @@ const MailPage = () => {
 
                                             {/* The Email Card (600px) */}
                                             <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-4">
-                                                <div className="max-w-[600px] mx-auto bg-white shadow-xl rounded-[24px] overflow-hidden border border-gray-100/50">
+                                                <div className="max-w-[600px] mx-auto flex flex-col bg-white shadow-xl rounded-[24px] overflow-hidden border border-gray-100/50">
                                                     <div className="min-h-[500px]">
                                                         <style>
                                                             {`.ql-container.ql-snow { border: none !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -560,9 +602,28 @@ const MailPage = () => {
                                                         <ReactQuill
                                                             theme="snow"
                                                             value={emailBody}
-                                                            onChange={setEmailBody}
+                                                            onChange={(content, delta, source) => {
+                                                                // PERSISTENCE FIX: Only update state if the user manually typed.
+                                                                // This stops Quill from "Cleaning" (mangling) your HTML on mount.
+                                                                if (source === 'user') {
+                                                                    setEmailBody(content);
+                                                                }
+                                                            }}
                                                             modules={QUILL_MODULES}
                                                             className="dark:text-gray-900"
+                                                        />
+                                                    </div>
+
+                                                    {/* GLOBAL LIVE PREVIEW (Always visible) */}
+                                                    <div className="p-4 bg-blue-50/30 border-t border-blue-50">
+                                                        <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                                                            Visual Result (Live)
+                                                        </div>
+                                                        <div 
+                                                            className="p-6 bg-white rounded-xl border border-blue-100 shadow-inner min-h-[200px]"
+                                                            style={{ fontFamily: "'Segoe UI', sans-serif" }}
+                                                            dangerouslySetInnerHTML={{ __html: emailBody }} 
                                                         />
                                                     </div>
                                                 </div>
@@ -577,14 +638,15 @@ const MailPage = () => {
                                              <div className="max-w-[600px] mx-auto bg-white shadow-xl rounded-[24px] overflow-hidden border border-gray-100/50 flex-1 flex flex-col">
                                                 <div className="p-4 bg-gray-50 border-b border-gray-100 italic text-[10px] text-gray-400 flex items-center justify-between">
                                                     <span>HTML Code Editor</span>
-                                                    <span className="flex items-center gap-1"><Code size={10} /> Live Preview Rendering Below</span>
+                                                    <span className="flex items-center gap-1"><Code size={10} /> Raw Structure Mode</span>
                                                 </div>
                                                 <textarea
                                                     value={emailBody}
                                                     onChange={(e) => setEmailBody(e.target.value)}
                                                     rows={16}
-                                                    className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 flex-1 resize-none"
+                                                    className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 flex-1 resize-none h-[500px]"
                                                 />
+                                                {/* GLOBAL LIVE PREVIEW (Always visible) */}
                                                 <div className="p-4 bg-blue-50/30 border-t border-blue-50">
                                                     <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                                                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
@@ -624,6 +686,17 @@ const MailPage = () => {
                                     >
                                         Clear
                                     </Button>
+                                    {audienceType === 'activity' && selectedActivity && (
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleSaveTemplate}
+                                            loading={isSavingTemplate}
+                                            className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                                            icon={<Save className="w-4 h-4" />}
+                                        >
+                                            Save Template
+                                        </Button>
+                                    )}
                                     <Button
                                         onClick={handleSendBulk}
                                         loading={isSending}

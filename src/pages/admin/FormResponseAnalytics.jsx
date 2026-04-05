@@ -11,10 +11,21 @@ import { Download, ArrowLeft, Filter, Table, Save, Search, Eye, ChevronDown, Sta
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Modal from '../../components/ui/Modal';
-import XLSX from 'xlsx-js-style';
+import * as XLSX from 'xlsx';
 import { useAuth } from '../../contexts/AuthContext';
+import { MAIL_TEMPLATES, THEMED_BOXES } from '../../config/mailTemplates';
 
 const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+
+const QUILL_MODULES = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+    ['link', 'clean'],
+  ],
+};
 
 // Helper: Compute analytics from data (Pure function)
 const computeAnalytics = (data, formSections, existingFields = null) => {
@@ -411,18 +422,8 @@ const FormResponseAnalytics = () => {
                         if (files.length === 0) {
                             row.push('');
                         } else if (files.length === 1) {
-                            // Single file - Make it a link
-                            const file = files[0];
-                            if (exportFormat === 'excel' && file.url) {
-                                row.push({
-                                    t: 's',
-                                    v: file.url,
-                                    l: { Target: file.url },
-                                    s: { font: { color: { rgb: "0000FF" }, underline: true } }
-                                });
-                            } else {
-                                row.push(file.url || '');
-                            }
+                            // Single file - use plain URL string
+                            row.push(files[0].url || '');
                         } else {
                             // Multiple files
                             // In Excel, 1 cell = 1 link usually. We can't easily make multiple links in one cell without rich text.
@@ -447,18 +448,9 @@ const FormResponseAnalytics = () => {
                             }
                         }
                     } else {
-                        // Check if value is a URL string even if type is not file
+                        // Plain string value
                         const strVal = Array.isArray(val) ? val.join('; ') : (val ? String(val) : '');
-                        if (exportFormat === 'excel' && strVal.startsWith('http')) {
-                            row.push({
-                                t: 's',
-                                v: strVal,
-                                l: { Target: strVal },
-                                s: { font: { color: { rgb: "0000FF" }, underline: true } }
-                            });
-                        } else {
-                            row.push(strVal);
-                        }
+                        row.push(strVal);
                     }
                 });
 
@@ -538,23 +530,69 @@ const FormResponseAnalytics = () => {
         const guessNameCol = baseAnalytics.formFields?.find(f => f.label?.toLowerCase().includes('name'))?.id || '';
         setSelectedNameColumn(guessNameCol);
 
-        setEmailSubject(`Your Ticket Confirmation: ${activity.title}`);
-        setEmailBody(`<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-    <h2>Registration Confirmed!</h2>
-    <p>Hello <strong>[Participant Name]</strong>,</p>
-    <p>Your registration for the event <strong>'[Event Name]'</strong> is confirmed.</p>
-    <p>Please find your official ticket attached to this email. You will need to present the QR Code on your ticket at the venue for check-in.</p>
-    
-    <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <p style="margin: 0;"><strong>Registration ID:</strong> [Registration ID]</p>
-    </div>
-
-    <p>If you have any questions, feel free to reply to this email.</p>
-    <br>
-    <p>Best Regards,</p>
-    <p><strong>The HITAM AI Team</strong></p>
-</div>`);
+        // --- Use Activity Templates if available ---
+        const postReg = activity.postRegistration || {};
+        
+        const titleLine = `Your Ticket Confirmation: ${activity.title || ''}`;
+        const finalSubject = postReg.welcomeEmailSubject !== undefined ? postReg.welcomeEmailSubject : titleLine;
+        const finalVenue = postReg.welcomeEmailVenue !== undefined ? postReg.welcomeEmailVenue : (activity.location || '');
+        const finalTime = postReg.welcomeEmailTime || '';
+        const finalCc = postReg.welcomeEmailCc || '';
+        const finalBody = postReg.welcomeEmailBody;
+        
+        setEmailSubject(finalSubject);
+        setTicketVenue(finalVenue);
+        setTicketTime(finalTime);
+        setEmailCc(finalCc);
+        
+        // PERSISTENCE FIX: Only revert to default IF the field is strictly undefined OR null.
+        if (finalBody !== undefined && finalBody !== null) {
+            setEmailBody(finalBody);
+        } else {
+            setEmailBody(MAIL_TEMPLATES[0].body);
+        }
         setEmailModalOpen(true);
+    };
+
+    const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+    const handleSaveEmailTemplate = async () => {
+        setIsSavingTemplate(true);
+        try {
+            const docRef = doc(db, 'upcomingActivities', activity.id);
+            const templateData = {
+                'postRegistration.welcomeEmailSubject': emailSubject,
+                'postRegistration.welcomeEmailBody': emailBody,
+                'postRegistration.welcomeEmailVenue': ticketVenue,
+                'postRegistration.welcomeEmailTime': ticketTime,
+                'postRegistration.welcomeEmailCc': emailCc,
+                'postRegistration.isCustomLayout': true, // Lock this design
+                'updatedAt': new Date().toISOString()
+            };
+            
+            await updateDoc(docRef, templateData);
+
+            // Update local activity state so the UI stays in sync without refresh
+            setActivity(prev => ({
+                ...prev,
+                postRegistration: {
+                    ...(prev.postRegistration || {}),
+                    welcomeEmailSubject: emailSubject,
+                    welcomeEmailBody: emailBody,
+                    welcomeEmailVenue: ticketVenue,
+                    welcomeEmailTime: ticketTime,
+                    welcomeEmailCc: emailCc,
+                    isCustomLayout: true
+                }
+            }));
+
+            alert('Email template saved successfully to Activity settings!');
+        } catch (err) {
+            console.error('Error saving template:', err);
+            alert('Failed to save template: ' + err.message);
+        } finally {
+            setIsSavingTemplate(false);
+        }
     };
 
     const handleSendTickets = async () => {
@@ -1561,13 +1599,23 @@ const FormResponseAnalytics = () => {
                         >
                             Cancel
                         </Button>
-                        <Button
-                            onClick={handleSendTickets}
-                            disabled={sendingTickets}
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
-                        >
-                            {sendingTickets ? 'Sending...' : 'Confirm & Send'}
-                        </Button>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={handleSaveEmailTemplate}
+                                loading={isSavingTemplate}
+                                className="flex-1"
+                            >
+                                Save as Template
+                            </Button>
+                            <Button
+                                onClick={handleSendTickets}
+                                loading={sendingTickets}
+                                className="flex-2 bg-green-600 hover:bg-green-700"
+                            >
+                                Send Tickets to Selection
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </Modal>
