@@ -898,8 +898,9 @@ function ActivityFormEditPage() {
 
                   <div className="md:col-span-2 space-y-4 pt-4 border-t border-blue-100 dark:border-blue-800/50">
                     <div>
-                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-                        Email Subject
+                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                        <span>Email Subject</span>
+                        <span className="normal-case font-normal text-gray-400">Placeholders: [Participant Name], [Event Name]</span>
                       </label>
                       <input
                         type="text"

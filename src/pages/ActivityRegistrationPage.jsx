@@ -1215,23 +1215,39 @@ function ActivityRegistrationPage() {
           const sanitizeKey = (s) => s?.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || '';
           const nameFieldLabel = sanitizeKey(activity.postRegistration.nameFieldId);
           const emailFieldLabel = sanitizeKey(activity.postRegistration.emailFieldId);
-          const customSubject = activity.postRegistration.welcomeEmailSubject;
-          const customHtml = activity.postRegistration.welcomeEmailBody;
-          const welcomeCc = activity.postRegistration.welcomeEmailCc || null;
+          
+          // MAP TO STANDARDIZED CONFIRMATION FIELDS
+          const customSubject = activity.postRegistration.confirmationSubject;
+          const customHtml = activity.postRegistration.confirmationBody;
+          const welcomeCc = activity.postRegistration.confirmationCc || null;
+          const welcomeVenue = activity.postRegistration.confirmationVenue || null;
+          const welcomeTime = activity.postRegistration.confirmationTime || null;
 
           const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
-          console.log(`[DEBUG] Attempting to send welcome email via: ${apiUrl}/api/send-welcome`);
+          console.log(`[DEBUG] Attempting to send auto-confirmation email:`, {
+            to: submissionData[emailFieldLabel],
+            name: submissionData[nameFieldLabel],
+            subject: customSubject,
+            endpoint: `${apiUrl}/api/send-welcome`
+          });
 
           const response = await fetch(`${apiUrl}/api/send-welcome`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              activity: { title: activity.title },
+              activity: { 
+                title: activity.title,
+                location: welcomeVenue || activity.location,
+                eventDate: activity.eventDate,
+                eventTime: welcomeTime || activity.eventTime
+              },
               participant: submissionData, // Already has sanitized keys!
               nameColumn: nameFieldLabel,
               emailColumn: emailFieldLabel,
               customSubject: customSubject,
               customHtml: customHtml,
+              venue: welcomeVenue,
+              time: welcomeTime,
               cc: welcomeCc
             })
           });
@@ -1241,7 +1257,7 @@ function ActivityRegistrationPage() {
             console.log('[SUCCESS] Auto-welcome email sent:', resData);
             const updateFlags = { welcomeEmailSent: true };
             if (docRefGlobal) await updateDoc(docRefGlobal, updateFlags).catch(e => console.error("Update global error", e));
-            if (docRefActivity) await updateDoc(docRefActivity, updateFlags).catch(e => console.error("Update activity error", e));
+            if (activityDocRef) await updateDoc(activityDocRef, updateFlags).catch(e => console.error("Update activity error", e));
           } else {
             const errData = await response.json().catch(() => ({ error: 'Unknown server error' }));
             console.error('[ERROR] Welcome email failed:', response.status, errData);

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -7,13 +8,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { Download, ArrowLeft, Filter, Table, Save, Search, Eye, ChevronDown, Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Frown, Meh, X, Mail, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { Download, ArrowLeft, Filter, Table, Save, Search, Eye, Code, ChevronDown, Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Frown, Meh, X, Mail, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Modal from '../../components/ui/Modal';
 import * as XLSX from 'xlsx';
 import { useAuth } from '../../contexts/AuthContext';
 import { MAIL_TEMPLATES, THEMED_BOXES } from '../../config/mailTemplates';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+const Quill = ReactQuill.Quill;
 
 const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
@@ -157,6 +161,33 @@ const computeAnalytics = (data, formSections, existingFields = null) => {
     };
 };
 
+const DEFAULT_TICKET_BODY = `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+    <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 24px; text-align: center; color: white;">
+        <h2 style="margin: 0; font-size: 20px; letter-spacing: 0.05em;">EVENT ENTRY TICKET</h2>
+    </div>
+    <div style="padding: 32px;">
+        <p style="font-size: 16px; margin-bottom: 20px;">Hello <strong>[Participant Name]</strong>,</p>
+        <p style="margin-bottom: 24px; color: #4b5563;">Your entry ticket for <strong>[Event Name]</strong> is ready! Please find the official PDF ticket attached to this email.</p>
+        
+        <div style="background: #f8fafc; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+            <div style="margin-bottom: 16px;">
+                <p style="text-transform: uppercase; font-size: 10px; font-weight: bold; color: #64748b; margin: 0 0 4px 0; letter-spacing: 0.1em;">Venue</p>
+                <p style="font-weight: 600; color: #1e293b; margin: 0; font-size: 15px;">[Venue]</p>
+            </div>
+            <div>
+                <p style="text-transform: uppercase; font-size: 10px; font-weight: bold; color: #64748b; margin: 0 0 4px 0; letter-spacing: 0.1em;">Date & Time</p>
+                <p style="font-weight: 600; color: #1e293b; margin: 0; font-size: 15px;">[Date] at [Time]</p>
+            </div>
+        </div>
+        
+        <div style="background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 8px; padding: 12px; font-size: 13px; color: #9d174d; text-align: center;">
+            <strong>Note:</strong> Please keep the QR code on the attached PDF ready for scanning at the entrance.
+        </div>
+        
+        <p style="text-align: center; margin-top: 32px; color: #94a3b8; font-size: 14px;">See you there! 👋</p>
+    </div>
+</div>`;
+
 const FormResponseAnalytics = () => {
     const { activityId } = useParams();
     const navigate = useNavigate();
@@ -200,6 +231,7 @@ const FormResponseAnalytics = () => {
     const [emailCc, setEmailCc] = useState(''); 
     const [isPreviewSample, setIsPreviewSample] = useState(false); 
     const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+    const [editorMode, setEditorMode] = useState('visual'); // 'visual' | 'html'
     const [selectedExportColumns, setSelectedExportColumns] = useState([]);
 
     // Initialize export columns when fields change
@@ -548,10 +580,10 @@ const FormResponseAnalytics = () => {
         setTicketTime(finalTime);
         setEmailCc(finalCc);
         
-        if (finalBody !== undefined && finalBody !== null) {
+        if (finalBody !== undefined && finalBody !== null && finalBody !== '') {
             setEmailBody(finalBody);
         } else {
-            setEmailBody(MAIL_TEMPLATES[0].body);
+            setEmailBody(DEFAULT_TICKET_BODY);
         }
         setEmailModalOpen(true);
     };
@@ -1589,16 +1621,55 @@ const FormResponseAnalytics = () => {
                             </div>
                             
                             <div>
-                                <div className="flex items-center justify-between mb-1">
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Email Body</label>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Email Body</label>
+                                        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditorMode('visual')}
+                                                className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                                                    editorMode === 'visual' 
+                                                    ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' 
+                                                    : 'text-gray-500 hover:text-gray-700'
+                                                }`}
+                                            >
+                                                <Eye size={12} /> VISUAL
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditorMode('html')}
+                                                className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-md transition-all ${
+                                                    editorMode === 'html' 
+                                                    ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' 
+                                                    : 'text-gray-500 hover:text-gray-700'
+                                                }`}
+                                            >
+                                                <Code size={12} /> HTML
+                                            </button>
+                                        </div>
+                                    </div>
                                     <span className="text-[10px] text-gray-400">Placeholders: [Participant Name], [Event Name], [Venue], [Time], [Date]</span>
                                 </div>
-                                <textarea
-                                    value={emailBody}
-                                    onChange={(e) => setEmailBody(e.target.value)}
-                                    rows={8}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono text-xs leading-relaxed"
-                                />
+                                
+                                {editorMode === 'visual' ? (
+                                    <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white">
+                                        <ReactQuill
+                                            theme="snow"
+                                            value={emailBody}
+                                            onChange={setEmailBody}
+                                            modules={QUILL_MODULES}
+                                            className="h-64"
+                                        />
+                                    </div>
+                                ) : (
+                                    <textarea
+                                        value={emailBody}
+                                        onChange={(e) => setEmailBody(e.target.value)}
+                                        rows={12}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono text-xs leading-relaxed"
+                                    />
+                                )}
                             </div>
                         </div>
 
