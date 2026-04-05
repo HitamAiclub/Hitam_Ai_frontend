@@ -1211,10 +1211,13 @@ function ActivityRegistrationPage() {
       if (activity.postRegistration?.autoConfirmEmail) {
         console.log('Auto-welcome enabled. Triggering email...');
         try {
-          const nameFieldLabel = activity.postRegistration.nameFieldId; // This is the label
-          const emailFieldLabel = activity.postRegistration.emailFieldId; // This is the label
+          // Sanitize column names to match how keys are stored in submission data
+          const sanitizeKey = (s) => s?.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || '';
+          const nameFieldLabel = sanitizeKey(activity.postRegistration.nameFieldId);
+          const emailFieldLabel = sanitizeKey(activity.postRegistration.emailFieldId);
           const customSubject = activity.postRegistration.welcomeEmailSubject;
           const customHtml = activity.postRegistration.welcomeEmailBody;
+          const welcomeCc = activity.postRegistration.welcomeEmailCc || null;
 
           const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
           console.log(`[DEBUG] Attempting to send welcome email via: ${apiUrl}/api/send-welcome`);
@@ -1224,11 +1227,12 @@ function ActivityRegistrationPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               activity: { title: activity.title },
-              participant: submissionData, // Already has Labels as keys!
+              participant: submissionData, // Already has sanitized keys!
               nameColumn: nameFieldLabel,
               emailColumn: emailFieldLabel,
               customSubject: customSubject,
-              customHtml: customHtml
+              customHtml: customHtml,
+              cc: welcomeCc
             })
           });
 
