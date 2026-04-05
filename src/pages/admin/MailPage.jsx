@@ -58,7 +58,9 @@ const MailPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [customEmailsRaw, setCustomEmailsRaw] = useState(''); // New state for manual entry
     const [attachments, setAttachments] = useState([]); // New state for file attachments
-    const [editorMode, setEditorMode] = useState('visual'); // 'visual' or 'html'
+    const [editorMode, setEditorMode] = useState('visual'); 
+    const [isPreviewSample, setIsPreviewSample] = useState(false); 
+    const [activityDetails, setActivityDetails] = useState(null);
 
     // Sending State
     const [isSending, setIsSending] = useState(false);
@@ -88,16 +90,18 @@ const MailPage = () => {
             const activitySnap = await getDoc(activityRef);
             
             if (activitySnap.exists()) {
-                const activityData = activitySnap.data();
+                const activityData = { id: activitySnap.id, ...activitySnap.data() };
+                setActivityDetails(activityData);
+                const broadcast = activityData.broadcastConfig || {};
                 const postReg = activityData.postRegistration || {};
-                const savedSubject = postReg.welcomeEmailSubject;
-                const savedBody = postReg.welcomeEmailBody;
-                const isCustomLayout = postReg.isCustomLayout;
+                
+                const savedSubject = broadcast.broadcastSubject || postReg.welcomeEmailSubject;
+                const savedBody = broadcast.broadcastBody || postReg.welcomeEmailBody;
+                const isCustomLayout = broadcast.isCustomLayout || postReg.isCustomLayout;
 
                 setEmailSubject(savedSubject !== undefined ? savedSubject : `Message regarding ${activityData.title}`);
-                if (postReg.welcomeEmailCc) setEmailCc(postReg.welcomeEmailCc);
+                setEmailCc(broadcast.broadcastCc || postReg.welcomeEmailCc || '');
 
-                // PERSISTENCE FIX: If isCustomLayout is true, or if the field exists, HONOR IT.
                 if (isCustomLayout || (savedBody !== undefined && savedBody !== null)) {
                     setEmailBody(savedBody || '');
                 } else {
@@ -163,14 +167,30 @@ const MailPage = () => {
         try {
             const docRef = doc(db, 'upcomingActivities', selectedActivity);
             const templateData = {
-                'postRegistration.welcomeEmailSubject': emailSubject,
-                'postRegistration.welcomeEmailBody': emailBody,
-                'postRegistration.isCustomLayout': true, // Lock this design
+                'broadcastConfig.broadcastSubject': emailSubject,
+                'broadcastConfig.broadcastBody': emailBody,
+                'broadcastConfig.broadcastCc': emailCc,
+                'broadcastConfig.isCustomLayout': true, 
                 'updatedAt': new Date().toISOString()
             };
             
             await updateDoc(docRef, templateData);
-            alert('Email template saved successfully to Activity settings!');
+            
+            // Update local activityDetails if it matches the current selection
+            if (activityDetails && activityDetails.id === selectedActivity) {
+                setActivityDetails(prev => ({
+                    ...prev,
+                    broadcastConfig: {
+                        ...(prev.broadcastConfig || {}),
+                        broadcastSubject: emailSubject,
+                        broadcastBody: emailBody,
+                        broadcastCc: emailCc,
+                        isCustomLayout: true
+                    }
+                }));
+            }
+            
+            alert('Broadcast template saved successfully to Activity settings!');
         } catch (err) {
             console.error('Error saving template:', err);
             alert('Failed to save template: ' + err.message);
@@ -182,9 +202,6 @@ const MailPage = () => {
     const handleSendBulk = async () => {
         if (!emailSubject || !emailBody) return alert("Please fill subject and body.");
         if (selectedRecipients.length === 0) return alert("No recipients selected.");
-
-        const confirm = window.confirm(`Ready to send email to ${selectedRecipients.length} recipients?`);
-        if (!confirm) return;
 
         setIsSending(true);
         setSendProgress({ current: 0, total: selectedRecipients.length });
@@ -249,11 +266,14 @@ const MailPage = () => {
                     </div>
                     
                     <div className="flex items-center gap-3">
-                        <div className="px-4 py-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-2">
-                            <Users className="w-5 h-5 text-gray-400" />
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                {selectedRecipients.length} Recipients Selected
-                            </span>
+                        <div className="px-4 py-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl border border-purple-200 dark:border-purple-800 flex items-center gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-bold text-purple-500 uppercase tracking-widest">Recipients</span>
+                                <span className="text-xl font-black text-purple-900 dark:text-purple-100 leading-none">
+                                    {selectedRecipients.length}
+                                </span>
+                            </div>
+                            <Users className="w-6 h-6 text-purple-400 opacity-50" />
                         </div>
                     </div>
                 </motion.div>
@@ -425,21 +445,23 @@ const MailPage = () => {
                             </div>
 
                             <div className="space-y-6">
-                                <Input
-                                    label="Subject"
-                                    placeholder="Enter email subject..."
-                                    value={emailSubject}
-                                    onChange={(e) => setEmailSubject(e.target.value)}
-                                    className="!rounded-xl"
-                                />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <Input
+                                        label="Subject"
+                                        placeholder="Enter email subject..."
+                                        value={emailSubject}
+                                        onChange={(e) => setEmailSubject(e.target.value)}
+                                        className="!rounded-xl"
+                                    />
 
-                                <Input
-                                    label="CC Emails (optional)"
-                                    placeholder="e.g. admin@hitam.ai, info@hitam.ai"
-                                    value={emailCc}
-                                    onChange={(e) => setEmailCc(e.target.value)}
-                                    className="!rounded-xl"
-                                />
+                                    <Input
+                                        label="Admin CC (optional)"
+                                        placeholder="e.g. admin@hitam.ai"
+                                        value={emailCc}
+                                        onChange={(e) => setEmailCc(e.target.value)}
+                                        className="!rounded-xl"
+                                    />
+                                </div>
 
                                 <div className="space-y-4">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -603,11 +625,7 @@ const MailPage = () => {
                                                             theme="snow"
                                                             value={emailBody}
                                                             onChange={(content, delta, source) => {
-                                                                // PERSISTENCE FIX: Only update state if the user manually typed.
-                                                                // This stops Quill from "Cleaning" (mangling) your HTML on mount.
-                                                                if (source === 'user') {
-                                                                    setEmailBody(content);
-                                                                }
+                                                                if (source === 'user') setEmailBody(content);
                                                             }}
                                                             modules={QUILL_MODULES}
                                                             className="dark:text-gray-900"
@@ -615,15 +633,33 @@ const MailPage = () => {
                                                     </div>
 
                                                     {/* GLOBAL LIVE PREVIEW (Always visible) */}
-                                                    <div className="p-4 bg-blue-50/30 border-t border-blue-50">
-                                                        <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
-                                                            Visual Result (Live)
+                                                    <div className="p-4 bg-blue-50/50 border-t border-blue-50">
+                                                        <div className="flex items-center justify-between mb-4">
+                                                            <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                                                                Design Check (Live)
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => setIsPreviewSample(!isPreviewSample)}
+                                                                className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tighter transition-all ${isPreviewSample ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}`}
+                                                            >
+                                                                {isPreviewSample ? 'SHOWING SAMPLE DATA' : 'SHOWING PLACEHOLDERS'}
+                                                            </button>
                                                         </div>
                                                         <div 
-                                                            className="p-6 bg-white rounded-xl border border-blue-100 shadow-inner min-h-[200px]"
+                                                            className="p-8 bg-white rounded-2xl border border-blue-100 shadow-inner min-h-[300px] prose prose-sm max-w-none"
                                                             style={{ fontFamily: "'Segoe UI', sans-serif" }}
-                                                            dangerouslySetInnerHTML={{ __html: emailBody }} 
+                                                            dangerouslySetInnerHTML={{ 
+                                                                __html: isPreviewSample 
+                                                                    ? emailBody
+                                                                        .replace(/\[Participant Name\]|\[Name\]/gi, "Arif")
+                                                                        .replace(/\[Event Name\]/gi, activityDetails?.title || "Upcoming Workshop")
+                                                                        .replace(/\[Venue\]/gi, activityDetails?.location || "Main Auditorium")
+                                                                        .replace(/\[Date\]/gi, activityDetails?.eventDate ? new Date(activityDetails.eventDate).toLocaleDateString() : "Next Monday")
+                                                                        .replace(/\[Time\]/gi, activityDetails?.eventTime || "10:00 AM")
+                                                                        .replace(/\[Registration ID\]/gi, "REG-88219-X")
+                                                                    : emailBody 
+                                                            }} 
                                                         />
                                                     </div>
                                                 </div>
@@ -636,7 +672,7 @@ const MailPage = () => {
                                     ) : (
                                         <div className="bg-[#fceef0] dark:bg-gray-900 p-4 sm:p-8 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-2xl relative min-h-[700px] flex flex-col">
                                              <div className="max-w-[600px] mx-auto bg-white shadow-xl rounded-[24px] overflow-hidden border border-gray-100/50 flex-1 flex flex-col">
-                                                <div className="p-4 bg-gray-50 border-b border-gray-100 italic text-[10px] text-gray-400 flex items-center justify-between">
+                                                 <div className="p-4 bg-gray-50 border-b border-gray-100 italic text-[10px] text-gray-400 flex items-center justify-between">
                                                     <span>HTML Code Editor</span>
                                                     <span className="flex items-center gap-1"><Code size={10} /> Raw Structure Mode</span>
                                                 </div>
@@ -647,15 +683,33 @@ const MailPage = () => {
                                                     className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 flex-1 resize-none h-[500px]"
                                                 />
                                                 {/* GLOBAL LIVE PREVIEW (Always visible) */}
-                                                <div className="p-4 bg-blue-50/30 border-t border-blue-50">
-                                                    <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
-                                                        Visual Result (Live)
+                                                <div className="p-4 bg-blue-50/50 border-t border-blue-50">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                                                            Design Check (Live)
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => setIsPreviewSample(!isPreviewSample)}
+                                                            className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tighter transition-all ${isPreviewSample ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}`}
+                                                        >
+                                                            {isPreviewSample ? 'SHOWING SAMPLE DATA' : 'SHOWING PLACEHOLDERS'}
+                                                        </button>
                                                     </div>
                                                     <div 
-                                                        className="p-6 bg-white rounded-xl border border-blue-100 shadow-inner min-h-[200px]"
+                                                        className="p-8 bg-white rounded-2xl border border-blue-100 shadow-inner min-h-[300px] prose prose-sm max-w-none"
                                                         style={{ fontFamily: "'Segoe UI', sans-serif" }}
-                                                        dangerouslySetInnerHTML={{ __html: emailBody }} 
+                                                        dangerouslySetInnerHTML={{ 
+                                                            __html: isPreviewSample 
+                                                                ? emailBody
+                                                                    .replace(/\[Participant Name\]|\[Name\]/gi, "Arif")
+                                                                    .replace(/\[Event Name\]/gi, activityDetails?.title || "Upcoming Workshop")
+                                                                    .replace(/\[Venue\]/gi, activityDetails?.location || "Main Auditorium")
+                                                                    .replace(/\[Date\]/gi, activityDetails?.eventDate ? new Date(activityDetails.eventDate).toLocaleDateString() : "Next Monday")
+                                                                    .replace(/\[Time\]/gi, activityDetails?.eventTime || "10:00 AM")
+                                                                    .replace(/\[Registration ID\]/gi, "REG-88219-X")
+                                                                : emailBody 
+                                                        }} 
                                                     />
                                                 </div>
                                             </div>
@@ -703,7 +757,7 @@ const MailPage = () => {
                                         icon={<Send className="w-4 h-4" />}
                                         className="shadow-lg shadow-blue-500/20"
                                     >
-                                        Launch Broadast
+                                        Launch Broadcast
                                     </Button>
                                 </div>
                             </div>

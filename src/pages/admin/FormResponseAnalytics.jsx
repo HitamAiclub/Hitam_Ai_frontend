@@ -197,9 +197,9 @@ const FormResponseAnalytics = () => {
     const [ticketTime, setTicketTime] = useState('');
     const [participantsToMail, setParticipantsToMail] = useState([]);
     const [selectedSubIds, setSelectedSubIds] = useState([]);
-    const [emailCc, setEmailCc] = useState(''); // New state for CC emails
-
-
+    const [emailCc, setEmailCc] = useState(''); 
+    const [isPreviewSample, setIsPreviewSample] = useState(false); 
+    const [isSavingTemplate, setIsSavingTemplate] = useState(false);
     const [selectedExportColumns, setSelectedExportColumns] = useState([]);
 
     // Initialize export columns when fields change
@@ -530,22 +530,24 @@ const FormResponseAnalytics = () => {
         const guessNameCol = baseAnalytics.formFields?.find(f => f.label?.toLowerCase().includes('name'))?.id || '';
         setSelectedNameColumn(guessNameCol);
 
-        // --- Use Activity Templates if available ---
+        // --- Use Ticket Config or Activity Templates if available ---
+        const ticketConfig = activity.ticketConfig || {};
         const postReg = activity.postRegistration || {};
         
         const titleLine = `Your Ticket Confirmation: ${activity.title || ''}`;
-        const finalSubject = postReg.welcomeEmailSubject !== undefined ? postReg.welcomeEmailSubject : titleLine;
-        const finalVenue = postReg.welcomeEmailVenue !== undefined ? postReg.welcomeEmailVenue : (activity.location || '');
-        const finalTime = postReg.welcomeEmailTime || '';
-        const finalCc = postReg.welcomeEmailCc || '';
-        const finalBody = postReg.welcomeEmailBody;
+        
+        // Priority: ticketConfig -> postReg (legacy) -> titleLine
+        const finalSubject = ticketConfig.ticketSubject || postReg.welcomeEmailSubject || titleLine;
+        const finalVenue = ticketConfig.ticketVenue !== undefined ? ticketConfig.ticketVenue : (postReg.welcomeEmailVenue || activity.location || '');
+        const finalTime = ticketConfig.ticketTime || postReg.welcomeEmailTime || '';
+        const finalCc = ticketConfig.ticketCc || postReg.welcomeEmailCc || '';
+        const finalBody = ticketConfig.ticketBody || postReg.welcomeEmailBody;
         
         setEmailSubject(finalSubject);
         setTicketVenue(finalVenue);
         setTicketTime(finalTime);
         setEmailCc(finalCc);
         
-        // PERSISTENCE FIX: Only revert to default IF the field is strictly undefined OR null.
         if (finalBody !== undefined && finalBody !== null) {
             setEmailBody(finalBody);
         } else {
@@ -554,39 +556,37 @@ const FormResponseAnalytics = () => {
         setEmailModalOpen(true);
     };
 
-    const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
     const handleSaveEmailTemplate = async () => {
         setIsSavingTemplate(true);
         try {
             const docRef = doc(db, 'upcomingActivities', activity.id);
             const templateData = {
-                'postRegistration.welcomeEmailSubject': emailSubject,
-                'postRegistration.welcomeEmailBody': emailBody,
-                'postRegistration.welcomeEmailVenue': ticketVenue,
-                'postRegistration.welcomeEmailTime': ticketTime,
-                'postRegistration.welcomeEmailCc': emailCc,
-                'postRegistration.isCustomLayout': true, // Lock this design
+                'ticketConfig.ticketSubject': emailSubject,
+                'ticketConfig.ticketBody': emailBody,
+                'ticketConfig.ticketVenue': ticketVenue,
+                'ticketConfig.ticketTime': ticketTime,
+                'ticketConfig.ticketCc': emailCc,
+                'ticketConfig.isCustomLayout': true, 
                 'updatedAt': new Date().toISOString()
             };
             
             await updateDoc(docRef, templateData);
 
-            // Update local activity state so the UI stays in sync without refresh
             setActivity(prev => ({
                 ...prev,
-                postRegistration: {
-                    ...(prev.postRegistration || {}),
-                    welcomeEmailSubject: emailSubject,
-                    welcomeEmailBody: emailBody,
-                    welcomeEmailVenue: ticketVenue,
-                    welcomeEmailTime: ticketTime,
-                    welcomeEmailCc: emailCc,
+                ticketConfig: {
+                    ...(prev.ticketConfig || {}),
+                    ticketSubject: emailSubject,
+                    ticketBody: emailBody,
+                    ticketVenue: ticketVenue,
+                    ticketTime: ticketTime,
+                    ticketCc: emailCc,
                     isCustomLayout: true
                 }
             }));
 
-            alert('Email template saved successfully to Activity settings!');
+            alert('Ticket template saved successfully to Activity settings!');
         } catch (err) {
             console.error('Error saving template:', err);
             alert('Failed to save template: ' + err.message);
@@ -598,9 +598,6 @@ const FormResponseAnalytics = () => {
     const handleSendTickets = async () => {
         if (!participantsToMail.length) return alert("No participants to send tickets to.");
         
-        const confirmSend = window.confirm(`Are you sure you want to send tickets to ${participantsToMail.length} participant(s)?\nEmails will be sent to matched email addresses.`);
-        if (!confirmSend) return;
-
         try {
             setSendingTickets(true);
             const token = await user?.getIdToken(); // Optional: if protected
@@ -1500,120 +1497,182 @@ const FormResponseAnalytics = () => {
             <Modal
                 isOpen={emailModalOpen}
                 onClose={() => setEmailModalOpen(false)}
-                title="Customize Ticket Email"
+                title="Manual Ticket Generation & Mails"
+                size="lg"
             >
                 <div className="space-y-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Customize the email subject and body before sending. You can use the following placeholders:
-                        <br/><code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">[Participant Name]</code> 
-                        <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded ml-2">[Event Name]</code> 
-                        <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded ml-2">[Registration ID]</code>
-                    </p>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recipient Name Data Column</label>
-                        <select
-                            value={selectedNameColumn}
-                            onChange={(e) => setSelectedNameColumn(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                        >
-                            <option value="">-- Let System Auto-Detect (Fallback) --</option>
-                            {baseAnalytics.formFields.map(f => (
-                                <option key={f.id} value={f.id}>{f.label}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recipient Email Data Column</label>
-                        <select
-                            value={selectedEmailColumn}
-                            onChange={(e) => setSelectedEmailColumn(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                        >
-                            <option value="">-- Let System Auto-Detect (Fallback) --</option>
-                            {baseAnalytics.formFields.map(f => (
-                                <option key={f.id} value={f.id}>{f.label}</option>
-                            ))}
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
-                        <input
-                            type="text"
-                            value={emailSubject}
-                            onChange={(e) => setEmailSubject(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CC Email (Optional)</label>
-                        <input
-                            type="text"
-                            value={emailCc}
-                            onChange={(e) => setEmailCc(e.target.value)}
-                            placeholder="e.g. admin@hitam.ai, info@hitam.ai"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Venue (on Ticket)</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. Auditorium"
-                                value={ticketVenue}
-                                onChange={(e) => setTicketVenue(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                            />
+                    <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl flex items-start gap-3">
+                        <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-lg">
+                            <Mail className="w-5 h-5 text-purple-600 dark:text-purple-300" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time (on Ticket)</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. 10:00 AM"
-                                value={ticketTime}
-                                onChange={(e) => setTicketTime(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                            />
+                           <h4 className="text-sm font-bold text-purple-900 dark:text-purple-100">Admin about to Mail</h4>
+                           <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                               You are sending tickets to <strong>{participantsToMail.length}</strong> selected participant(s). 
+                               Each email will include a generated PDF ticket.
+                           </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Recipient Name Data Column</label>
+                                <select
+                                    value={selectedNameColumn}
+                                    onChange={(e) => setSelectedNameColumn(e.target.value)}
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                >
+                                    <option value="">-- Let System Auto-Detect (Fallback) --</option>
+                                    {baseAnalytics.formFields.map(f => (
+                                        <option key={f.id} value={f.id}>{f.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Recipient Email Data Column</label>
+                                <select
+                                    value={selectedEmailColumn}
+                                    onChange={(e) => setSelectedEmailColumn(e.target.value)}
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                >
+                                    <option value="">-- Let System Auto-Detect (Fallback) --</option>
+                                    {baseAnalytics.formFields.map(f => (
+                                        <option key={f.id} value={f.id}>{f.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Email Subject</label>
+                                <input
+                                    type="text"
+                                    value={emailSubject}
+                                    onChange={(e) => setEmailSubject(e.target.value)}
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Admin CC (Optional)</label>
+                                <input
+                                    type="text"
+                                    value={emailCc}
+                                    onChange={(e) => setEmailCc(e.target.value)}
+                                    placeholder="admin@hitam.ai, info@hitam.ai"
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Venue (on Ticket)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Auditorium"
+                                        value={ticketVenue}
+                                        onChange={(e) => setTicketVenue(e.target.value)}
+                                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Time (on Ticket)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="10:00 AM"
+                                        value={ticketTime}
+                                        onChange={(e) => setTicketTime(e.target.value)}
+                                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Email Body</label>
+                                    <span className="text-[10px] text-gray-400">Placeholders: [Participant Name], [Event Name], [Venue], [Time], [Date]</span>
+                                </div>
+                                <textarea
+                                    value={emailBody}
+                                    onChange={(e) => setEmailBody(e.target.value)}
+                                    rows={8}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono text-xs leading-relaxed"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Preview Section */}
+                        <div className="flex flex-col border-l border-gray-100 dark:border-gray-700 pl-4 h-full">
+                            <div className="flex items-center justify-between mb-3">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                                    Live Design Check
+                                </label>
+                                <button 
+                                  onClick={() => setIsPreviewSample(!isPreviewSample)}
+                                  className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tighter transition-all ${isPreviewSample ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}`}
+                                >
+                                  {isPreviewSample ? 'SHOWING SAMPLE DATA' : 'SHOWING PLACEHOLDERS'}
+                                </button>
+                            </div>
+
+                            <div className="flex-1 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-inner flex flex-col min-h-[400px]">
+                                <div className="p-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-red-400"></div>
+                                    <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+                                    <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                                    <span className="text-[10px] text-gray-400 ml-2 font-mono">ticket_preview.html</span>
+                                </div>
+                                
+                                <div className="flex-1 p-6 overflow-y-auto bg-white">
+                                    <div 
+                                        className="prose prose-sm max-w-none"
+                                        style={{ fontFamily: "'Segoe UI', sans-serif" }}
+                                        dangerouslySetInnerHTML={{ 
+                                            __html: isPreviewSample 
+                                                ? emailBody
+                                                    .replace(/\[Participant Name\]/gi, "Arif")
+                                                    .replace(/\[Event Name\]/gi, activity.title)
+                                                    .replace(/\[Venue\]/gi, ticketVenue || activity.location || "Auditorium")
+                                                    .replace(/\[Date\]/gi, activity.eventDate ? new Date(activity.eventDate).toLocaleDateString() : "Next Monday")
+                                                    .replace(/\[Time\]/gi, ticketTime || activity.eventTime || "10:00 AM")
+                                                : emailBody 
+                                        }} 
+                                    />
+                                    <div className="mt-8 pt-8 border-t border-dashed border-gray-200">
+                                        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex items-center justify-center gap-3 text-gray-500 italic text-xs">
+                                           <Download size={14} /> [Auto-Generated PDF Ticket Attached]
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Body (HTML Supported)</label>
-                        <textarea
-                            value={emailBody}
-                            onChange={(e) => setEmailBody(e.target.value)}
-                            rows={10}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono text-sm leading-relaxed"
-                        />
-                    </div>
-                    
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
                         <Button
-                            variant="ghost"
-                            onClick={() => setEmailModalOpen(false)}
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSaveEmailTemplate}
+                            loading={isSavingTemplate}
+                            className="text-xs"
                         >
-                            Cancel
+                            <Save size={14} className="mr-2" /> Save Designer Template
                         </Button>
                         <div className="flex gap-3">
                             <Button
-                                variant="outline"
-                                onClick={handleSaveEmailTemplate}
-                                loading={isSavingTemplate}
-                                className="flex-1"
+                                variant="ghost"
+                                onClick={() => setEmailModalOpen(false)}
                             >
-                                Save as Template
+                                Cancel
                             </Button>
                             <Button
                                 onClick={handleSendTickets}
                                 loading={sendingTickets}
-                                className="flex-2 bg-green-600 hover:bg-green-700"
+                                className="bg-purple-600 hover:bg-purple-700 text-white"
                             >
-                                Send Tickets to Selection
+                                {sendingTickets ? 'Sending...' : `Confirm & Send ${participantsToMail.length} Tickets`}
                             </Button>
                         </div>
                     </div>

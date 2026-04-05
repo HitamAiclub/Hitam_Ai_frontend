@@ -74,12 +74,13 @@ function ActivityFormEditPage() {
   const [autoConfirmEmail, setAutoConfirmEmail] = useState(false);
   const [emailFieldId, setEmailFieldId] = useState('');
   const [nameFieldId, setNameFieldId] = useState('');
-  const [welcomeEmailSubject, setWelcomeEmailSubject] = useState('');
-  const [welcomeEmailBody, setWelcomeEmailBody] = useState('');
-  const [welcomeEmailCc, setWelcomeEmailCc] = useState('');
-  const [welcomeEmailVenue, setWelcomeEmailVenue] = useState('');
-  const [welcomeEmailTime, setWelcomeEmailTime] = useState('');
-  const [editorMode, setEditorMode] = useState('visual'); // 'visual' or 'html' for Welcome Email
+  const [confirmationSubject, setConfirmationSubject] = useState('');
+  const [confirmationBody, setConfirmationBody] = useState('');
+  const [confirmationCc, setConfirmationCc] = useState('');
+  const [confirmationVenue, setConfirmationVenue] = useState('');
+  const [confirmationTime, setConfirmationTime] = useState('');
+  const [isPreviewSample, setIsPreviewSample] = useState(false); // Toggle for sample data in preview
+  const [editorMode, setEditorMode] = useState('visual'); 
   const [instructionsEditorMode, setInstructionsEditorMode] = useState('visual');
   const [successEditorMode, setSuccessEditorMode] = useState('visual');
 
@@ -228,20 +229,18 @@ function ActivityFormEditPage() {
         const postReg = activityData.postRegistration || {};
         const titleLine = `Registration Confirmed: ${activityData.title || ''}`;
         
-        setWelcomeEmailSubject(postReg.welcomeEmailSubject || titleLine);
-        setWelcomeEmailCc(postReg.welcomeEmailCc || '');
-        setWelcomeEmailVenue(postReg.welcomeEmailVenue !== undefined ? postReg.welcomeEmailVenue : (activityData.location || ''));
-        setWelcomeEmailTime(postReg.welcomeEmailTime || '');
+        setConfirmationSubject(postReg.confirmationSubject || postReg.welcomeEmailSubject || titleLine);
+        setConfirmationCc(postReg.confirmationCc || postReg.welcomeEmailCc || '');
+        setConfirmationVenue(postReg.confirmationVenue !== undefined ? postReg.confirmationVenue : (postReg.welcomeEmailVenue || activityData.location || ''));
+        setConfirmationTime(postReg.confirmationTime || postReg.welcomeEmailTime || '');
         
-        const savedBody = activityData.postRegistration?.welcomeEmailBody;
-        const isCustomLayout = activityData.postRegistration?.isCustomLayout;
+        const savedBody = postReg.confirmationBody || postReg.welcomeEmailBody;
+        const isCustomLayout = postReg.isCustomLayout;
         
-        // PERSISTENCE FIX: If isCustomLayout is true, or if the field exists, HONOR IT.
-        // We only use defaults if it's a brand new activity with no registration settings.
         if (isCustomLayout || (savedBody !== undefined && savedBody !== null)) {
-            setWelcomeEmailBody(savedBody || '');
+            setConfirmationBody(savedBody || '');
         } else {
-            setWelcomeEmailBody(MAIL_TEMPLATES[0].body);
+            setConfirmationBody(MAIL_TEMPLATES[0].body);
         }
 
         // --- CONSOLIDATED SECTION MANAGEMENT ---
@@ -356,12 +355,12 @@ function ActivityFormEditPage() {
         'postRegistration.autoConfirmEmail': autoConfirmEmail || false,
         'postRegistration.emailFieldId': emailFieldId || '',
         'postRegistration.nameFieldId': nameFieldId || '',
-        'postRegistration.welcomeEmailSubject': welcomeEmailSubject || '',
-        'postRegistration.welcomeEmailBody': welcomeEmailBody || '',
-        'postRegistration.welcomeEmailCc': welcomeEmailCc || '',
-        'postRegistration.welcomeEmailVenue': welcomeEmailVenue || '',
-        'postRegistration.welcomeEmailTime': welcomeEmailTime || '',
-        'postRegistration.isCustomLayout': true, // Mark as custom to prevent auto-overwrites
+        'postRegistration.confirmationSubject': confirmationSubject || '',
+        'postRegistration.confirmationBody': confirmationBody || '',
+        'postRegistration.confirmationCc': confirmationCc || '',
+        'postRegistration.confirmationVenue': confirmationVenue || '',
+        'postRegistration.confirmationTime': confirmationTime || '',
+        'postRegistration.isCustomLayout': true, 
         'updatedAt': new Date().toISOString()
       };
 
@@ -382,12 +381,12 @@ function ActivityFormEditPage() {
     try {
       const docRef = doc(db, 'upcomingActivities', id);
       const templateData = {
-        'postRegistration.welcomeEmailSubject': welcomeEmailSubject,
-        'postRegistration.welcomeEmailBody': welcomeEmailBody,
-        'postRegistration.welcomeEmailCc': welcomeEmailCc,
-        'postRegistration.welcomeEmailVenue': welcomeEmailVenue,
-        'postRegistration.welcomeEmailTime': welcomeEmailTime,
-        'postRegistration.isCustomLayout': true, // Lock this design
+        'postRegistration.confirmationSubject': confirmationSubject,
+        'postRegistration.confirmationBody': confirmationBody,
+        'postRegistration.confirmationCc': confirmationCc,
+        'postRegistration.confirmationVenue': confirmationVenue,
+        'postRegistration.confirmationTime': confirmationTime,
+        'postRegistration.isCustomLayout': true, 
         'updatedAt': new Date().toISOString()
       };
       await updateDoc(docRef, templateData);
@@ -397,11 +396,11 @@ function ActivityFormEditPage() {
         ...prev,
         postRegistration: {
             ...(prev.postRegistration || {}),
-            welcomeEmailSubject,
-            welcomeEmailBody,
-            welcomeEmailCc,
-            welcomeEmailVenue,
-            welcomeEmailTime,
+            confirmationSubject,
+            confirmationBody,
+            confirmationCc,
+            confirmationVenue,
+            confirmationTime,
             isCustomLayout: true
         }
       }));
@@ -822,15 +821,15 @@ function ActivityFormEditPage() {
               </div>
             </div>
 
-            {/* Confirmation Email Settings */}
+            {/* Registration Confirmation Email (Auto) Settings */}
             <div className="p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <Mail className="w-5 h-5 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 dark:text-white">Email Confirmation</h4>
-                  <p className="text-xs text-gray-500">Send an instant "Registration Received" email to participants.</p>
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Registration Confirmation Email</h4>
+                  <p className="text-xs text-gray-500">Automatically sents immediately after a student registers.</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <Button
@@ -904,20 +903,20 @@ function ActivityFormEditPage() {
                       </label>
                       <input
                         type="text"
-                        value={welcomeEmailSubject}
-                        onChange={(e) => setWelcomeEmailSubject(e.target.value)}
+                        value={confirmationSubject}
+                        onChange={(e) => setConfirmationSubject(e.target.value)}
                         placeholder="Registration Confirmed: [Event Name]"
                         className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-                        Welcome Email CC (comma separated)
+                        Admin CC (comma separated)
                       </label>
                       <input
                         type="text"
-                        value={welcomeEmailCc}
-                        onChange={(e) => setWelcomeEmailCc(e.target.value)}
+                        value={confirmationCc}
+                        onChange={(e) => setConfirmationCc(e.target.value)}
                         placeholder="admin@example.com, info@example.com"
                         className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
                       />
@@ -927,8 +926,8 @@ function ActivityFormEditPage() {
                     <div>
                       <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 flex items-center justify-between">
                         <div>
-                          Email Body
-                          <span className="ml-2 normal-case font-normal text-gray-400">Placeholders: [Participant Name], [Event Name]</span>
+                          Email Body Design
+                          <span className="ml-2 normal-case font-normal text-gray-400">Placeholders: [Participant Name], [Event Name], [Venue], [Time], [Date]</span>
                         </div>
                         <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
                           <button
@@ -965,9 +964,9 @@ function ActivityFormEditPage() {
                               key={tmpl.id}
                               type="button"
                               onClick={() => {
-                                if (welcomeEmailBody && !window.confirm("Selecting a template will replace your current email body. Continue?")) return;
-                                setWelcomeEmailBody(tmpl.body);
-                                if (tmpl.subject) setWelcomeEmailSubject(tmpl.subject.replace('[Event Name]', activity.title));
+                                if (confirmationBody && !window.confirm("Selecting a template will replace your current email body. Continue?")) return;
+                                setConfirmationBody(tmpl.body);
+                                if (tmpl.subject) setConfirmationSubject(tmpl.subject.replace('[Event Name]', activity.title));
                               }}
                               className="flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all text-center group"
                             >
@@ -989,7 +988,7 @@ function ActivityFormEditPage() {
                               key={key}
                               type="button"
                               onClick={() => {
-                                setWelcomeEmailBody(prev => prev + box.html);
+                                setConfirmationBody(prev => prev + box.html);
                               }}
                               className={`px-4 py-2 rounded-full text-xs font-bold border transition-all hover:shadow-md active:scale-95 ${box.class}`}
                             >
@@ -1006,8 +1005,8 @@ function ActivityFormEditPage() {
                         <div className="flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-300">
                           <div className="flex items-center gap-6">
                             <ArrowLeft size={20} />
-                            <div className="w-8 h-8 flex items-center justify-center">
-                              <Zap size={22} className="text-gray-400" />
+                            <div className="w-8 h-8 flex items-center justify-center font-bold text-xs">
+                               HITAM
                             </div>
                           </div>
                           <div className="flex items-center gap-6">
@@ -1027,18 +1026,14 @@ function ActivityFormEditPage() {
                             <div>
                               <div className="flex items-center gap-1">
                                 <span className="text-sm font-bold text-gray-900 dark:text-white">HITAM AI CLUB</span>
-                                <span className="text-xs text-gray-400">6:16 PM</span>
+                                <span className="text-xs text-gray-400">Just now</span>
                               </div>
                               <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">
                                 to me <ChevronDown size={14} />
                               </button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-5 text-gray-400">
-                            <Smile size={18} />
-                            <ArrowLeft size={18} className="rotate-180" /> {/* Reply icon mock */}
-                            <MoreVertical size={18} />
-                          </div>
+                   
                         </div>
 
                         {/* The Email Card (600px) */}
@@ -1055,12 +1050,10 @@ function ActivityFormEditPage() {
                                 </style>
                                 <ReactQuill
                                   theme="snow"
-                                  value={welcomeEmailBody}
+                                  value={confirmationBody}
                                   onChange={(content, delta, source) => {
-                                    // PERSISTENCE FIX: Only update state if the user manually typed.
-                                    // This stops Quill from "Cleaning" (mangling) your HTML on mount.
                                     if (source === 'user') {
-                                      setWelcomeEmailBody(content);
+                                      setConfirmationBody(content);
                                     }
                                   }}
                                   modules={QUILL_MODULES}
@@ -1074,8 +1067,8 @@ function ActivityFormEditPage() {
                                   <span className="flex items-center gap-1"><Code size={10} /> Raw Structure Mode</span>
                                 </div>
                                 <textarea
-                                  value={welcomeEmailBody}
-                                  onChange={(e) => setWelcomeEmailBody(e.target.value)}
+                                  value={confirmationBody}
+                                  onChange={(e) => setConfirmationBody(e.target.value)}
                                   rows={12}
                                   className="w-full p-8 text-sm font-mono bg-white text-gray-900 outline-none border-0 selection:bg-blue-100 resize-none h-[500px]"
                                   placeholder="<h1>Hello [Participant Name]!</h1>..."
@@ -1085,26 +1078,43 @@ function ActivityFormEditPage() {
                             
                             {/* GLOBAL LIVE PREVIEW (Always visible) */}
                             <div className="p-4 bg-blue-50/30 border-t border-blue-50">
-                              <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
-                                Visual Result (Live)
+                              <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                                  Design Check (Preview)
+                                </div>
+                                <button 
+                                  onClick={() => setIsPreviewSample(!isPreviewSample)}
+                                  className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tighter transition-all ${isPreviewSample ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}`}
+                                >
+                                  {isPreviewSample ? 'SHOWING SAMPLE DATA' : 'SHOWING PLACEHOLDERS'}
+                                </button>
                               </div>
                               <div 
-                                className="p-6 bg-white rounded-xl border border-blue-100 shadow-inner min-h-[200px]"
+                                className="p-6 bg-white rounded-xl border border-blue-100 shadow-inner min-h-[200px] overflow-hidden"
                                 style={{ fontFamily: "'Segoe UI', sans-serif" }}
-                                dangerouslySetInnerHTML={{ __html: welcomeEmailBody }} 
+                                dangerouslySetInnerHTML={{ 
+                                  __html: isPreviewSample 
+                                    ? confirmationBody
+                                        .replace(/\[Participant Name\]/gi, "Arif")
+                                        .replace(/\[Event Name\]/gi, activity.title)
+                                        .replace(/\[Venue\]/gi, activity.location || "Main Hall")
+                                        .replace(/\[Date\]/gi, activity.eventDate ? new Date(activity.eventDate).toLocaleDateString() : "Next Monday")
+                                        .replace(/\[Time\]/gi, activity.eventTime || "10:00 AM")
+                                    : confirmationBody 
+                                }} 
                               />
                             </div>
                           </div>
 
                           {/* Quick Actions (Reply/Forward) */}
                           <div className="max-w-[600px] mx-auto grid grid-cols-2 gap-4 mt-6">
-                            <button className="flex items-center justify-center gap-2 py-3 px-6 bg-gray-900/5 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-bold text-gray-700 dark:text-gray-300">
-                              <ArrowLeft size={16} /> Reply
-                            </button>
-                            <button className="flex items-center justify-center gap-2 py-3 px-6 bg-gray-900/5 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-bold text-gray-700 dark:text-gray-300">
-                              <ArrowLeft size={16} className="rotate-180" /> Forward
-                            </button>
+                            <div className="flex items-center justify-center gap-2 py-3 px-6 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-full text-xs font-bold text-gray-500">
+                              <ArrowLeft size={14} /> Reply
+                            </div>
+                            <div className="flex items-center justify-center gap-2 py-3 px-6 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-full text-xs font-bold text-gray-500">
+                              <ArrowLeft size={14} className="rotate-180" /> Forward
+                            </div>
                           </div>
                         </div>
 
