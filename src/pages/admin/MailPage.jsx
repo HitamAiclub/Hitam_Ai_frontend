@@ -40,58 +40,39 @@ import { useClubMembers, useCommunityMembers } from '../../hooks/useFirebaseData
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 
-const BROADCAST_DEFAULT = `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; max-width: 600px; margin: 0 auto; line-height: 1.6; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; background-color: #ffffff;">
-    <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 30px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em;">OFFICIAL ANNOUNCEMENT</h1>
-        <p style="color: #bfdbfe; margin: 5px 0 0 0; font-size: 14px; font-weight: 500;">HITAM AI CLUB | ADMINISTRATIVE DIVISION</p>
-    </div>
+const BROADCAST_DEFAULT = `<div>
+    <h2 style="color: #111827; margin: 0 0 20px 0; font-size: 20px; font-weight: 700;">Hello [Name],</h2>
     
-    <div style="padding: 40px;">
-        <h2 style="color: #111827; margin: 0 0 20px 0; font-size: 20px; font-weight: 700;">Hello [Name],</h2>
-        
-        <p style="margin: 0 0 15px 0;">We are writing to share an important update regarding our upcoming initiatives. As part of our commitment to excellence, we have a few key points to communicate:</p>
-        
-        <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
-            <p style="margin: 0; font-weight: 600; color: #1e40af; font-size: 15px;">Key Information Overview:</p>
-            <p style="margin: 5px 0 0 0; color: #475569; font-size: 14px;">[Enter your main message details here. You can use the themed boxes below for more specific layouts.]</p>
-        </div>
+    <p style="margin: 0 0 15px 0;">We are writing to share an important update regarding our upcoming initiatives. As part of our commitment to excellence, we have a few key points to communicate:</p>
+    
+    <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+        <p style="margin: 0; font-weight: 600; color: #1e40af; font-size: 15px;">Key Information Overview:</p>
+        <p style="margin: 5px 0 0 0; color: #475569; font-size: 14px;">[Enter your main message details here. You can use the themed boxes below for more specific layouts.]</p>
+    </div>
 
-        <p style="margin: 0 0 15px 0;">Please ensure you review all attached documents and reach out if you have any questions.</p>
-        
-        <div style="margin-top: 35px; padding-top: 25px; border-top: 1px solid #f1f5f9;">
-            <p style="margin: 0; font-weight: 700; color: #111827;">Regards,</p>
-            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;"><strong>The HITAM AI CLUB Team</strong><br>Empowering the Future of Intelligent Systems</p>
-        </div>
-    </div>
+    <p style="margin: 0 0 15px 0;">Please ensure you review all attached documents and reach out if you have any questions.</p>
     
-    <div style="background-color: #f1f5f9; padding: 20px; text-align: center; color: #94a3b8; font-size: 11px;">
-        <p style="margin: 0;">© 2024 HITAM AI CLUB. All rights reserved.</p>
-        <p style="margin: 5px 0 0 0;">This is an administrative broadcast. Please do not reply to this email.</p>
+    <div style="margin-top: 35px; padding-top: 25px; border-top: 1px solid #f1f5f9;">
+        <p style="margin: 0; font-weight: 700; color: #111827;">Regards,</p>
+        <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;"><strong>The HITAM AI CLUB Team</strong><br>Empowering the Future of Intelligent Systems</p>
     </div>
 </div>`;
 
-const ACTIVITY_BROADCAST_DEFAULT = `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; max-width: 600px; margin: 0 auto; line-height: 1.6; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; background-color: #ffffff;">
-    <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800;">ACTIVITY UPDATE</h1>
-        <p style="color: #d1fae5; margin: 5px 0 0 0; font-size: 14px;">Event: [Event Name]</p>
-    </div>
+const ACTIVITY_BROADCAST_DEFAULT = `<div>
+    <h2 style="color: #111827; margin: 0 0 20px 0; font-size: 20px; font-weight: 700;">Hello [Name],</h2>
     
-    <div style="padding: 40px;">
-        <h2 style="color: #111827; margin: 0 0 20px 0; font-size: 20px; font-weight: 700;">Hello [Name],</h2>
-        
-        <p style="margin: 0 0 15px 0;">We are excited to share some important updates regarding the upcoming activity <strong>[Event Name]</strong>. Please take a moment to review the details below:</p>
-        
-        <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
-            <p style="margin: 0; font-weight: 600; color: #065f46; font-size: 15px;">Venue & Logistics:</p>
-            <p style="margin: 5px 0 0 0; color: #374151; font-size: 14px;"><strong>Location:</strong> [Venue]<br><strong>Time:</strong> [Time]<br><strong>Date:</strong> [Date]</p>
-        </div>
+    <p style="margin: 0 0 15px 0;">We are excited to share some important updates regarding the upcoming activity <strong>[Event Name]</strong>. Please take a moment to review the details below:</p>
+    
+    <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+        <p style="margin: 0; font-weight: 600; color: #065f46; font-size: 15px;">Venue & Logistics:</p>
+        <p style="margin: 5px 0 0 0; color: #374151; font-size: 14px;"><strong>Location:</strong> [Venue]<br><strong>Time:</strong> [Time]<br><strong>Date:</strong> [Date]</p>
+    </div>
 
-        <p style="margin: 0 0 15px 0;">We look forward to seeing you there! If you have any questions or cannot attend, please inform the coordination team.</p>
-        
-        <div style="margin-top: 35px; padding-top: 25px; border-top: 1px solid #f1f5f9;">
-            <p style="margin: 0; font-weight: 700;">Best Regards,</p>
-            <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;"><strong>The Coordination Team</strong><br>HITAM AI CLUB</p>
-        </div>
+    <p style="margin: 0 0 15px 0;">We look forward to seeing you there! If you have any questions or cannot attend, please inform the coordination team.</p>
+    
+    <div style="margin-top: 35px; padding-top: 25px; border-top: 1px solid #f1f5f9;">
+        <p style="margin: 0; font-weight: 700;">Best Regards,</p>
+        <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;"><strong>The Coordination Team</strong><br>HITAM AI CLUB</p>
     </div>
 </div>`;
 

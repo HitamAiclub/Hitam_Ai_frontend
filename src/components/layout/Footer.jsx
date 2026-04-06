@@ -1,26 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
-  Github,
-  Linkedin,
-  Twitter,
   Instagram,
   Mail,
   MapPin,
-  Phone,
-  ArrowRight,
-  Send
+  ArrowRight
 } from "lucide-react";
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    // Add newsletter subscription logic here
-  };
-
   return (
     <footer className="bg-gray-900 border-t border-gray-800 text-gray-300">
       <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
@@ -101,20 +88,17 @@ const Footer = () => {
               </li>
               <li className="flex items-center">
                 <Mail className="w-5 h-5 text-blue-500 mr-3 flex-shrink-0" />
-                <a href="mailto:hitam.ai.club@gmail.com" className="hover:text-blue-400 transition-colors">
+                <a href="mailto:hitam.ai.club@gmail.com" className="hover:text-blue-400 transition-colors text-sm">
                   hitam.ai.club@gmail.com
                 </a>
               </li>
             </ul>
           </div>
 
-
-
         </div>
 
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
-          <p>© {currentYear} HITAM AI Club. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link to="#" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link to="#" className="hover:text-white transition-colors">Terms of Service</Link>

@@ -161,31 +161,40 @@ const computeAnalytics = (data, formSections, existingFields = null) => {
     };
 };
 
-const DEFAULT_TICKET_BODY = `<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1f2937; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
-    <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 24px; text-align: center; color: white;">
-        <h2 style="margin: 0; font-size: 20px; letter-spacing: 0.05em;">EVENT ENTRY TICKET</h2>
+const DEFAULT_TICKET_BODY = `<div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+
+    <h2 style="color: #2563eb;">🎟️ Event Entry Ticket</h2>
+
+    <p>Hi <strong>[Participant Name]</strong>,</p>
+
+    <p>Your entry ticket for <strong>'[Event Name]'</strong> is ready. Please find your official PDF ticket attached to this email.</p>
+
+    <div style="margin: 25px 0; padding: 24px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
+        
+        <p style="margin: 0 0 12px 0; color: #1e3a8a; font-weight: bold; font-size: 16px;">Event Details</p>
+
+        <p style="margin: 0; color: #1e3a8a;">
+            <strong>📍 Venue:</strong><br>
+            [Venue]
+        </p>
+
+        <p style="margin: 12px 0 0 0; color: #1e3a8a;">
+            <strong>📅 Date & Time:</strong><br>
+            [Date] at [Time]
+        </p>
+
     </div>
-    <div style="padding: 32px;">
-        <p style="font-size: 16px; margin-bottom: 20px;">Hello <strong>[Participant Name]</strong>,</p>
-        <p style="margin-bottom: 24px; color: #4b5563;">Your entry ticket for <strong>[Event Name]</strong> is ready! Please find the official PDF ticket attached to this email.</p>
-        
-        <div style="background: #f8fafc; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
-            <div style="margin-bottom: 16px;">
-                <p style="text-transform: uppercase; font-size: 10px; font-weight: bold; color: #64748b; margin: 0 0 4px 0; letter-spacing: 0.1em;">Venue</p>
-                <p style="font-weight: 600; color: #1e293b; margin: 0; font-size: 15px;">[Venue]</p>
-            </div>
-            <div>
-                <p style="text-transform: uppercase; font-size: 10px; font-weight: bold; color: #64748b; margin: 0 0 4px 0; letter-spacing: 0.1em;">Date & Time</p>
-                <p style="font-weight: 600; color: #1e293b; margin: 0; font-size: 15px;">[Date] at [Time]</p>
-            </div>
-        </div>
-        
-        <div style="background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 8px; padding: 12px; font-size: 13px; color: #9d174d; text-align: center;">
+
+    <div style="margin: 20px 0; padding: 18px; background: #fef3c7; border: 1px solid #fde68a; border-radius: 10px;">
+        <p style="margin: 0; color: #92400e;">
             <strong>Note:</strong> Please keep the QR code on the attached PDF ready for scanning at the entrance.
-        </div>
-        
-        <p style="text-align: center; margin-top: 32px; color: #94a3b8; font-size: 14px;">See you there! 👋</p>
+        </p>
     </div>
+
+    <p>We look forward to seeing you at the event! 👋</p>
+
+    <p>Best Regards,<br><strong>The HITAM AI CLUB Team</strong></p>
+
 </div>`;
 
 const FormResponseAnalytics = () => {

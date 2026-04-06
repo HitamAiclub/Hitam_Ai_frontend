@@ -1860,10 +1860,10 @@ const UpcomingActivities = () => {
                             : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
                           }`}>
                           {!isRegistrationOpen(activity)
-                            ? "Registration Closed"
-                            : isActivityFull(activity) // Use logic check for "Full"
-                              ? "Registration Full"
-                              : "Registration Open"
+                            ? "FORM UNAVAILABLE"
+                            : isActivityFull(activity)
+                              ? "FORM FULL"
+                              : "JOINING OPEN"
                           }
                         </span>
                       </div>
@@ -1881,9 +1881,9 @@ const UpcomingActivities = () => {
                         <Button
                           size="sm"
                           onClick={() => openRegistrationForm(activity)}
-                          className="w-full sm:w-auto"
+                          className="w-full sm:w-auto font-black tracking-widest text-xs"
                         >
-                          Fill Form
+                          FILL THE FORM
                         </Button>
                       )}
 
@@ -1891,9 +1891,9 @@ const UpcomingActivities = () => {
                         <Button
                           size="sm"
                           disabled
-                          className="w-full sm:w-auto"
+                          className="w-full sm:w-auto text-xs"
                         >
-                          Registration Full
+                          FORM FULL
                         </Button>
                       )}
 
@@ -1901,9 +1901,9 @@ const UpcomingActivities = () => {
                         <Button
                           size="sm"
                           disabled
-                          className="w-full sm:w-auto"
+                          className="w-full sm:w-auto text-xs"
                         >
-                          Registration Closed
+                          FORM UNAVAILABLE
                         </Button>
                       )}
 
@@ -2145,12 +2145,12 @@ const UpcomingActivities = () => {
                 <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                   <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                  Registration Complete!
+                <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3">
+                  Form Filled Successfully!
                 </h3>
                 <p 
                   className="text-gray-600 dark:text-gray-400 mb-8 max-w-sm mx-auto whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{ __html: renderFormattedText(selectedActivity?.postRegistration?.joinLinkMessage || "Your registration has been submitted successfully.") }}
+                  dangerouslySetInnerHTML={{ __html: renderFormattedText(selectedActivity?.postRegistration?.joinLinkMessage || "Your form has been submitted successfully.") }}
                 />
 
                 {selectedActivity?.postRegistration?.joinLink && (

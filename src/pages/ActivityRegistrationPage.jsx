@@ -50,8 +50,8 @@ function ActivityRegistrationPage() {
   const getDefaultFormSections = () => ([
     {
       id: Date.now(),
-      title: 'Registration',
-      description: 'Please fill in your details',
+      title: 'Official Form',
+      description: 'Please provide the required information below',
       fields: [
         {
           id: `field_${Date.now()}`,
@@ -79,7 +79,7 @@ function ActivityRegistrationPage() {
     if (legacyFields && Array.isArray(legacyFields) && legacyFields.length > 0) {
       return [{
         id: Date.now(),
-        title: activityData.formTitle || 'Registration',
+        title: activityData.formTitle || 'Official Form',
         description: activityData.formDescription || '',
         fields: legacyFields,
         conditional: { enabled: false, fieldId: null, condition: 'equals', value: '' }
@@ -1402,10 +1402,10 @@ function ActivityRegistrationPage() {
           >
             <FiCheckCircle className="w-8 h-8 text-green-600" />
           </motion.div>
-          <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
+          <h2 className="text-2xl font-black mb-2 text-gray-900 dark:text-white uppercase tracking-tighter">Form Submission Successful!</h2>
           <p 
-            className="text-gray-600 dark:text-gray-400 mb-4 whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: renderFormattedText(activity.postRegistration?.joinLinkMessage || "Your registration has been submitted successfully.") }}
+            className="text-gray-600 dark:text-gray-400 mb-6 whitespace-pre-wrap leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: renderFormattedText(activity.postRegistration?.joinLinkMessage || "Thank you! Your details have been securely received and documented.") }}
           />
 
           {activity.postRegistration?.joinLink && (
@@ -1587,8 +1587,8 @@ function ActivityRegistrationPage() {
         title="⚠️ Validation Errors"
       >
         <div className="space-y-4">
-          <p className="text-gray-700 dark:text-gray-300">
-            Please fix the following errors before registering:
+          <p className="text-gray-700 dark:text-gray-300 font-medium">
+            Please correct the following before submitting your form:
           </p>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {validationErrors.map((error, index) => (
