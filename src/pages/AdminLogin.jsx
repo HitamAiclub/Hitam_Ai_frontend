@@ -41,8 +41,18 @@ const AdminLogin = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-white" />
+            <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-6 shadow-xl border-2 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 relative">
+              <img 
+                src="/logo.jpg" 
+                alt="Hitam AI Club Logo" 
+                className="w-full h-full object-cover relative z-10"
+                onError={(e) => {
+                  e.target.style.opacity = '0';
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+                <span className="text-white font-bold text-2xl">AI</span>
+              </div>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Admin Login

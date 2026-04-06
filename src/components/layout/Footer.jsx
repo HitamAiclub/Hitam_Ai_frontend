@@ -28,9 +28,19 @@ const Footer = () => {
 
           {/* Brand Section */}
           <div className="space-y-6">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg">
-                AI
+            <Link to="/" className="flex items-center space-x-3">
+              <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl">
+                <img
+                  src="/logo.jpg"
+                  alt="Hitam AI Club"
+                  className="w-full h-full object-cover relative z-10"
+                  onError={(e) => {
+                    e.target.style.opacity = '0';
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+                  <span className="text-white font-bold text-xl">AI</span>
+                </div>
               </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                 HITAM AI CLUB
@@ -39,7 +49,22 @@ const Footer = () => {
             <p className="text-gray-400 leading-relaxed">
               Empowering students with cutting-edge AI knowledge through workshops, hands-on projects, and a vibrant community of innovators.
             </p>
-
+            <div className="flex space-x-4">
+              <a
+                href="https://www.instagram.com/hitamaiclub?igsh=ZnFsdnZya2RyN3N3"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-yellow-400 hover:to-purple-600 hover:text-white transition-all duration-300 shadow-md hover:shadow-purple-500/20"
+              >
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a
+                href="mailto:hitam.ai.club@gmail.com"
+                className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all duration-300 shadow-md hover:shadow-blue-500/20"
+              >
+                <Mail className="w-5 h-5" />
+              </a>
+            </div>
           </div>
 
           {/* Quick Links */}
@@ -50,6 +75,7 @@ const Footer = () => {
                 { name: "Home", path: "/" },
                 { name: "Events & Workshops", path: "/events" },
                 { name: "Upcoming Activities", path: "/upcoming" },
+                { name: "Network", path: "/network" },
                 { name: "Join the Club", path: "/join" }
               ].map((link) => (
                 <li key={link.name}>
