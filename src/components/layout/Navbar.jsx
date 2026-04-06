@@ -1,7 +1,25 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, Menu, X, LogOut, User } from "lucide-react";
+import { 
+  Moon, 
+  Sun, 
+  Menu, 
+  X, 
+  LogOut, 
+  User, 
+  Home, 
+  Calendar, 
+  Activity, 
+  Globe, 
+  UserPlus, 
+  Users, 
+  ClipboardList, 
+  Link as LinkIcon, 
+  Image, 
+  Star, 
+  Mail 
+} from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -21,24 +39,24 @@ const Navbar = () => {
   };
 
   const publicNavItems = [
-    { name: "Home", path: "/" },
-    { name: "Events & Workshops", path: "/events" },
-    { name: "Upcoming Activities", path: "/upcoming" },
-    { name: "Network", path: "/network" },
-    { name: "Join the Club", path: "/join" },
+    { name: "Home", path: "/", icon: Home },
+    { name: "Events & Workshops", path: "/events", icon: Calendar },
+    { name: "Upcoming Activities", path: "/upcoming", icon: Activity },
+    { name: "Network", path: "/network", icon: Globe },
+    { name: "Join the Club", path: "/join", icon: UserPlus },
   ];
 
   const adminNavItems = [
-    { name: "Home", path: "/" },
-    { name: "Events & Workshops", path: "/events" },
-    { name: "Upcoming Activities", path: "/upcoming" },
-    { name: "Network", path: "/network" },
-    { name: "Committee Members", path: "/admin/committee" },
-    { name: "Form Submissions", path: "/admin/submissions" },
-    { name: "Community & Connections", path: "/admin/community" },
-    { name: "Media Management", path: "/admin/media" },
-    { name: "Highlights", path: "/admin/highlights" },
-    { name: "Mail Center", path: "/admin/mail" },
+    { name: "Home", path: "/", icon: Home },
+    { name: "Events & Workshops", path: "/events", icon: Calendar },
+    { name: "Upcoming Activities", path: "/upcoming", icon: Activity },
+    { name: "Network", path: "/network", icon: Globe },
+    { name: "Committee Members", path: "/admin/committee", icon: Users },
+    { name: "Form Submissions", path: "/admin/submissions", icon: ClipboardList },
+    { name: "Community & Connections", path: "/admin/community", icon: LinkIcon },
+    { name: "Media Management", path: "/admin/media", icon: Image },
+    { name: "Highlights", path: "/admin/highlights", icon: Star },
+    { name: "Mail Center", path: "/admin/mail", icon: Mail },
   ];
 
   const navItems = user ? adminNavItems : publicNavItems;
@@ -75,23 +93,27 @@ const Navbar = () => {
           </motion.div>
 
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item, index) => (
-              <motion.div
-                key={item.name}
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Link
-                  to={item.path}
-                  className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+          {/* Desktop Navigation - Scrollable Buttons */}
+          <div className="hidden md:flex items-center flex-1 px-6 overflow-hidden min-w-0">
+            <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar py-2 w-full">
+              {navItems.map((item, index) => (
+                <motion.div
+                  key={item.name}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.03 }}
+                  className="flex-shrink-0"
                 >
-                  {item.name}
-                </Link>
-              </motion.div>
-            ))}
+                  <Link
+                    to={item.path}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap bg-gray-50/50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600 border border-transparent hover:border-blue-400 dark:hover:border-blue-500 shadow-sm hover:shadow-blue-500/20 group"
+                  >
+                    <item.icon className="w-4 h-4 transition-transform group-hover:scale-110" />
+                    <span>{item.name}</span>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
           </div>
 
           {/* Actions */}
@@ -163,9 +185,10 @@ const Navbar = () => {
                   <Link
                     to={item.path}
                     onClick={() => setIsOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+                    className="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600 transition-all duration-200 group"
                   >
-                    {item.name}
+                    <item.icon className="w-5 h-5 transition-transform group-hover:scale-110" />
+                    <span className="font-medium">{item.name}</span>
                   </Link>
                 </motion.div>
               ))}
