@@ -4,7 +4,7 @@ import {
   FiImage, FiTrash2, FiEdit3, FiPlus, FiFolder, FiFolderPlus,
   FiSearch, FiGrid, FiList, FiRefreshCw, FiChevronRight, FiChevronDown,
   FiMoreVertical, FiDownload, FiLink, FiFile, FiX, FiFileText, FiVideo,
-  FiChevronRight as FiChevronRightIcon, FiArrowLeft, FiMenu
+  FiArrowLeft, FiMenu
 } from 'react-icons/fi';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -14,6 +14,101 @@ import CloudinaryUpload from '../../components/ui/CloudinaryUpload';
 import { deleteFromCloudinary } from "../../utils/cloudinary";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+// -- Recursive Sidebar Item --
+const RecursiveSidebarItem = ({ name, path, level = 0, onSelect, currentPath, startExpanded = false }) => {
+  const [expanded, setExpanded] = useState(startExpanded);
+  const [children, setChildren] = useState([]);
+  const [loadingChildren, setLoadingChildren] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const isSelected = currentPath === path;
+  // Indentation
+  const paddingLeft = level * 12 + 12;
+
+  // Auto-load if expanded initially or toggled
+  useEffect(() => {
+    if (expanded && !loaded && !loadingChildren) {
+      fetchChildren();
+    }
+  }, [expanded]);
+
+  const fetchChildren = async () => {
+    setLoadingChildren(true);
+    try {
+      const res = await fetch(`${API_URL}/api/cloudinary/folders?parent=${encodeURIComponent(path)}`);
+
+      if (res.status === 420 || res.status === 429) {
+        console.warn("Sidebar fetch rate limited");
+        setLoadingChildren(false);
+        return;
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        setChildren(data);
+        setLoaded(true);
+      }
+    } catch (err) {
+      console.error("Failed to load subfolders", err);
+    } finally {
+      setLoadingChildren(false);
+    }
+  };
+
+  const handleToggle = (e) => {
+    e.stopPropagation();
+    setExpanded(!expanded);
+  };
+
+  return (
+    <div className="w-full select-none">
+      <div
+        className={`flex items-center gap-1 py-1 pr-2 text-sm cursor-pointer transition-colors
+                  ${isSelected ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}
+              `}
+        style={{ paddingLeft: `${paddingLeft}px` }}
+        onClick={() => onSelect(path)}
+      >
+        <div onClick={handleToggle} className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400">
+          <FiChevronRight className={`w-3 h-3 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+        </div>
+        <FiFolder className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'fill-blue-500 text-blue-600' : 'fill-yellow-100 text-yellow-500'}`} />
+        <span className="truncate flex-1">{name}</span>
+      </div>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            {loadingChildren && (
+              <div className="pl-8 py-1 text-xs text-gray-400 flex items-center gap-2">
+                <FiRefreshCw className="animate-spin w-3 h-3" /> Loading...
+              </div>
+            )}
+            {!loadingChildren && children.length === 0 && loaded && (
+              <div className="pl-8 py-1 text-xs text-gray-400 italic">Empty</div>
+            )}
+            {children.map(child => (
+              <RecursiveSidebarItem
+                key={child.path}
+                name={child.name}
+                path={child.path}
+                level={level + 1}
+                onSelect={onSelect}
+                currentPath={currentPath}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const MediaManagement = () => {
   // -- State --
@@ -67,12 +162,13 @@ const MediaManagement = () => {
         setRateLimitError(errData.error?.message || "Rate limit exceeded. Please try again later.");
         return;
       }
-      if (!res.ok) throw new Error('Failed to fetch folders');
+      if (!res.ok) throw new Error('Failed to fetch folders: ' + res.statusText);
       const data = await res.json();
       setRateLimitError(null);
       setFolders(data);
     } catch (err) {
       console.error(err);
+      setRateLimitError("Connect error: " + err.message);
     }
   };
 
@@ -308,100 +404,6 @@ const MediaManagement = () => {
   };
 
   // -- Recursive Sidebar Item --
-  // -- Recursive Sidebar Item --
-  const RecursiveSidebarItem = ({ name, path, level = 0, onSelect, currentPath, startExpanded = false }) => {
-    const [expanded, setExpanded] = useState(startExpanded);
-    const [children, setChildren] = useState([]);
-    const [loadingChildren, setLoadingChildren] = useState(false);
-    const [loaded, setLoaded] = useState(false);
-
-    const isSelected = currentPath === path;
-    // Indentation
-    const paddingLeft = level * 12 + 12;
-
-    // Auto-load if expanded initially or toggled
-    useEffect(() => {
-      if (expanded && !loaded && !loadingChildren) {
-        fetchChildren();
-      }
-    }, [expanded]);
-
-    const fetchChildren = async () => {
-      setLoadingChildren(true);
-      try {
-        const res = await fetch(`${API_URL}/api/cloudinary/folders?parent=${encodeURIComponent(path)}`);
-
-        if (res.status === 420 || res.status === 429) {
-          console.warn("Sidebar fetch rate limited");
-          setLoadingChildren(false);
-          return;
-        }
-
-        if (res.ok) {
-          const data = await res.json();
-          setChildren(data);
-          setLoaded(true);
-        }
-      } catch (err) {
-        console.error("Failed to load subfolders", err);
-      } finally {
-        setLoadingChildren(false);
-      }
-    };
-
-    const handleToggle = (e) => {
-      e.stopPropagation();
-      setExpanded(!expanded);
-    };
-
-    return (
-      <div className="w-full select-none">
-        <div
-          className={`flex items-center gap-1 py-1 pr-2 text-sm cursor-pointer transition-colors
-                    ${isSelected ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}
-                `}
-          style={{ paddingLeft: `${paddingLeft}px` }}
-          onClick={() => onSelect(path)}
-        >
-          <div onClick={handleToggle} className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400">
-            <FiChevronRight className={`w-3 h-3 transition-transform ${expanded ? 'rotate-90' : ''}`} />
-          </div>
-          <FiFolder className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'fill-blue-500 text-blue-600' : 'fill-yellow-100 text-yellow-500'}`} />
-          <span className="truncate flex-1">{name}</span>
-        </div>
-
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
-            >
-              {loadingChildren && (
-                <div className="pl-8 py-1 text-xs text-gray-400 flex items-center gap-2">
-                  <FiRefreshCw className="animate-spin w-3 h-3" /> Loading...
-                </div>
-              )}
-              {!loadingChildren && children.length === 0 && loaded && (
-                <div className="pl-8 py-1 text-xs text-gray-400 italic">Empty</div>
-              )}
-              {children.map(child => (
-                <RecursiveSidebarItem
-                  key={child.path}
-                  name={child.name}
-                  path={child.path}
-                  level={level + 1}
-                  onSelect={onSelect}
-                  currentPath={currentPath}
-                />
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  };
 
 
   const filteredSubFolders = subFolders.filter(f =>
