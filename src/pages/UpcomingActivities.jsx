@@ -17,6 +17,19 @@ import QRCodeStyling from "qr-code-styling";
 const UpcomingActivities = () => {
   console.log("🚀 UpcomingActivities component is loading...");
   const navigate = useNavigate();
+  
+  // Reusable text formatting utility
+  const renderFormattedText = (text) => {
+    if (!text) return "";
+    // Handle Bold: **text** -> <strong>text</strong>
+    let formatted = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // Handle Links: [text](url) -> <a> link
+    formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+      const isInternal = url.startsWith('/') || url.includes(window.location.hostname);
+      return `<a href="${url}" ${isInternal ? '' : 'target="_blank" rel="noopener noreferrer"'} class="text-blue-600 dark:text-blue-400 hover:underline font-medium">${linkText}</a>`;
+    });
+    return formatted;
+  };
 
   // Define schema first to avoid ReferenceErrors
   const getDefaultFormSchema = () => [
@@ -128,6 +141,8 @@ const UpcomingActivities = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    posterUrl: "",
+    posterFile: null,
     registrationStart: "",
     registrationEnd: "",
     eventDate: "",
@@ -563,42 +578,55 @@ const UpcomingActivities = () => {
     console.log("User is authenticated, proceeding with submission...");
     setSubmitting(true);
 
-    const tempId = Date.now().toString();
-    const optimisticActivity = {
-      id: editingActivity?.id || tempId,
-      ...formData,
-      formSchema: formData.formSchema && formData.formSchema.length > 0
-        ? formData.formSchema
-        : getDefaultFormSchema(),
-      createdAt: editingActivity?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isOptimistic: !editingActivity
-    };
-
-    if (editingActivity) {
-      setOptimisticActivities(prev =>
-        prev.map(activity =>
-          activity.id === editingActivity.id ? optimisticActivity : activity
-        )
-      );
-    } else {
-      setOptimisticActivities(prev => [...prev, optimisticActivity]);
-    }
-
-    setShowModal(false);
-    resetForm();
-
     try {
+      let currentPosterUrl = formData.posterUrl;
+
+      // Upload poster if a new file is selected
+      if (formData.posterFile) {
+        console.log("Uploading activity poster...");
+        try {
+          const uploadResult = await uploadFormFile(formData.posterFile, `poster_${formData.title}`);
+          currentPosterUrl = uploadResult.url;
+          console.log(" Poster uploaded successfully:", currentPosterUrl);
+        } catch (uploadError) {
+          console.error(" Poster upload failed:", uploadError);
+          alert("Failed to upload poster image. Please try again.");
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      const tempId = Date.now().toString();
+      const optimisticActivity = {
+        id: editingActivity?.id || tempId,
+        ...formData,
+        posterUrl: currentPosterUrl,
+        formSchema: formData.formSchema && formData.formSchema.length > 0
+          ? formData.formSchema
+          : getDefaultFormSchema(),
+        createdAt: editingActivity?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isOptimistic: !editingActivity
+      };
+
+      if (editingActivity) {
+        setOptimisticActivities(prev =>
+          prev.map(activity =>
+            activity.id === editingActivity.id ? optimisticActivity : activity
+          )
+        );
+      } else {
+        setOptimisticActivities(prev => [...prev, optimisticActivity]);
+      }
+
+      setShowModal(false);
+
       // Ensure formSchema is properly initialized
       let finalFormSchema = formData.formSchema;
       if (!finalFormSchema || !Array.isArray(finalFormSchema) || finalFormSchema.length === 0) {
         console.log("FormSchema is empty or invalid, using default schema");
         finalFormSchema = getDefaultFormSchema();
       }
-
-      console.log("Final form schema:", finalFormSchema);
-      console.log("FormSchema type:", typeof finalFormSchema);
-      console.log("FormSchema is array:", Array.isArray(finalFormSchema));
 
       // Utility function to remove undefined values recursively
       const removeUndefinedValues = (obj) => {
@@ -620,15 +648,16 @@ const UpcomingActivities = () => {
       // Clean up form data to prevent undefined values in Firestore
       const cleanedFormData = {
         ...formData,
+        posterUrl: currentPosterUrl,
         maxParticipants: formData.maxParticipants && formData.maxParticipants !== ""
           ? parseInt(formData.maxParticipants, 10)
-          : null, // Explicitly set to null to indicate infinite/no limit (overwrites existing value)
+          : null,
         formSchema: finalFormSchema
       };
 
-      console.log("Cleaned form data (maxParticipants check):", cleanedFormData.maxParticipants);
+      // Remove the File object before saving to Firestore
+      delete cleanedFormData.posterFile;
 
-      // Clean the form schema to remove undefined values
       const cleanedFormSchema = removeUndefinedValues(finalFormSchema);
 
       const activityData = {
@@ -638,8 +667,6 @@ const UpcomingActivities = () => {
         updatedAt: new Date().toISOString()
       };
 
-      // Final cleanup of the entire activity data object
-      // Note: we want to keep null values (like maxParticipants) but remove undefined
       const finalActivityData = removeUndefinedValues(activityData);
 
       console.log("Final activity data to save:", finalActivityData);
@@ -978,6 +1005,8 @@ const UpcomingActivities = () => {
     setFormData({
       title: activity.title || "",
       description: activity.description || "",
+      posterUrl: activity.posterUrl || "",
+      posterFile: null,
       registrationStart: activity.registrationStart || "",
       registrationEnd: activity.registrationEnd || "",
       eventDate: activity.eventDate || "",
@@ -1033,6 +1062,8 @@ const UpcomingActivities = () => {
     setFormData({
       title: "",
       description: "",
+      posterUrl: "",
+      posterFile: null,
       registrationStart: "",
       registrationEnd: "",
       eventDate: "",
@@ -1792,14 +1823,27 @@ const UpcomingActivities = () => {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {optimisticActivities.map((activity, index) => (
-                <Card key={activity.id} delay={index * 0.1}>
-                  <div className={`p-6 ${activity.isOptimistic ? "opacity-75" : ""}`}>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                <Card key={activity.id} className="group overflow-hidden flex flex-col h-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300" delay={index * 0.1}>
+                  {/* Activity Poster */}
+                  {activity.posterUrl && (
+                    <div className="relative w-full aspect-video overflow-hidden">
+                      <img
+                        src={activity.posterUrl}
+                        alt={activity.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                  )}
+
+                  <div className="p-6 flex flex-col flex-grow">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {activity.title}
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
-                      {activity.description}
-                    </p>
+                    <p 
+                      className="text-gray-700 dark:text-gray-200 mb-4 whitespace-pre-wrap text-[15px] leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: renderFormattedText(activity.description) }}
+                    />
 
                     <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
                       <div className="flex items-center">
@@ -1935,15 +1979,70 @@ const UpcomingActivities = () => {
                   required
                 />
 
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Activity Poster
+                  </label>
+                  <div className="flex flex-col gap-4">
+                    {/* Poster Preview */}
+                    {(formData.posterUrl || formData.posterFile) && (
+                      <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                        <img
+                          src={formData.posterFile ? URL.createObjectURL(formData.posterFile) : formData.posterUrl}
+                          alt="Poster Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, posterUrl: "", posterFile: null })}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Upload Button */}
+                    <div className="flex items-center justify-center w-full">
+                      <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${formData.posterFile || formData.posterUrl
+                        ? "border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/10"
+                        : "border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
+                        }`}>
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload className="w-8 h-8 mb-3 text-gray-400" />
+                          <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            SVG, PNG, JPG or GIF (MAX. 800x400px)
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setFormData({ ...formData, posterFile: e.target.files[0] });
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Description
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex justify-between">
+                    <span>Description</span>
+                    <span className="text-[10px] text-gray-400 uppercase tracking-wider font-normal">Supports **bold** and [links](url)</span>
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter activity description. Use **text** for bold."
                     required
                   />
                 </div>
@@ -2086,9 +2185,10 @@ const UpcomingActivities = () => {
                     <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
                       About this Activity
                     </h4>
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      {selectedActivity.description}
-                    </p>
+                    <p 
+                      className="text-blue-800 dark:text-blue-100 whitespace-pre-wrap leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: renderFormattedText(selectedActivity.description) }}
+                    />
                     <div className="mt-3 text-xs text-blue-600 dark:text-blue-400">
                       <p><strong>Event Date:</strong> {new Date(selectedActivity.eventDate).toLocaleDateString()}</p>
                       <p><strong>Registration Deadline:</strong> {new Date(selectedActivity.registrationEnd).toLocaleDateString()}</p>
