@@ -18,16 +18,18 @@ const UpcomingActivities = () => {
   console.log("🚀 UpcomingActivities component is loading...");
   const navigate = useNavigate();
   
-  // Reusable text formatting utility
+  // Reusable text formatting utility for bold (**text**) and links ([text](url))
   const renderFormattedText = (text) => {
     if (!text) return "";
     // Handle Bold: **text** -> <strong>text</strong>
-    let formatted = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    let formatted = String(text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     // Handle Links: [text](url) -> <a> link
     formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
       const isInternal = url.startsWith('/') || url.includes(window.location.hostname);
       return `<a href="${url}" ${isInternal ? '' : 'target="_blank" rel="noopener noreferrer"'} class="text-blue-600 dark:text-blue-400 hover:underline font-medium">${linkText}</a>`;
     });
+    // Handle Line Breaks: \n -> <br/>
+    formatted = formatted.replace(/\n/g, '<br/>');
     return formatted;
   };
 
@@ -1552,13 +1554,6 @@ const UpcomingActivities = () => {
   };
 
   const renderContentField = (field) => {
-    const renderMarkdownLinks = (text) => {
-      if (!text) return text;
-      return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">${linkText}</a>`;
-      });
-    };
-
     const getFontSizeClass = (size) => {
       switch (size) {
         case "xs": return "text-xs";
@@ -1675,7 +1670,7 @@ const UpcomingActivities = () => {
             <div
               className={`${getFontSizeClass(field.fontSize)} ${getTextColorClass(field.textColor)} ${field.fontWeight === "bold" ? "font-bold" : field.fontWeight === "semibold" ? "font-semibold" : field.fontWeight === "medium" ? "font-medium" : ""} ${field.italic ? "italic" : ""} ${field.underline ? "underline" : ""}`}
               dangerouslySetInnerHTML={{
-                __html: field.contentType === "markdown" ? renderMarkdownLinks(field.content || "") : field.content || ""
+                __html: field.contentType === "markdown" ? renderFormattedText(field.content || "") : field.content || ""
               }}
             />
           </div>
@@ -2041,10 +2036,19 @@ const UpcomingActivities = () => {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-normal leading-relaxed"
                     placeholder="Enter activity description. Use **text** for bold."
                     required
                   />
+                  {formData.description && (
+                    <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Live Design Preview</p>
+                      <div 
+                        className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: renderFormattedText(formData.description) }}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -2144,9 +2148,10 @@ const UpcomingActivities = () => {
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                   Registration Complete!
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-sm mx-auto">
-                  {selectedActivity?.postRegistration?.joinLinkMessage || "Your registration has been submitted successfully."}
-                </p>
+                <p 
+                  className="text-gray-600 dark:text-gray-400 mb-8 max-w-sm mx-auto whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{ __html: renderFormattedText(selectedActivity?.postRegistration?.joinLinkMessage || "Your registration has been submitted successfully.") }}
+                />
 
                 {selectedActivity?.postRegistration?.joinLink && (
                   <motion.div

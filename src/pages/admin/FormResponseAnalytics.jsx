@@ -192,6 +192,19 @@ const FormResponseAnalytics = () => {
     const { activityId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    
+    // Reusable text formatting utility
+    const renderFormattedText = (text) => {
+        if (!text) return "";
+        // Handle Bold: **text** -> <strong>text</strong>
+        let formatted = String(text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        // Handle Links: [text](url) -> <a> link
+        formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+            const isInternal = url.startsWith('/') || url.includes(window.location.hostname);
+            return `<a href="${url}" ${isInternal ? '' : 'target="_blank" rel="noopener noreferrer"'} class="text-blue-600 dark:text-blue-400 hover:underline font-medium">${linkText}</a>`;
+        });
+        return formatted;
+    };
 
     // Data State
     const [activity, setActivity] = useState(null);
@@ -1506,7 +1519,8 @@ const FormResponseAnalytics = () => {
                                                     );
                                                 }
 
-                                                return typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val);
+                                                const displayVal = typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val);
+                                                return <div dangerouslySetInnerHTML={{ __html: renderFormattedText(displayVal) }} />;
                                             })()}
                                         </div>
                                     </div>

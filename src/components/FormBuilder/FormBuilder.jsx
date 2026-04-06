@@ -143,6 +143,21 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
     { type: "rating", label: "Rating", icon: "⭐", category: "input" }
   ];
 
+  // Reusable text formatting utility for bold (**text**) and links ([text](url))
+  const renderFormattedText = (text) => {
+    if (!text) return "";
+    // Handle Bold: **text** -> <strong>text</strong>
+    let formatted = String(text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // Handle Links: [text](url) -> <a> link
+    formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+      const isInternal = url.startsWith('/') || url.includes(window.location.hostname);
+      return `<a href="${url}" ${isInternal ? '' : 'target="_blank" rel="noopener noreferrer"'} class="text-blue-600 dark:text-blue-400 hover:underline font-medium">${linkText}</a>`;
+    });
+    // Handle Line Breaks: \n -> <br/>
+    formatted = formatted.replace(/\n/g, '<br/>');
+    return formatted;
+  };
+
   // Section management functions
   const addSection = () => {
     const newSection = {
@@ -370,7 +385,7 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
               <div
                 className={`${getFontSizeClass(field.fontSize)} ${getTextColorClass(field.textColor)} ${field.fontWeight === "bold" ? "font-bold" : field.fontWeight === "semibold" ? "font-semibold" : field.fontWeight === "medium" ? "font-medium" : ""} ${field.italic ? "italic" : ""} ${field.underline ? "underline" : ""}`}
                 dangerouslySetInnerHTML={{
-                  __html: field.contentType === "markdown" ? renderMarkdownLinks(field.content || "Add your description here...") : field.content || "Add your description here..."
+                  __html: field.contentType === "markdown" ? renderFormattedText(field.content || "") : field.content || ""
                 }}
               />
             </div>
@@ -1627,6 +1642,23 @@ const FormBuilder = ({ formSchema = [], onChange, isPaid = false, fee = '', paym
                       </button>
                     </div>
                   </div>
+                  <div className="space-y-4">
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Live Design Preview</p>
+                    <div 
+                      className={`${getFontSizeClass(editingFieldDraft.fontSize || "medium")} ${getTextColorClass(editingFieldDraft.textColor || "default")} ${editingFieldDraft.fontWeight === "bold" ? "font-bold" : editingFieldDraft.fontWeight === "semibold" ? "font-semibold" : editingFieldDraft.fontWeight === "medium" ? "font-medium" : ""} ${editingFieldDraft.italic ? "italic" : ""} ${editingFieldDraft.underline ? "underline" : ""} whitespace-pre-wrap leading-relaxed`}
+                      dangerouslySetInnerHTML={{ __html: renderFormattedText(editingFieldDraft.content || "Add your description here...") }}
+                    />
+                  </div>
+                  <textarea
+                    value={editingFieldDraft.content || ""}
+                    onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, content: e.target.value })}
+                    rows={6}
+                    className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-normal leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter description. Use **bold** and [links](url)."
+                  />
+                  <p className="text-[10px] text-gray-400">Supports **bold text**, [links](url), and preserves line breaks.</p>
+                </div>
                   <select
                     value={editingFieldDraft.contentType || "text"}
                     onChange={(e) => setEditingFieldDraft({ ...editingFieldDraft, contentType: e.target.value })}

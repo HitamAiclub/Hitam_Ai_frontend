@@ -84,6 +84,21 @@ function ActivityFormEditPage() {
   const [instructionsEditorMode, setInstructionsEditorMode] = useState('visual');
   const [successEditorMode, setSuccessEditorMode] = useState('visual');
 
+  // Reusable text formatting utility for bold (**text**) and links ([text](url))
+  const renderFormattedText = (text) => {
+    if (!text) return "";
+    // Handle Bold: **text** -> <strong>text</strong>
+    let formatted = String(text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // Handle Links: [text](url) -> <a> link
+    formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+      const isInternal = url.startsWith('/') || url.includes(window.location.hostname);
+      return `<a href="${url}" ${isInternal ? '' : 'target="_blank" rel="noopener noreferrer"'} class="text-blue-600 dark:text-blue-400 hover:underline font-medium">${linkText}</a>`;
+    });
+    // Handle Line Breaks: \n -> <br/>
+    formatted = formatted.replace(/\n/g, '<br/>');
+    return formatted;
+  };
+
   // Create payment section with current payment details
   const createPaymentSection = (customFee = null, customUrl = null, customQrUrl = null, customInstructions = null, existingFields = []) => {
     const sectionFee = customFee !== null ? customFee : fee;
@@ -682,10 +697,10 @@ function ActivityFormEditPage() {
                           />
                           <div className="flex-1 p-4 overflow-y-auto max-h-[300px] bg-gray-50 dark:bg-gray-900/50">
                             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Live Preview</div>
-                            <div 
-                              className="prose prose-sm dark:prose-invert max-w-none"
-                              dangerouslySetInnerHTML={{ __html: instructions || '<p className="text-gray-400 font-italic italic text-xs">No content to preview</p>' }} 
-                            />
+                              <div 
+                                className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap"
+                                dangerouslySetInnerHTML={{ __html: renderFormattedText(instructions) || '<p className="text-gray-400 font-italic italic text-xs">No content to preview</p>' }} 
+                              />
                           </div>
                         </div>
                       )}
@@ -810,8 +825,8 @@ function ActivityFormEditPage() {
                         <div className="flex-1 p-4 overflow-y-auto max-h-[300px] bg-gray-50 dark:bg-gray-900/50">
                           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Live Preview</div>
                           <div 
-                            className="prose prose-sm dark:prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{ __html: joinLinkMessage || '<p className="text-gray-400 font-italic italic text-xs">No content to preview</p>' }} 
+                            className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap"
+                            dangerouslySetInnerHTML={{ __html: renderFormattedText(joinLinkMessage) || '<p className="text-gray-400 font-italic italic text-xs">No content to preview</p>' }} 
                           />
                         </div>
                       </div>

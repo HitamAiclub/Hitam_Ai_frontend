@@ -13,6 +13,22 @@ import { Star, Heart, ThumbsUp, Sun, Moon, Zap, Award, Crown, Smile, Meh, Frown 
 function ActivityRegistrationPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Reusable text formatting utility for bold (**text**), links ([text](url)), and line breaks
+  const renderFormattedText = (text) => {
+    if (!text) return "";
+    // Handle Bold: **text** -> <strong>text</strong>
+    let formatted = String(text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // Handle Links: [text](url) -> <a> link
+    formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+      const isInternal = url.startsWith('/') || url.includes(window.location.hostname);
+      return `<a href="${url}" ${isInternal ? '' : 'target="_blank" rel="noopener noreferrer"'} class="text-blue-600 dark:text-blue-400 hover:underline font-medium">${linkText}</a>`;
+    });
+    // Handle Line Breaks: \n -> <br/>
+    formatted = formatted.replace(/\n/g, '<br/>');
+    return formatted;
+  };
+
   const [activity, setActivity] = useState(null);
   const [formSections, setFormSections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -130,13 +146,6 @@ function ActivityRegistrationPage() {
   }, [id]);
 
   const renderContentField = (field) => {
-    const renderMarkdownLinks = (text) => {
-      if (!text) return text;
-      return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">${linkText}</a>`;
-      });
-    };
-
     const getFontSizeClass = (size) => {
       switch (size) {
         case "xs": return "text-xs";
@@ -176,7 +185,7 @@ function ActivityRegistrationPage() {
           <div
             className={`${getFontSizeClass(field.fontSize)} ${getTextColorClass(field.textColor)} ${field.fontWeight === "bold" ? "font-bold" : field.fontWeight === "semibold" ? "font-semibold" : field.fontWeight === "medium" ? "font-medium" : ""} ${field.italic ? "italic" : ""} ${field.underline ? "underline" : ""}`}
             dangerouslySetInnerHTML={{
-              __html: field.contentType === "markdown" ? renderMarkdownLinks(field.content || "") : field.content || ""
+              __html: field.contentType === "markdown" ? renderFormattedText(field.content || "") : field.content || ""
             }}
           />
         </div>
@@ -448,9 +457,6 @@ function ActivityRegistrationPage() {
       );
       const querySnapshot = await getDocs(q);
 
-      // TEMPORARY DEBUGGING ALERT - REMOVED
-      // alert(`Debug: Found ${querySnapshot.size} matches for ${label} = ${value}`);
-
       if (!querySnapshot.empty) {
         setUniqueErrors(prev => ({
           ...prev,
@@ -463,12 +469,7 @@ function ActivityRegistrationPage() {
       return true; // Unique
     } catch (error) {
       console.error("Error checking unique value:", error);
-      alert(`Debug Error checking unique value: ${error.message}\nKey: ${sanitizedKey}\nValue: ${value.trim()}`);
       setValidatingFields(prev => ({ ...prev, [fieldId]: false }));
-
-      // If we can't check, we should probably assume it's NOT unique or warn the user
-      // For now, let's return FALSE so they can't submit if the check fails (safety first)
-      // But we need to distinguish between "duplicate found" and "error checking"
       return false;
     }
   };
@@ -1402,9 +1403,10 @@ function ActivityRegistrationPage() {
             <FiCheckCircle className="w-8 h-8 text-green-600" />
           </motion.div>
           <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {activity.postRegistration?.joinLinkMessage || "Your registration has been submitted successfully."}
-          </p>
+          <p 
+            className="text-gray-600 dark:text-gray-400 mb-4 whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: renderFormattedText(activity.postRegistration?.joinLinkMessage || "Your registration has been submitted successfully.") }}
+          />
 
           {activity.postRegistration?.joinLink && (
             <motion.div
@@ -1456,7 +1458,10 @@ function ActivityRegistrationPage() {
               {activity.title}
             </h1>
             {activity.description && (
-              <p className="text-gray-600 dark:text-gray-400">{activity.description}</p>
+              <p 
+                className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderFormattedText(activity.description) }}
+              />
             )}
             <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 space-y-1">
               <p><strong>Event Date:</strong> {new Date(activity.eventDate).toLocaleDateString()}</p>
@@ -1508,9 +1513,10 @@ function ActivityRegistrationPage() {
                         </h3>
                       )}
                       {currentSection.description && (
-                        <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                          {currentSection.description}
-                        </p>
+                        <p 
+                          className="text-sm text-blue-700 dark:text-blue-300 mt-1 whitespace-pre-wrap"
+                          dangerouslySetInnerHTML={{ __html: renderFormattedText(currentSection.description) }}
+                        />
                       )}
                     </div>
                   )}
