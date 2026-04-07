@@ -452,7 +452,7 @@ const EventDetailPage = () => {
               <span className="text-xs font-black uppercase tracking-[0.3em] text-gray-900 dark:text-white group-hover:text-white">Return to Events</span>
            </Link>
            <div className="flex flex-col items-center md:items-end gap-1">
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400">HITAM AI Club © <a href="https://www.instagram.com/hitamaiclub?igsh=ZnFsdnZya2RyN3N3" className="text-blue-600 hover:text-blue-400 transition-colors ml-2">INSTAGRAM</a></span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400">HITAM AI Club © <a href="https://www.instagram.com/hitamaiclub?igsh=aTYwcXQyZWh1NXZj" className="text-blue-600 hover:text-blue-400 transition-colors ml-2">INSTAGRAM</a></span>
               <span className="text-[8px] font-bold text-gray-300 dark:text-gray-800 uppercase tracking-widest italic">Experience Innovation with Cognitive Intelligence</span>
            </div>
         </div>

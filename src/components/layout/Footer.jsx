@@ -38,7 +38,7 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4">
               <a
-                href="https://www.instagram.com/hitamaiclub?igsh=ZnFsdnZya2RyN3N3"
+                href="https://www.instagram.com/hitamaiclub?igsh=aTYwcXQyZWh1NXZj"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-yellow-400 hover:to-purple-600 hover:text-white transition-all duration-300 shadow-md hover:shadow-purple-500/20"
