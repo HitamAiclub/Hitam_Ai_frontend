@@ -77,7 +77,7 @@ const EventDetailPage = () => {
 
         {/* Blurred backdrop image to fill empty space */}
         <div className="absolute inset-0 z-0 opacity-40 blur-3xl scale-110">
-           <img src={meta?.imageUrl} alt="" className="w-full h-full object-cover" />
+           <img src={meta?.imageUrl} alt=" " className="w-full h-full object-cover" />
         </div>
         
         {/* Main Full-Size Image */}
@@ -127,7 +127,7 @@ const EventDetailPage = () => {
                <motion.h1 
                  initial={{ opacity: 0, y: 30 }} 
                  animate={{ opacity: 1, y: 0 }}
-                 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-950 dark:text-white uppercase tracking-tighter leading-[0.95]"
+                 className="text-4xl md:text-5xl lg:text-7xl font-black text-gray-950 dark:text-white uppercase tracking-tighter leading-none"
                >
                  {meta?.title}
                </motion.h1>
@@ -137,7 +137,7 @@ const EventDetailPage = () => {
                    initial={{ opacity: 0 }}
                    animate={{ opacity: 1 }}
                    transition={{ delay: 0.2 }}
-                   className="text-sm md:text-base font-black text-blue-600 uppercase tracking-[0.5em]"
+                   className="text-xs md:text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.6em] py-4"
                  >
                    A Session By {meta.sessionBy}
                  </motion.p>
@@ -149,7 +149,7 @@ const EventDetailPage = () => {
                initial={{ opacity: 0, y: 40 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ delay: 0.3 }}
-               className="group relative w-full flex flex-wrap justify-center gap-8 p-12 bg-white/95 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-[4rem] shadow-[0_48px_80px_-20px_rgba(0,0,0,0.1)] dark:shadow-[0_48px_80px_-20px_rgba(59,130,246,0.15)] hover:shadow-[0_64px_100px_-30px_rgba(59,130,246,0.25)] backdrop-blur-3xl overflow-hidden transition-all duration-700"
+               className="group relative w-full flex flex-wrap justify-center gap-6 md:gap-12 p-8 md:p-14 bg-white/95 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-[3rem] md:rounded-[5rem] shadow-[0_48px_80px_-20px_rgba(0,0,0,0.05)] dark:shadow-none hover:shadow-[0_64px_100px_-30px_rgba(59,130,246,0.15)] backdrop-blur-3xl overflow-hidden transition-all duration-700"
             >
                {/* Shining Overlay */}
                <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none" />
@@ -162,10 +162,10 @@ const EventDetailPage = () => {
                ]
                .filter(item => item.value)
                .map((item, idx, filtered) => (
-                 <div key={idx} className={`relative z-10 flex flex-col items-center text-center space-y-2 px-8 ${idx !== filtered.length - 1 ? 'border-b md:border-b-0 md:border-r border-gray-100 dark:border-white/10 pb-6 md:pb-0' : ''}`}>
-                    <item.icon className={`w-6 h-6 ${item.color} mb-2`} />
-                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.label}</div>
-                    <div className="text-xl font-black text-gray-900 dark:text-white leading-none uppercase">{item.value}</div>
+                 <div key={idx} className={`relative z-10 flex flex-col items-center text-center space-y-3 px-6 ${idx !== filtered.length - 1 ? 'border-b md:border-b-0 md:border-r border-gray-100 dark:border-white/10 pb-6 md:pb-0' : ''}`}>
+                    <item.icon className={`w-5 h-5 ${item.color} mb-1`} />
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">{item.label}</div>
+                    <div className="text-lg md:text-xl font-black text-gray-900 dark:text-white leading-none uppercase tracking-tight">{item.value}</div>
                  </div>
                ))}
             </motion.div>
@@ -177,21 +177,62 @@ const EventDetailPage = () => {
 
         {/* Section: About the Event - Premium Shining Card */}
         {meta?.aboutEvent && (
-          <AnimatedSection className="space-y-10 group relative">
-            <div className="flex items-center gap-4">
-               <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-600 flex items-center gap-4">
-                  <FiLayout className="w-5 h-5" /> About the Event
-               </h2>
-               <div className="h-[1px] flex-grow bg-gray-100 dark:bg-white/5" />
+          <AnimatedSection className="space-y-12 group relative">
+            {/* Refined Section Header: Focused on Alignment & Balance */}
+            <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-10 px-4 md:px-0">
+               <div className="flex items-center gap-3 px-5 py-2 bg-blue-50/80 dark:bg-blue-600/10 rounded-2xl border border-blue-100 dark:border-blue-500/20 shadow-sm backdrop-blur-sm self-start">
+                  <FiLayout className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 dark:text-blue-400">Context</span>
+               </div>
+               <div className="flex items-center gap-6 flex-grow">
+                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold uppercase tracking-tight text-gray-900 dark:text-white leading-none">
+                     About the Event
+                  </h2>
+                  <div className="hidden md:block h-[1px] flex-grow bg-gradient-to-r from-gray-200 dark:from-white/10 to-transparent" />
+               </div>
             </div>
             
-            <div className="relative p-12 md:p-20 bg-gray-50/50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-[4rem] shadow-[0_40px_80px_-24px_rgba(0,0,0,0.05)] dark:shadow-[0_40px_80px_-24px_rgba(59,130,246,0.1)] hover:shadow-[0_64px_100px_-30px_rgba(59,130,246,0.2)] transition-all duration-700 overflow-hidden">
-               {/* Shining Overlay */}
-               <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 pointer-events-none" />
+            <div className="relative p-10 md:p-24 bg-white/40 dark:bg-white/[0.02] border border-white/60 dark:border-white/5 rounded-[4rem] shadow-[0_48px_80px_-20px_rgba(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_64px_100px_-30px_rgba(59,130,246,0.1)] transition-all duration-700 overflow-hidden group/card backdrop-blur-sm">
                
-               <p className="relative z-10 text-3xl md:text-5xl font-medium leading-[1.1] text-gray-950 dark:text-gray-100 tracking-tighter max-w-4xl whitespace-pre-line">
-                  {meta.aboutEvent}
-               </p>
+               {/* Refined Background Texture */}
+               <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none" 
+                    style={{ backgroundImage: 'radial-gradient(#3b82f6 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
+               
+               <div className="absolute -top-12 -left-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-600/10 blur-[100px] rounded-full pointer-events-none" />
+               <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-purple-500/5 dark:bg-purple-600/10 blur-[100px] rounded-full pointer-events-none" />
+
+               {/* Elegant Quotation Handle */}
+               <div className="absolute top-10 left-10 text-[10rem] md:text-[14rem] font-serif text-blue-500/5 dark:text-blue-400/5 leading-none select-none pointer-events-none group-hover/card:scale-105 transition-transform duration-700 -translate-x-1/4 -translate-y-1/4 italic">
+                  “
+               </div>
+
+               <div className="relative z-10 space-y-12">
+                  <p className="text-lg md:text-2xl lg:text-3xl font-medium leading-relaxed md:leading-snug text-gray-800/90 dark:text-gray-100 tracking-tight max-w-5xl whitespace-pre-line drop-shadow-sm">
+                     {meta.aboutEvent}
+                  </p>
+                  
+                  {/* Re-designed Branding Anchor */}
+                  <div className="flex items-center gap-6 pt-12 border-t border-gray-100/50 dark:border-white/5">
+                     <div className="w-14 h-14 md:w-16 md:h-16 rounded-[1.5rem] bg-gradient-to-br from-blue-600 to-purple-600 p-[1px] shadow-lg shadow-blue-500/20 group-hover/card:scale-110 transition-transform duration-500">
+                        <div className="w-full h-full rounded-[1.4rem] bg-white dark:bg-[#050505] flex items-center justify-center overflow-hidden">
+                           <img 
+                              src="https://hitam-ai-club.vercel.app/logo.jpg" 
+                              alt="Club Logo" 
+                              className="w-10 h-10 md:w-12 md:h-12 object-contain filter grayscale group-hover/card:grayscale-0 transition-all duration-500" 
+                           />
+                        </div>
+                     </div>
+                     <div className="flex flex-col gap-1">
+                        <span className="text-xs md:text-sm font-black uppercase tracking-[0.3em] text-gray-950 dark:text-white leading-none">HITAM AI CLUB</span>
+                        <span className="text-[9px] md:text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest italic flex items-center gap-2">
+                           Experience Innovation <span className="w-1 h-1 bg-blue-500/50 rounded-full" /> With Cognitive Intelligence
+                        </span>
+                     </div>
+                  </div>
+               </div>
+
+               {/* Refined Surface Sweep */}
+               <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/5 dark:via-blue-500/10 to-transparent -translate-x-[150%] group-hover/card:translate-x-[150%] transition-transform duration-[1200ms] pointer-events-none" />
             </div>
           </AnimatedSection>
         )}
@@ -199,9 +240,16 @@ const EventDetailPage = () => {
         {/* Section: Speakers (Clean Format) */}
         {meta?.speakers?.length > 0 && (
           <AnimatedSection className="space-y-12">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-purple-600 flex items-center gap-3">
-              <FiUsers className="w-5 h-5" /> Executive Panel
-            </h4>
+            <div className="flex items-center gap-6">
+               <div className="flex items-center gap-3 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-100 dark:border-purple-800/30">
+                  <FiUsers className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-600 dark:text-purple-400">Panel</span>
+               </div>
+               <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-gray-900 dark:text-white">
+                  Executive Speakers
+               </h2>
+               <div className="h-[1px] flex-grow bg-gradient-to-r from-gray-100 dark:from-white/10 to-transparent" />
+            </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {meta.speakers.map((speaker, i) => (
                 <div key={i} className="group relative p-8 bg-gray-50/50 dark:bg-gray-900/40 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-[0_20px_40px_-15px_rgba(139,92,246,0.1)] dark:shadow-[0_20px_40px_-15px_rgba(139,92,246,0.2)] hover:shadow-[0_32px_64px_-16px_rgba(139,92,246,0.3)] transition-all duration-700 overflow-hidden">
@@ -240,12 +288,15 @@ const EventDetailPage = () => {
         <div className="grid lg:grid-cols-2 gap-20">
            {meta?.highlights?.length > 0 && (
              <AnimatedSection className="space-y-12">
-                <div className="space-y-4">
-                   <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-orange-600 flex items-center gap-3">
-                      <FiAward className="w-5 h-5" /> Elite Value
-                   </h4>
-                   <h3 className="text-4xl md:text-5xl font-black text-gray-950 dark:text-white tracking-tighter uppercase">Key Highlights</h3>
-                </div>
+                 <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3 px-4 py-2 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-800/30">
+                       <FiAward className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                       <span className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-600 dark:text-orange-400">Value</span>
+                    </div>
+                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-gray-900 dark:text-white">
+                       Key Highlights
+                    </h2>
+                 </div>
                 <div className="space-y-6">
                   {meta.highlights.map((h, i) => (
                     <div key={i} className="group relative flex items-center gap-6 p-8 rounded-[2.5rem] bg-orange-50/30 dark:bg-orange-500/5 border border-orange-100 dark:border-white/5 shadow-[0_20px_40px_-15px_rgba(249,115,22,0.1)] dark:shadow-[0_20px_40px_-15px_rgba(249,115,22,0.15)] hover:shadow-[0_32px_64px_-16px_rgba(249,115,22,0.3)] transition-all duration-700 overflow-hidden">
@@ -262,12 +313,15 @@ const EventDetailPage = () => {
 
            {meta?.whatYouLearn?.length > 0 && (
              <AnimatedSection className="space-y-12">
-                <div className="space-y-4">
-                   <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-emerald-600 flex items-center gap-3">
-                      <FiTrendingUp className="w-5 h-5" /> Knowledge Gain
-                   </h4>
-                   <h3 className="text-4xl md:text-5xl font-black text-gray-950 dark:text-white tracking-tighter uppercase">What You'll Learn</h3>
-                </div>
+                 <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+                       <FiTrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                       <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-600 dark:text-emerald-400">Skills</span>
+                    </div>
+                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-gray-900 dark:text-white">
+                       What You'll Learn
+                    </h2>
+                 </div>
                 <div className="space-y-6">
                   {meta.whatYouLearn.map((l, i) => (
                     <div key={i} className="group relative flex items-center gap-6 p-8 rounded-[2.5rem] bg-emerald-50/30 dark:bg-emerald-500/5 border border-emerald-100 dark:border-white/5 shadow-[0_20px_40px_-15px_rgba(16,185,129,0.1)] dark:shadow-[0_20px_40px_-15px_rgba(16,185,129,0.15)] hover:shadow-[0_32px_64px_-16px_rgba(16,185,129,0.3)] transition-all duration-700 overflow-hidden">
@@ -284,13 +338,16 @@ const EventDetailPage = () => {
         {/* Section: Activities / Engagement Flow */}
         {meta?.activities?.length > 0 && (
           <AnimatedSection className="space-y-16 pt-10">
-            <div className="text-center space-y-4">
-               <h4 className="text-[10px] md:text-xs font-black uppercase tracking-[0.6em] text-blue-600 dark:text-blue-400">Event Timeline</h4>
-               <h3 className="text-4xl md:text-6xl font-black text-gray-950 dark:text-white tracking-tighter uppercase relative inline-block drop-shadow-sm">
-                  Activities
-                  <div className="absolute -top-10 -right-16 w-32 h-32 bg-blue-500/10 dark:bg-blue-500/20 blur-3xl rounded-full pointer-events-none" />
-               </h3>
-            </div>
+             <div className="text-center space-y-4">
+                <div className="inline-flex items-center gap-3 px-6 py-2 bg-blue-50/50 dark:bg-blue-900/10 rounded-full border border-blue-100/50 dark:border-blue-800/20">
+                   <FiActivity className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                   <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 dark:text-blue-400">Timeline</span>
+                </div>
+                <h3 className="text-4xl md:text-6xl font-black text-gray-950 dark:text-white tracking-tighter uppercase relative inline-block">
+                   Execution Phases
+                   <div className="absolute -top-12 -right-16 w-32 h-32 bg-blue-500/10 dark:bg-blue-500/20 blur-3xl rounded-full pointer-events-none" />
+                </h3>
+             </div>
 
             <div className="max-w-4xl mx-auto px-4 md:px-0">
                <div className="flex flex-col gap-6 md:gap-10">
@@ -468,4 +525,4 @@ const EventDetailPage = () => {
   );
 };
 
-export default EventDetailPage;;
+export default EventDetailPage;
