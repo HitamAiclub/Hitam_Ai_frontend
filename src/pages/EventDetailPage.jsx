@@ -3,10 +3,10 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { motion } from "framer-motion";
-import { 
-  FiCalendar, FiUser, FiClock, FiArrowLeft, FiAward, FiTarget, FiZap, 
-  FiLayers, FiUsers, FiImage, FiTrendingUp, FiLinkedin, FiLayout, 
-  FiActivity, FiMapPin, FiEdit, FiInstagram, FiYoutube, FiMessageCircle, FiLink, FiShare2 
+import {
+   FiCalendar, FiUser, FiClock, FiArrowLeft, FiAward, FiTarget, FiZap,
+   FiLayers, FiUsers, FiImage, FiTrendingUp, FiLinkedin, FiLayout,
+   FiActivity, FiMapPin, FiEdit, FiInstagram, FiYoutube, FiMessageCircle, FiLink, FiShare2
 } from "react-icons/fi";
 import { useAuth } from "../contexts/AuthContext";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
@@ -14,277 +14,305 @@ import AnimatedSection from "../components/ui/AnimatedSection";
 import EventEditModal from "../components/events/EventEditModal";
 
 const EventDetailPage = () => {
-  const { id } = useParams();
-  const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [scrolled, setScrolled] = useState(false);
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [showEditModal, setShowEditModal] = useState(false);
+   const { id } = useParams();
+   const [event, setEvent] = useState(null);
+   const [loading, setLoading] = useState(true);
+   const [scrolled, setScrolled] = useState(false);
+   const { user } = useAuth();
+   const navigate = useNavigate();
+   const [showEditModal, setShowEditModal] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+   useEffect(() => {
+      const handleScroll = () => setScrolled(window.scrollY > 50);
+      window.addEventListener("scroll", handleScroll);
+      return () => window.removeEventListener("scroll", handleScroll);
+   }, []);
 
-  const handleEditSuccess = (updatedData) => {
-    setEvent({ ...event, meta: updatedData.meta });
-  };
+   const handleEditSuccess = (updatedData) => {
+      setEvent({ ...event, meta: updatedData.meta });
+   };
 
-  useEffect(() => {
-    const fetchEvent = async () => {
-      try {
-        const docRef = doc(db, "events", id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setEvent({ id: docSnap.id, ...docSnap.data() });
-        } else {
-          navigate("/events");
-        }
-      } catch (error) {
-        console.error("Error fetching event:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEvent();
-  }, [id, navigate]);
+   useEffect(() => {
+      const fetchEvent = async () => {
+         try {
+            const docRef = doc(db, "events", id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+               setEvent({ id: docSnap.id, ...docSnap.data() });
+            } else {
+               navigate("/events");
+            }
+         } catch (error) {
+            console.error("Error fetching event:", error);
+         } finally {
+            setLoading(false);
+         }
+      };
+      fetchEvent();
+   }, [id, navigate]);
+   if (loading) return <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black"><LoadingSpinner size="lg" /></div>;
+   if (!event) return null;
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
-  if (!event) return null;
+   const { meta } = event;
 
-  const { meta } = event;
+   return (
+      <div className="min-h-screen bg-white dark:bg-gray-950 selection:bg-blue-500 selection:text-white pb-32 relative overflow-hidden font-sans">
 
-  return (
-    <div className="min-h-screen pt-16 bg-white dark:bg-gray-950 selection:bg-blue-500 selection:text-white pb-32 relative overflow-hidden">
-      {/* Premium Background Glows */}
-      <div className="absolute top-[10%] -right-32 w-[600px] h-[600px] bg-blue-500/10 dark:bg-blue-600/5 blur-[120px] rounded-full pointer-events-none z-0" />
-      <div className="absolute top-[40%] -left-32 w-[500px] h-[500px] bg-purple-500/5 dark:bg-purple-600/5 blur-[100px] rounded-full pointer-events-none z-0" />
-      <div className="absolute bottom-[10%] -right-32 w-[500px] h-[500px] bg-pink-500/5 dark:bg-pink-600/5 blur-[120px] rounded-full pointer-events-none z-0" />
+         {/* Premium Atmospheric Glows (From Somdesign) */}
+         <div className="absolute top-[5%] -right-32 w-[600px] h-[600px] bg-blue-500/10 dark:bg-blue-600/5 blur-[120px] rounded-full pointer-events-none z-0" />
+         <div className="absolute top-[35%] -left-32 w-[500px] h-[500px] bg-purple-500/5 dark:bg-purple-600/5 blur-[100px] rounded-full pointer-events-none z-0" />
 
-      {/* Clean Banner Section - Full-View Visual */}
-      <section className="relative w-full overflow-hidden bg-gray-950 border-b border-gray-100 dark:border-gray-900 z-10 flex items-center justify-center group">
-        
-        {/* Floating Back Button (Top Left) */}
-        <Link 
-          to="/events" 
-          className="absolute top-6 left-6 md:top-8 md:left-8 z-50 flex items-center justify-center w-12 h-12 bg-black/40 hover:bg-blue-600 backdrop-blur-md border border-white/10 hover:border-transparent rounded-full text-white transition-all duration-300 hover:scale-110 shadow-2xl"
-          title="Return to Events"
-        >
-          <FiArrowLeft className="w-6 h-6" />
-        </Link>
+         {/* Clean Banner Section - Smart Engine */}
+         <section className="relative w-full pt-20 overflow-hidden bg-gray-950 border-b border-gray-100 dark:border-gray-900 z-10 flex items-center justify-center group">
 
-        {/* Blurred backdrop image to fill empty space */}
-        <div className="absolute inset-0 z-0 opacity-40 blur-3xl scale-110">
-           <img src={meta?.imageUrl} alt=" " className="w-full h-full object-cover" />
-        </div>
-        
-        {/* Main Full-Size Image */}
-        <div className="relative z-10 w-full flex justify-center">
-           <img 
-             src={meta?.imageUrl} 
-             alt="Event Banner" 
-             className="w-full h-auto max-h-[85vh] object-contain drop-shadow-2xl"
-           />
-           <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-gray-950 via-transparent to-transparent pointer-events-none" />
-        </div>
-      </section>
-
-      {/* Main Content Area - Starts AFTER the full banner */}
-      <div className="max-w-6xl mx-auto px-6 py-24 relative z-10 bg-white dark:bg-gray-950">
-         <div className="flex flex-col items-center text-center space-y-10" id="event-title-section">
-            
-            {/* Branding & Type Badge */}
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-4"
+            {/* Floating Back Button (Top Left) */}
+            <Link
+               to="/events"
+               className="absolute top-6 left-6 md:top-8 md:left-8 z-50 flex items-center justify-center w-12 h-12 bg-black/40 hover:bg-blue-600 backdrop-blur-md border border-white/10 hover:border-transparent rounded-full text-white transition-all duration-300 hover:scale-110 shadow-2xl"
+               title="Return to Events"
             >
-               <div className="px-5 py-1.5 border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-lg">
-                  <span className="text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-[0.4em]">HITAM AI Club</span>
-               </div>
-               <div className="px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-lg shadow-lg">
-                  {meta?.type || "Event"}
-               </div>
-            </motion.div>
+               <FiArrowLeft className="w-6 h-6" />
+            </Link>
 
-            {/* Main Title Section */}
-            <div className="space-y-6 max-w-5xl relative">
-               {/* Admin Control - Contextual to title */}
-               {user && (
-                 <motion.button
-                   initial={{ opacity: 0, scale: 0.9 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   onClick={() => setShowEditModal(true)}
-                   className="absolute -top-12 right-0 md:-right-16 p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-full text-gray-400 hover:text-blue-600 hover:shadow-2xl transition-all"
-                   title="Edit Layout"
-                 >
-                   <FiEdit className="w-5 h-5" />
-                 </motion.button>
-               )}
-
-               <motion.h1 
-                 initial={{ opacity: 0, y: 30 }} 
-                 animate={{ opacity: 1, y: 0 }}
-                 className="text-4xl md:text-5xl lg:text-7xl font-black text-gray-950 dark:text-white uppercase tracking-tighter leading-none"
-               >
-                 {meta?.title}
-               </motion.h1>
-               
-               {meta?.sessionBy && (
-                 <motion.p 
-                   initial={{ opacity: 0 }}
-                   animate={{ opacity: 1 }}
-                   transition={{ delay: 0.2 }}
-                   className="text-xs md:text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.6em] py-4"
-                 >
-                   A Session By {meta.sessionBy}
-                 </motion.p>
-               )}
-            </div>
-
-            {/* Event Details Bar (Quick Info) - Strictly Dynamic & Glowing */}
-            <motion.div 
-               initial={{ opacity: 0, y: 40 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ delay: 0.3 }}
-               className="group relative w-full flex flex-wrap justify-center gap-6 md:gap-12 p-8 md:p-14 bg-white/95 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-[3rem] md:rounded-[5rem] shadow-[0_48px_80px_-20px_rgba(0,0,0,0.05)] dark:shadow-none hover:shadow-[0_64px_100px_-30px_rgba(59,130,246,0.15)] backdrop-blur-3xl overflow-hidden transition-all duration-700"
-            >
-               {/* Shining Overlay */}
-               <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none" />
-
-               {[
-                 { label: 'Calendar Date', value: meta?.startDate ? new Date(meta.startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long' }) : null, icon: FiCalendar, color: 'text-blue-600' },
-                 { label: 'Execution Type', value: meta?.type, icon: FiClock, color: 'text-purple-600' },
-                 { label: 'Official Venue', value: meta?.venue, icon: FiMapPin, color: 'text-pink-600' },
-                 { label: 'Growth Factor', value: meta?.impactStat || meta?.growthFactor, icon: FiTarget, color: 'text-emerald-600' }
-               ]
-               .filter(item => item.value)
-               .map((item, idx, filtered) => (
-                 <div key={idx} className={`relative z-10 flex flex-col items-center text-center space-y-3 px-6 ${idx !== filtered.length - 1 ? 'border-b md:border-b-0 md:border-r border-gray-100 dark:border-white/10 pb-6 md:pb-0' : ''}`}>
-                    <item.icon className={`w-5 h-5 ${item.color} mb-1`} />
-                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">{item.label}</div>
-                    <div className="text-lg md:text-xl font-black text-gray-900 dark:text-white leading-none uppercase tracking-tight">{item.value}</div>
-                 </div>
-               ))}
-            </motion.div>
-         </div>
-      </div>
-
-      {/* Main Content Sections */}
-      <div className="max-w-6xl mx-auto px-6 mt-32 space-y-40">
-
-        {/* Section: About the Event - Premium Shining Card */}
-        {meta?.aboutEvent && (
-          <AnimatedSection className="space-y-12 group relative">
-            {/* Refined Section Header: Focused on Alignment & Balance */}
-            <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-10 px-4 md:px-0">
-               <div className="flex items-center gap-3 px-5 py-2 bg-blue-50/80 dark:bg-blue-600/10 rounded-2xl border border-blue-100 dark:border-blue-500/20 shadow-sm backdrop-blur-sm self-start">
-                  <FiLayout className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 dark:text-blue-400">Context</span>
-               </div>
-               <div className="flex items-center gap-6 flex-grow">
-                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold uppercase tracking-tight text-gray-900 dark:text-white leading-none">
-                     About the Event
-                  </h2>
-                  <div className="hidden md:block h-[1px] flex-grow bg-gradient-to-r from-gray-200 dark:from-white/10 to-transparent" />
-               </div>
-            </div>
-            
-            <div className="relative p-10 md:p-24 bg-white/40 dark:bg-white/[0.02] border border-white/60 dark:border-white/5 rounded-[4rem] shadow-[0_48px_80px_-20px_rgba(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_64px_100px_-30px_rgba(59,130,246,0.1)] transition-all duration-700 overflow-hidden group/card backdrop-blur-sm">
-               
-               {/* Refined Background Texture */}
-               <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none" 
-                    style={{ backgroundImage: 'radial-gradient(#3b82f6 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
-               
-               <div className="absolute -top-12 -left-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-600/10 blur-[100px] rounded-full pointer-events-none" />
-               <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-purple-500/5 dark:bg-purple-600/10 blur-[100px] rounded-full pointer-events-none" />
-
-               {/* Elegant Quotation Handle */}
-               <div className="absolute top-10 left-10 text-[10rem] md:text-[14rem] font-serif text-blue-500/5 dark:text-blue-400/5 leading-none select-none pointer-events-none group-hover/card:scale-105 transition-transform duration-700 -translate-x-1/4 -translate-y-1/4 italic">
-                  “
-               </div>
-
-               <div className="relative z-10 space-y-12">
-                  <p className="text-lg md:text-2xl lg:text-3xl font-medium leading-relaxed md:leading-snug text-gray-800/90 dark:text-gray-100 tracking-tight max-w-5xl whitespace-pre-line drop-shadow-sm">
-                     {meta.aboutEvent}
-                  </p>
-                  
-                  {/* Re-designed Branding Anchor */}
-                  <div className="flex items-center gap-6 pt-12 border-t border-gray-100/50 dark:border-white/5">
-                     <div className="w-14 h-14 md:w-16 md:h-16 rounded-[1.5rem] bg-gradient-to-br from-blue-600 to-purple-600 p-[1px] shadow-lg shadow-blue-500/20 group-hover/card:scale-110 transition-transform duration-500">
-                        <div className="w-full h-full rounded-[1.4rem] bg-white dark:bg-[#050505] flex items-center justify-center overflow-hidden">
-                           <img 
-                              src="https://hitam-ai-club.vercel.app/logo.jpg" 
-                              alt="Club Logo" 
-                              className="w-10 h-10 md:w-12 md:h-12 object-contain filter grayscale group-hover/card:grayscale-0 transition-all duration-500" 
-                           />
-                        </div>
-                     </div>
-                     <div className="flex flex-col gap-1">
-                        <span className="text-xs md:text-sm font-black uppercase tracking-[0.3em] text-gray-950 dark:text-white leading-none">HITAM AI CLUB</span>
-                        <span className="text-[9px] md:text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest italic flex items-center gap-2">
-                           Experience Innovation <span className="w-1 h-1 bg-blue-500/50 rounded-full" /> With Cognitive Intelligence
-                        </span>
-                     </div>
+            {meta?.imageUrl ? (
+               <>
+                  {/* Blurred backdrop image to fill empty space */}
+                  <div className="absolute inset-0 z-0 opacity-40 blur-3xl scale-110">
+                     <img src={meta.imageUrl} alt=" " className="w-full h-full object-cover" />
                   </div>
+
+                  {/* Main Full-Size Image (Object Contain) */}
+                  <div className="relative z-10 w-full flex justify-center">
+                     <img
+                        src={meta.imageUrl}
+                        alt="Event Banner"
+                        className="w-full h-auto max-h-[80vh] object-contain drop-shadow-2xl"
+                     />
+                     <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-gray-950 via-transparent to-transparent pointer-events-none" />
+                  </div>
+               </>
+            ) : (
+               /* FALLBACK: Monumental Name Highlight */
+               <div className="relative z-10 w-full max-w-7xl px-12 py-32 md:py-48 text-center space-y-12">
+                  <motion.div
+                     initial={{ opacity: 0, scale: 0.9 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     className="space-y-6"
+                  >
+                     <div className="h-[1px] w-24 bg-blue-600 mx-auto" />
+                     <h1 className="text-5xl md:text-9xl font-black text-white uppercase tracking-[-0.06em] leading-none">
+                        {meta?.title}
+                     </h1>
+                     <div className="text-[10px] font-black uppercase tracking-[0.8em] text-blue-500">
+                        Highlighting Innovation
+                     </div>
+                  </motion.div>
+               </div>
+            )}
+         </section>
+
+         {/* Main Title Section - Balanced & Centered */}
+         <div className="max-w-6xl mx-auto px-6 py-20 relative z-10">
+            <div className="flex flex-col items-center text-center space-y-8" id="event-title-section">
+
+               {/* Type Badge */}
+               <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="px-6 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.4em] rounded-xl shadow-xl shadow-blue-500/20"
+               >
+                  {meta?.type || "Event"}
+               </motion.div>
+
+               {/* Title Content */}
+               <div className="space-y-6 max-w-5xl relative">
+                  {/* Admin Edit Context */}
+                  {user?.email && (
+                     <motion.button
+                        whileHover={{ scale: 1.1, rotate: 12 }}
+                        onClick={() => setShowEditModal(true)}
+                        className="absolute -top-16 -right-12 p-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-full text-blue-600 shadow-2xl z-50 hover:shadow-blue-500/20 transition-all"
+                     >
+                        <FiEdit className="w-5 h-5" />
+                     </motion.button>
+                  )}
+
+                  <motion.h1
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     className="text-4xl md:text-7xl font-black text-gray-950 dark:text-white uppercase tracking-tighter leading-none"
+                  >
+                     {meta?.title}
+                  </motion.h1>
+
+                  {meta?.sessionBy && (
+                     <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-xs md:text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.5em] pt-4"
+                     >
+                        A Session By {meta.sessionBy}
+                     </motion.p>
+                  )}
                </div>
 
-               {/* Refined Surface Sweep */}
-               <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/5 dark:via-blue-500/10 to-transparent -translate-x-[150%] group-hover/card:translate-x-[150%] transition-transform duration-[1200ms] pointer-events-none" />
-            </div>
-          </AnimatedSection>
-        )}
+               {/* "Proper Small" Quick Info Pill */}
+               {(meta?.startDate || meta?.venue || meta?.impactStat || meta?.growthFactor) && (
+                  <motion.div
+                     initial={{ opacity: 0, y: 30 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ delay: 0.3 }}
+                     className="group relative flex flex-wrap justify-center gap-x-12 gap-y-6 py-6 px-12 md:py-8 md:px-16 bg-white/50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-full shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] backdrop-blur-3xl overflow-hidden hover:shadow-blue-500/10 transition-all duration-700"
+                  >
+                     {/* Gloss sweep */}
+                     <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-[1500ms] pointer-events-none" />
 
-        {/* Section: Speakers (Clean Format) */}
-        {meta?.speakers?.length > 0 && (
-          <AnimatedSection className="space-y-12">
-            <div className="flex items-center gap-6">
-               <div className="flex items-center gap-3 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-2xl border border-purple-100 dark:border-purple-800/30">
-                  <FiUsers className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-600 dark:text-purple-400">Panel</span>
-               </div>
-               <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-gray-900 dark:text-white">
-                  Executive Speakers
-               </h2>
-               <div className="h-[1px] flex-grow bg-gradient-to-r from-gray-100 dark:from-white/10 to-transparent" />
+                     {[
+                        { label: 'Date', value: meta?.startDate ? new Date(meta.startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'long' }) : null, icon: FiCalendar, color: 'text-blue-500' },
+                        { label: 'Venue', value: meta?.venue, icon: FiMapPin, color: 'text-purple-500' },
+                        { label: 'Growth', value: meta?.impactStat || meta?.growthFactor, icon: FiTarget, color: 'text-emerald-500' }
+                     ]
+                        .filter(item => item.value)
+                        .map((item, idx, filtered) => (
+                           <div key={idx} className="flex items-center gap-4 group/item">
+                              <div className={`w-8 h-8 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center ${item.color} group-hover/item:scale-110 transition-transform`}>
+                                 <item.icon className="w-4 h-4" />
+                              </div>
+                              <div className="flex flex-col text-left">
+                                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">{item.label}</span>
+                                 <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight leading-none">{item.value}</span>
+                              </div>
+                              {idx < filtered.length - 1 && (
+                                 <div className="hidden lg:block h-6 w-px bg-gray-100 dark:bg-white/10 ml-8" />
+                              )}
+                           </div>
+                        ))}
+                  </motion.div>
+               )}
             </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {meta.speakers.map((speaker, i) => (
-                <div key={i} className="group relative p-8 bg-gray-50/50 dark:bg-gray-900/40 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-[0_20px_40px_-15px_rgba(139,92,246,0.1)] dark:shadow-[0_20px_40px_-15px_rgba(139,92,246,0.2)] hover:shadow-[0_32px_64px_-16px_rgba(139,92,246,0.3)] transition-all duration-700 overflow-hidden">
-                   {/* Shining Overlay */}
-                   <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-purple-500/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none" />
-                   
-                   <div className="relative z-10 space-y-4">
-                      <div className="flex justify-between items-start gap-4">
-                         <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none">{speaker.name}</h3>
-                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest whitespace-nowrap ${speaker.type === 'guest' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                           {speaker.type || 'Internal'}
-                         </span>
-                      </div>
-                      <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{speaker.role}</p>
-                      
-                      <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-                         {speaker.linkedin && (
-                           <a href={speaker.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 bg-white dark:bg-gray-800 rounded-lg text-gray-400 hover:text-blue-600 transition-colors">
-                             <FiLinkedin className="w-4 h-4" />
-                           </a>
-                         )}
-                         {speaker.instagram && (
-                           <a href={speaker.instagram} target="_blank" rel="noopener noreferrer" className="p-2 bg-white dark:bg-gray-800 rounded-lg text-gray-400 hover:text-pink-600 transition-colors">
-                             <FiInstagram className="w-4 h-4" />
-                           </a>
-                         )}
-                      </div>
-                   </div>
-                </div>
-              ))}
-            </div>
-          </AnimatedSection>
-        )}
+         </div>
 
-        {/* Section: Key Highlights & Learning Outcomes */}
+
+
+         {/* Main Content Sections */}
+         <div className="max-w-6xl mx-auto px-6 mt-12 space-y-16">
+
+            {/* About the Event */}
+            {meta?.aboutEvent && (
+               <AnimatedSection className="relative py-24 border-b border-black/5 dark:border-white/10">
+                  <div className="space-y-12">
+                     <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-gray-950 dark:text-white uppercase tracking-tighter leading-none">
+                        The <br />
+                        <span className="font-serif italic lowercase tracking-tight font-normal text-blue-600 dark:text-blue-400">overview</span>
+                     </h2>
+
+                     <p className="text-xl md:text-2xl lg:text-3xl font-serif text-gray-800 dark:text-gray-300 leading-[1.6] tracking-tight w-full italic opacity-90">
+                        {meta.aboutEvent}
+                     </p>
+                  </div>
+               </AnimatedSection>
+            )}
+
+
+            {/* Section: Honors / Masterminds */}
+            {meta?.honorees?.length > 0 && (
+               <AnimatedSection className="py-24 space-y-16 border-b border-black/5 dark:border-white/10">
+                  <div className="flex items-center gap-6">
+                     <div className="flex items-center gap-3 px-4 py-2 bg-purple-50 dark:bg-purple-600/10 rounded-2xl border border-purple-100 dark:border-purple-500/20">
+                        <FiAward className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-600 dark:text-purple-400">Recognition</span>
+                     </div>
+                     <h2 className="text-2xl md:text-3xl lg:text-4xl font-black uppercase tracking-tighter text-gray-900 dark:text-white">
+                        {meta.honorTitle || "Master Minds"}
+                     </h2>
+                     <div className="h-[1px] flex-grow bg-gradient-to-r from-gray-100 dark:from-white/10 to-transparent" />
+                  </div>
+
+                  <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                     {meta.honorees.map((honoree, i) => (
+                        <div key={i} className="group relative p-10 bg-purple-50/50 dark:bg-purple-900/10 rounded-[2.5rem] border border-purple-100/50 dark:border-purple-500/10 shadow-[0_20px_40px_-15px_rgba(147,51,234,0.1)] hover:shadow-[0_32px_64px_-16px_rgba(147,51,234,0.2)] transition-all duration-700 overflow-hidden">
+                           <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-purple-500/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+                           <div className="relative z-10 space-y-4">
+                              <div className="flex flex-col">
+                                 <span className="text-[9px] font-black text-purple-500 uppercase tracking-[0.4em] mb-2">Honored Participant</span>
+                                 <h3 className="text-2xl md:text-3xl font-black text-gray-950 dark:text-white uppercase tracking-tighter leading-none group-hover:text-purple-600 transition-colors">
+                                    {honoree.name}
+                                 </h3>
+                              </div>
+                              <div className="pt-4 border-t border-purple-100 dark:border-purple-500/20 flex flex-wrap items-center gap-3">
+                                 <div className="flex items-center gap-2">
+                                    <FiLayers className="w-3 h-3 text-gray-400" />
+                                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{honoree.branch}</span>
+                                 </div>
+                                 {honoree.addition && (
+                                    <span className="px-2 py-0.5 bg-purple-100/50 dark:bg-purple-600/10 text-purple-600 dark:text-purple-400 text-[8px] font-black uppercase tracking-widest rounded-md border border-purple-200/50 dark:border-purple-500/20">
+                                       {honoree.addition}
+                                    </span>
+                                 )}
+                              </div>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </AnimatedSection>
+            )}
+
+
+            {/* Section: Speakers (Clean Premium Format) */}
+            {meta?.speakers?.length > 0 && (
+               <AnimatedSection className="py-24 space-y-16">
+                  {/* Premium Section Header */}
+                  <div className="flex items-center gap-6">
+                     <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 dark:bg-blue-600/10 rounded-2xl border border-blue-100 dark:border-blue-500/20">
+                        <FiUsers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 dark:text-blue-400">Panel</span>
+                     </div>
+                     <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-gray-900 dark:text-white">
+                        Executive Speakers
+                     </h2>
+                     <div className="h-[1px] flex-grow bg-gradient-to-r from-gray-100 dark:from-white/10 to-transparent" />
+                  </div>
+
+                  {/* Speaker Grid */}
+                  <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                     {meta.speakers.map((speaker, i) => (
+                        <div key={i} className="group relative p-10 bg-gray-50/50 dark:bg-gray-900/40 rounded-[2.5rem] border border-gray-100 dark:border-white/5 shadow-[0_20px_40px_-15px_rgba(59,130,246,0.1)] dark:shadow-[0_20px_40px_-15px_rgba(147,51,234,0.1)] hover:shadow-[0_32px_64px_-16px_rgba(59,130,246,0.2)] transition-all duration-700 overflow-hidden">
+
+                           {/* Shining Interaction Overlay */}
+                           <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+                           <div className="relative z-10 space-y-6">
+                              <div className="flex justify-between items-start gap-4">
+                                 <h3 className="text-2xl font-black text-gray-950 dark:text-white uppercase tracking-tighter leading-none">{speaker.name}</h3>
+                                 <span className={`px-4 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest whitespace-nowrap ${speaker.type === 'guest' ? 'bg-purple-100/50 text-purple-600 dark:bg-purple-600/20 dark:text-purple-400' : 'bg-blue-100/50 text-blue-600 dark:bg-blue-600/20 dark:text-blue-400'}`}>
+                                    {speaker.type || 'Internal'}
+                                 </span>
+                              </div>
+                              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-none">{speaker.role}</p>
+
+                              <div className="flex items-center gap-4 pt-6 border-t border-gray-100 dark:border-gray-800">
+                                 {speaker.linkedin && (
+                                    <a href={speaker.linkedin} target="_blank" rel="noopener noreferrer" className="p-3 bg-white dark:bg-gray-800 rounded-xl text-gray-400 hover:text-blue-600 hover:shadow-lg transition-all">
+                                       <FiLinkedin className="w-4 h-4" />
+                                    </a>
+                                 )}
+                                 {speaker.instagram && (
+                                    <a href={speaker.instagram} target="_blank" rel="noopener noreferrer" className="p-3 bg-white dark:bg-gray-800 rounded-xl text-gray-400 hover:text-pink-600 hover:shadow-lg transition-all">
+                                       <FiInstagram className="w-4 h-4" />
+                                    </a>
+                                 )}
+                              </div>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </AnimatedSection>
+            )}
+
+
+        {/* Section: Key Highlights & Learning Outcomes (Restored as per your snippet) */}
         <div className="grid lg:grid-cols-2 gap-20">
            {meta?.highlights?.length > 0 && (
              <AnimatedSection className="space-y-12">
@@ -335,194 +363,201 @@ const EventDetailPage = () => {
            )}
         </div>
 
-        {/* Section: Activities / Engagement Flow */}
-        {meta?.activities?.length > 0 && (
-          <AnimatedSection className="space-y-16 pt-10">
-             <div className="text-center space-y-4">
-                <div className="inline-flex items-center gap-3 px-6 py-2 bg-blue-50/50 dark:bg-blue-900/10 rounded-full border border-blue-100/50 dark:border-blue-800/20">
-                   <FiActivity className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                   <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 dark:text-blue-400">Timeline</span>
-                </div>
-                <h3 className="text-4xl md:text-6xl font-black text-gray-950 dark:text-white tracking-tighter uppercase relative inline-block">
-                   Execution Phases
-                   <div className="absolute -top-12 -right-16 w-32 h-32 bg-blue-500/10 dark:bg-blue-500/20 blur-3xl rounded-full pointer-events-none" />
-                </h3>
-             </div>
 
-            <div className="max-w-4xl mx-auto px-4 md:px-0">
-               <div className="flex flex-col gap-6 md:gap-10">
-                 {meta.activities.map((a, i) => (
-                   <div key={i} className="group relative flex items-stretch gap-4 md:gap-10 transition-all duration-700">
-                      
-                      {/* Tracker Axis */}
-                      <div className="relative flex flex-col items-center mt-[44px] md:mt-[60px] flex-shrink-0">
-                         {/* Axis Node Base */}
-                         <div className="z-20 w-3 h-3 md:w-5 md:h-5 rounded-full bg-gray-200 dark:bg-gray-800 border-[3px] md:border-[4px] border-white dark:border-[#080808] shadow-[0_0_0_2px_rgba(229,231,235,1)] dark:shadow-[0_0_0_2px_rgba(31,41,55,1)] group-hover:bg-blue-500 group-hover:shadow-[0_0_0_4px_rgba(59,130,246,0.3),_0_0_20px_rgba(59,130,246,0.6)] transition-all duration-500" />
-                         
-                         {/* Connecting Line Vector */}
-                         {i !== meta.activities.length - 1 && (
-                            <div className="absolute top-[12px] md:top-[20px] bottom-[-24px] md:bottom-[-40px] w-[2px] bg-gradient-to-b from-gray-200 dark:from-gray-800 to-transparent group-hover:from-blue-500/50 transition-colors duration-700" />
-                         )}
-                      </div>
-                      
-                      {/* Activity Slab */}
-                      <div className="relative z-10 flex-grow p-8 md:p-12 bg-white/80 dark:bg-white/[0.02] backdrop-blur-3xl border border-gray-100 dark:border-white/5 rounded-[2rem] md:rounded-[3rem] shadow-[0_20px_40px_-20px_rgba(0,0,0,0.05)] dark:shadow-none hover:shadow-[0_30px_60px_-15px_rgba(59,130,246,0.15)] hover:border-blue-500/20 dark:hover:border-blue-500/30 hover:bg-white dark:hover:bg-white/[0.05] transition-all duration-700 group-hover:-translate-y-2 overflow-hidden w-full">
-                         
-                         {/* Ethereal Phase Number Background Watermark */}
-                         <div className="absolute -right-6 -bottom-6 md:-right-8 md:-bottom-12 text-[100px] md:text-[180px] font-black text-gray-50/80 dark:text-gray-800/20 group-hover:text-blue-50/50 dark:group-hover:text-blue-900/20 leading-none tracking-tighter transition-colors duration-700 pointer-events-none select-none z-0">
-                            {String(i + 1).padStart(2, '0')}
-                         </div>
-                         
-                         {/* Highlight Sweep */}
-                         <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/5 dark:via-blue-500/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-[1500ms] ease-in-out pointer-events-none" />
-                         
-                         <div className="relative z-10">
-                            <h3 className="text-xl md:text-3xl lg:text-4xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-500 max-w-[90%] break-words">
-                               {a}
-                            </h3>
-                         </div>
-                      </div>
-                   </div>
-                 ))}
-               </div>
-            </div>
-          </AnimatedSection>
-        )}
 
-        {/* Section: Support Network (Sponsors) */}
-        {meta?.sponsors?.length > 0 && (
-           <AnimatedSection className="py-16 md:py-24 border-t border-gray-100 dark:border-gray-900/50">
-              <div className="text-center space-y-4 mb-12 md:mb-16 relative">
-                 <h4 className="text-[10px] md:text-xs font-black uppercase tracking-[0.6em] text-blue-600 dark:text-blue-400">Collaboration</h4>
-                 <h3 className="text-4xl md:text-5xl font-black text-gray-950 dark:text-white tracking-tighter uppercase inline-block relative">
-                    {meta?.sponsorLabel || "Sponsors"}
-                    <div className="absolute -top-6 -left-10 w-24 h-24 bg-purple-500/10 blur-3xl rounded-full pointer-events-none" />
-                 </h3>
-              </div>
-              <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 max-w-5xl mx-auto px-6">
-                 {meta.sponsors.map((s, i) => (
-                    <div key={i} className="group flex flex-col items-center gap-4 md:gap-6 p-4 md:p-6 rounded-[2rem] hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-500">
-                       <img 
-                          src={s.logoUrl} 
-                          alt={s.name} 
-                          className="h-16 sm:h-20 md:h-28 object-contain opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 max-w-[150px] md:max-w-[250px] dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" 
-                          style={{ filter: "drop-shadow(0px 10px 20px rgba(0,0,0,0.05))" }}
-                       />
-                       <span className="text-[10px] font-black text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 uppercase tracking-[0.3em] transition-colors duration-500 text-center">
-                          {s.name}
-                       </span>
-                    </div>
-                 ))}
-              </div>
-           </AnimatedSection>
-        )}
 
-        {/* Section: Visual Highlights (Gallery) - Horizontal Scroll */}
-        {meta?.gallery?.length > 0 && (
-          <AnimatedSection className="space-y-16">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-6">
-               <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-400">Visual Evidence</h4>
-                  <h3 className="text-5xl md:text-7xl font-black text-gray-950 dark:text-white tracking-tighter uppercase leading-none">Gallery</h3>
-               </div>
-               <div className="hidden md:flex items-center gap-4 text-gray-400">
-                  <span className="text-[10px] font-black uppercase tracking-widest">Scroll to Explore</span>
-                  <div className="w-12 h-[1px] bg-gray-200 dark:bg-gray-800" />
-               </div>
-            </div>
-            
-            <div className="flex overflow-x-auto gap-8 px-6 pb-12 snap-x snap-mandatory scrollbar-hide no-scrollbar transition-all duration-700">
-              {meta.gallery.map((img, i) => (
-                <div key={i} className="flex-none w-[320px] md:w-[600px] aspect-[16/10] rounded-[2.5rem] overflow-hidden shadow-2xl hover:shadow-blue-500/20 snap-center transition-all duration-700 group">
-                  <img 
-                    src={img} 
-                    alt={`Gallery ${i}`} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" 
-                  />
-                </div>
-              ))}
-              {/* End Spacer for horizontal scroll */}
-              <div className="flex-none w-px h-full" />
-            </div>
-          </AnimatedSection>
-        )}
 
-        {/* Section: Connect & Share (Social Media) */}
-        {(meta?.instagram || meta?.linkedin || meta?.youtube || meta?.whatsapp) && (
-          <AnimatedSection className="space-y-16 pt-16 border-t border-gray-100 dark:border-gray-800">
-             <div className="text-center space-y-4">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-600">Event Highlights Online</h4>
-                <h3 className="text-5xl md:text-6xl font-black text-gray-950 dark:text-white tracking-tighter uppercase">Social Media</h3>
-             </div>
-             
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                  { name: 'Instagram', icon: FiInstagram, color: 'hover:bg-gradient-to-tr hover:from-orange-500 hover:to-pink-500', link: meta?.instagram, label: 'Post / Reel' },
-                  { name: 'LinkedIn', icon: FiLinkedin, color: 'hover:bg-[#0077b5]', link: meta?.linkedin, label: 'Official Update' },
-                  { name: 'YouTube', icon: FiYoutube, color: 'hover:bg-[#ff0000]', link: meta?.youtube, label: 'Event Recording' },
-                  { name: 'WhatsApp', icon: FiMessageCircle, color: 'hover:bg-[#25d366]', link: meta?.whatsapp, label: 'Join Group' }
-                ]
-                .filter(platform => platform.link)
-                .map((platform, idx) => (
-                  <motion.a
-                    key={idx}
-                    href={platform.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ y: -10 }}
-                    className={`group relative p-10 bg-gray-50 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 rounded-[3rem] flex flex-col items-center text-center transition-all duration-500 ${platform.color} hover:text-white hover:shadow-[0_40px_80px_-20px_rgba(59,130,246,0.25)]`}
-                  >
-                     <platform.icon className="w-12 h-12 mb-6 transition-transform group-hover:scale-110" />
-                     <h4 className="text-xl font-black uppercase tracking-tight leading-none mb-2">{platform.name}</h4>
-                     <span className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-6">{platform.label}</span>
-                     <div className="mt-auto flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                        View Now <FiLink className="w-3 h-3" />
+            {/* Section: Timeline (Execution Phases) */}
+            {meta?.activities?.length > 0 && (
+               <AnimatedSection className="py-24 space-y-24 border-b border-black/5 dark:border-white/10">
+                  {/* Premium Timeline Header */}
+                  <div className="text-center space-y-6">
+                     <div className="inline-flex items-center gap-4 px-6 py-2 bg-gray-100 dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10">
+                        <FiActivity className="w-3 h-3 text-blue-600" />
+                        <span className="text-[9px] font-black uppercase tracking-[0.6em] text-black/50 dark:text-white/40">Execution Phases</span>
                      </div>
-                  </motion.a>
-                ))}
-             </div>
-          </AnimatedSection>
-        )}
+                     <h3 className="text-4xl md:text-7xl font-black text-black dark:text-white tracking-[-0.05em] uppercase leading-none">The Timeline</h3>
+                  </div>
 
-        {/* Section: Growth & Impact */}
-        {meta?.impact && (
-          <AnimatedSection className="relative bg-gray-950 p-20 rounded-[5rem] overflow-hidden">
-             <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 opacity-40 blur-3xl" />
-             <div className="relative text-center space-y-8">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-blue-400">Outcome / Impact</h4>
-                <p className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[0.95] tracking-tighter uppercase">
-                   {meta.impact}
-                </p>
-                <div className="pt-8">
-                   <Link to="/join" className="inline-block px-12 py-5 bg-white text-gray-950 text-xs font-black uppercase tracking-widest rounded-full hover:scale-105 transition-transform shadow-2xl">
-                     Join the Impact
-                   </Link>
-                </div>
-             </div>
-          </AnimatedSection>
-        )}
+                  <div className="max-w-4xl mx-auto space-y-12 relative">
+                     {/* Refined Side-Axis Line */}
+                     <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px bg-gradient-to-b from-blue-600 via-blue-500/10 to-transparent z-0" />
 
-        {/* Footer Navigation */}
-        <div className="pt-20 border-t border-gray-100 dark:border-gray-900 flex flex-col md:flex-row justify-between items-center gap-8">
-           <Link to="/events" className="group flex items-center gap-4 bg-gray-50 dark:bg-gray-900 px-8 py-4 rounded-3xl hover:bg-blue-600 transition-all transition-duration-500">
-              <FiArrowLeft className="w-5 h-5 group-hover:-translate-x-2 transition-transform group-hover:text-white" />
-              <span className="text-xs font-black uppercase tracking-[0.3em] text-gray-900 dark:text-white group-hover:text-white">Return to Events</span>
-           </Link>
-           <div className="flex flex-col items-center md:items-end gap-1">
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400">HITAM AI Club © <a href="https://www.instagram.com/hitamaiclub?igsh=aTYwcXQyZWh1NXZj" className="text-blue-600 hover:text-blue-400 transition-colors ml-2">INSTAGRAM</a></span>
-              <span className="text-[8px] font-bold text-gray-300 dark:text-gray-800 uppercase tracking-widest italic">Experience Innovation with Cognitive Intelligence</span>
-           </div>
-        </div>
+                     {meta.activities.map((a, i) => (
+                        <div key={i} className="group relative pl-16 md:pl-24 py-4 transition-all duration-700">
+                           {/* Axis Node - The Glowing Progress Indicator */}
+                           <div className="absolute left-[20px] md:left-[28px] top-10 flex items-center justify-center">
+                              <div className="absolute w-8 h-8 bg-blue-500/10 rounded-full animate-ping opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <div className="w-3.5 h-3.5 bg-white dark:bg-gray-900 border-[2px] border-blue-600 rounded-full z-10 group-hover:bg-blue-600 transition-all duration-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]" />
+                           </div>
+
+                           {/* Premium Roadmap Content Card */}
+                           <div className="relative p-10 bg-gray-50/50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 rounded-[2.5rem] hover:bg-white dark:hover:bg-white/[0.05] transition-all duration-700 shadow-sm hover:shadow-2xl group-hover:-translate-y-2 overflow-hidden">
+                              {/* Shining Interaction Glow */}
+                              <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/5 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+                              <div className="space-y-4">
+                                 <div className="flex items-center gap-3">
+                                    <span className="text-[10px] font-black text-blue-600/40 dark:text-blue-400/40 uppercase tracking-[0.4em]">Phase {String(i + 1).padStart(2, '0')}</span>
+                                    <div className="h-px w-8 bg-blue-600/20" />
+                                 </div>
+                                 <h4 className="text-xl md:text-3xl font-black text-gray-950 dark:text-white uppercase tracking-tighter leading-none group-hover:text-blue-600 transition-colors duration-500">
+                                    {a}
+                                 </h4>
+                              </div>
+
+                              {/* Corner Watermark */}
+                              <div className="absolute -right-4 -bottom-4 text-9xl font-black text-black/5 dark:text-white/5 group-hover:text-blue-500/10 leading-none tracking-tight pointer-events-none transition-colors duration-700">
+                                 {String(i + 1).padStart(2, '0')}
+                              </div>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </AnimatedSection>
+            )}
+
+
+            {/* Sponsors */}
+            {meta?.sponsors?.length > 0 && (
+               <AnimatedSection className="py-16 border-b border-black/5 dark:border-white/10">
+                  <div className="flex flex-col items-center text-center space-y-8 mb-16">
+                     <h3 className="text-3xl md:text-5xl font-light text-gray-950 dark:text-white tracking-tighter uppercase">
+                        Our <span className="font-serif italic lowercase">Sponsors</span>
+                     </h3>
+                  </div>
+                  <div className="flex flex-wrap justify-center items-center gap-16 md:gap-24 max-w-5xl mx-auto px-12">
+                     {meta.sponsors.map((s, i) => (
+                        <div key={i} className="group flex flex-col items-center gap-6">
+                           <img
+                              src={s.logoUrl}
+                              alt={s.name}
+                              className="h-16 md:h-20 object-contain brightness-0 dark:invert opacity-40 group-hover:opacity-100 transition-all duration-700"
+                           />
+                           <span className="text-[8px] font-black text-black/20 dark:text-white/20 uppercase tracking-[0.4em] group-hover:text-black dark:group-hover:text-white transition-colors">
+                              {s.name}
+                           </span>
+                        </div>
+                     ))}
+                  </div>
+               </AnimatedSection>
+            )}
+
+            {/* Event Gallery */}
+            {meta?.gallery?.length > 0 && (
+               <AnimatedSection className="space-y-12 py-16 border-b border-black/5 dark:border-white/10">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                     <h3 className="text-3xl md:text-5xl font-light text-gray-950 dark:text-white tracking-[-0.04em] uppercase leading-none">Event <span className="font-serif italic lowercase">Gallery</span></h3>
+                  </div>
+
+                  <div className="flex overflow-x-auto gap-8 px-12 pb-16 snap-x snap-mandatory scrollbar-hide no-scrollbar scroll-smooth">
+                     {meta.gallery.map((img, i) => (
+                        <div key={i} className="flex-none w-[300px] md:w-[600px] aspect-[16/10] bg-gray-50 dark:bg-white/5 border border-black/5 dark:border-white/10 overflow-hidden snap-center transition-all duration-700 group">
+                           <img
+                              src={img}
+                              alt={`Gallery ${i}`}
+                              className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110"
+                           />
+                        </div>
+                     ))}
+                     <div className="flex-none w-12" />
+                  </div>
+
+                  <div className="flex justify-center items-center gap-4 text-black/20 dark:text-white/20">
+                     <span className="text-[8px] font-black uppercase tracking-widest">Scroll to Explore</span>
+                     <div className="w-32 h-px bg-black/5 dark:bg-white/5" />
+                  </div>
+               </AnimatedSection>
+            )}
+
+            {/* Social Connect (Premium Glass Pills) */}
+            {(meta?.instagram || meta?.linkedin || meta?.youtube || meta?.whatsapp) && (
+               <AnimatedSection className="py-24 border-t border-black/5 dark:border-white/10">
+                  <div className="flex flex-col items-center text-center space-y-16">
+                     <div className="flex flex-col items-center gap-4">
+                        <div className="h-px w-16 bg-blue-600/30" />
+                        <h3 className="text-xl md:text-2xl font-black text-gray-950 dark:text-white tracking-[0.4em] uppercase">Join the Collective</h3>
+                     </div>
+
+                     <div className="flex flex-wrap justify-center gap-6">
+                        {[
+                           { name: 'Instagram', icon: FiInstagram, link: meta?.instagram, color: 'hover:bg-pink-500', glow: 'shadow-pink-500/20' },
+                           { name: 'LinkedIn', icon: FiLinkedin, link: meta?.linkedin, color: 'hover:bg-blue-600', glow: 'shadow-blue-600/20' },
+                           { name: 'YouTube', icon: FiYoutube, link: meta?.youtube, color: 'hover:bg-red-600', glow: 'shadow-red-600/20' },
+                           { name: 'WhatsApp', icon: FiMessageCircle, link: meta?.whatsapp, color: 'hover:bg-green-500', glow: 'shadow-green-500/20' }
+                        ]
+                           .filter(platform => platform.link)
+                           .map((platform, idx) => (
+                              <motion.a
+                                 key={idx}
+                                 href={platform.link}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 whileHover={{ scale: 1.05, y: -5 }}
+                                 className={`group relative flex items-center gap-4 px-10 py-5 bg-white dark:bg-white/[0.03] border border-black/5 dark:border-white/10 rounded-full transition-all duration-500 hover:shadow-2xl ${platform.glow} overflow-hidden`}
+                              >
+                                 {/* Shining Sweep Effect */}
+                                 <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+                                 <platform.icon className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors relative z-10" />
+                                 <span className="text-xs font-black uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300 group-hover:text-white transition-colors relative z-10">{platform.name}</span>
+                                 <div className={`absolute inset-0 ${platform.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                              </motion.a>
+                           ))}
+                     </div>
+                  </div>
+               </AnimatedSection>
+            )}
+
+            {/* Event Outcome / Impact (Cinematic Focus) */}
+            {meta?.impact && (
+               <AnimatedSection className="relative min-h-[60vh] flex items-center justify-center py-32 px-12 overflow-hidden mt-24 bg-gray-50/50 dark:bg-[#050505] border border-black/5 dark:border-white/5 rounded-[4rem]">
+                  <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                     style={{ backgroundImage: 'radial-gradient(#3b82f6 0.5px, transparent 0.5px)', backgroundSize: '48px 48px' }} />
+
+                  <div className="relative z-10 max-w-5xl w-full text-center space-y-20">
+                     <div className="flex flex-col items-center gap-6">
+                        <FiActivity className="w-8 h-8 text-blue-600/40" />
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.8em] text-black/40 dark:text-white/40">Event Genesis & Impact</h4>
+                     </div>
+
+                     <p className="text-2xl md:text-3xl lg:text-4xl font-serif italic text-gray-950 dark:text-white leading-[1.4] tracking-tight max-w-4xl mx-auto">
+                        {meta.impact}
+                     </p>
+
+                     <div className="pt-12 flex items-center justify-center">
+                        <Link
+                           to="/join"
+                           className="group relative px-20 py-8 bg-black dark:bg-white text-white dark:text-black rounded-full overflow-hidden transition-all duration-700 hover:scale-105 hover:shadow-[0_20px_50px_rgba(59,130,246,0.3)]"
+                        >
+                           {/* Internal Shining Ripple */}
+                           <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out" />
+
+                           <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.5em]">Connect with us</span>
+                        </Link>
+                     </div>
+                  </div>
+               </AnimatedSection>
+            )}
+
+            {/* Footer Navigation */}
+            <div className="pt-24 border-t border-black/5 dark:border-white/10 flex flex-col md:flex-row justify-between items-end gap-12 px-12">
+               <Link to="/events" className="group flex items-center gap-6 pb-2 border-b border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white transition-all duration-500">
+                  <FiArrowLeft className="w-4 h-4" />
+                  <span className="text-[9px] font-black uppercase tracking-[0.5em] text-black dark:text-white">Back to Events</span>
+               </Link>
+            </div>
+         </div>
+
+         <EventEditModal
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            editingEvent={event}
+            onSuccess={handleEditSuccess}
+         />
       </div>
-
-      <EventEditModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        editingEvent={event}
-        onSuccess={handleEditSuccess}
-      />
-    </div>
-  );
+   );
 };
 
 export default EventDetailPage;

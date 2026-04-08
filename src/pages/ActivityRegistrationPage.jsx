@@ -1557,22 +1557,16 @@ function ActivityRegistrationPage() {
                       ) : (
                         <Button
                           onClick={handleSubmit}
+                          variant={submitting || !isValid || (Object.keys(uniqueErrors).length > 0) || Object.values(validatingFields).some(Boolean) ? "secondary" : "success"}
+                          loading={submitting}
                           disabled={submitting || !isValid || (Object.keys(uniqueErrors).length > 0) || Object.values(validatingFields).some(Boolean)}
-                          className={`min-w-[150px] flex items-center justify-center gap-2 ${(submitting || !isValid || (Object.keys(uniqueErrors).length > 0) || Object.values(validatingFields).some(Boolean)) ? 'opacity-50 cursor-not-allowed bg-gray-400 dark:bg-gray-600' : 'bg-green-600 hover:bg-green-700'} text-white`}
+                          className="min-w-[150px]"
                         >
-                          {submitting ? (
-                            <>
-                              <LoadingSpinner size="sm" color="white" />
-                              <span>Processing...</span>
-                            </>
-                          ) : (
-                            <>
-                              <FiCheckCircle className="w-4 h-4" />
-                              <span>Submit</span>
-                            </>
-                          )}
+                          {submitting ? "Processing..." : "Submit"}
                         </Button>
+
                       )}
+
                     </div>
                   </div>
                 </div>

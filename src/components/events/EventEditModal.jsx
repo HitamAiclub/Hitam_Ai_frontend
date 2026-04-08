@@ -29,7 +29,9 @@ const EventEditModal = ({ isOpen, onClose, editingEvent, onSuccess }) => {
     whatsapp: "",
     impact: "",
     venue: "",
-    impactStat: ""
+    impactStat: "",
+    honorTitle: "Master Minds",
+    honorees: []
   });
 
   const [imageFile, setImageFile] = useState(null);
@@ -60,7 +62,9 @@ const EventEditModal = ({ isOpen, onClose, editingEvent, onSuccess }) => {
         whatsapp: editingEvent.meta?.whatsapp || "",
         impact: editingEvent.meta?.impact || "",
         venue: editingEvent.meta?.venue || "",
-        impactStat: editingEvent.meta?.impactStat || ""
+        impactStat: editingEvent.meta?.impactStat || "",
+        honorTitle: editingEvent.meta?.honorTitle || "Master Minds",
+        honorees: editingEvent.meta?.honorees || []
       });
     } else {
       setFormData({
@@ -83,7 +87,9 @@ const EventEditModal = ({ isOpen, onClose, editingEvent, onSuccess }) => {
         whatsapp: "",
         impact: "",
         venue: "",
-        impactStat: ""
+        impactStat: "",
+        honorTitle: "Master Minds",
+        honorees: []
       });
     }
     // Clean up files
@@ -213,6 +219,38 @@ const EventEditModal = ({ isOpen, onClose, editingEvent, onSuccess }) => {
               <Input label="Impact (Growth)" placeholder="e.g. 500+..." value={formData.impactStat} onChange={(e) => setFormData({ ...formData, impactStat: e.target.value })} />
            </div>
            <Input label="Hosted By (Legacy Field)" value={formData.sessionBy} onChange={(e) => setFormData({ ...formData, sessionBy: e.target.value })} />
+        </div>
+
+        {/* Section: Honors / Masterminds */}
+        <div className="p-6 bg-purple-50/50 dark:bg-purple-600/5 border border-purple-100 dark:border-purple-500/10 rounded-3xl space-y-6">
+           <div className="flex justify-between items-center">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-600 flex items-center gap-2">
+                <FiLayout className="w-3 h-3" /> Honors Section (Mastermind / Best Performers)
+              </h3>
+              <Button type="button" size="sm" variant="outline" onClick={() => setFormData({ ...formData, honorees: [...formData.honorees, { name: "", branch: "", addition: "" }] })}>
+                + Add Honoree
+              </Button>
+           </div>
+           
+           <Input 
+             label="Section Display Title" 
+             placeholder="e.g. Master Mind, Grand Master Mind..." 
+             value={formData.honorTitle} 
+             onChange={(e) => setFormData({ ...formData, honorTitle: e.target.value })} 
+           />
+
+           <div className="space-y-4">
+              {formData.honorees.map((h, i) => (
+                 <div key={i} className="relative p-6 border rounded-2xl bg-white dark:bg-gray-800 space-y-4 shadow-sm">
+                    <X className="absolute top-4 right-4 w-4 h-4 text-red-500 cursor-pointer" onClick={() => setFormData({ ...formData, honorees: formData.honorees.filter((_, idx) => idx !== i) })} />
+                    <div className="grid md:grid-cols-2 gap-4">
+                       <Input label="FullName" value={h.name} onChange={(e) => { const hon = [...formData.honorees]; hon[i].name = e.target.value; setFormData({ ...formData, honorees: hon }); }} />
+                       <Input label="Branch" value={h.branch} onChange={(e) => { const hon = [...formData.honorees]; hon[i].branch = e.target.value; setFormData({ ...formData, honorees: hon }); }} />
+                    </div>
+                    <Input label="Note / Addition (Optional)" placeholder="e.g. From Other College..." value={h.addition} onChange={(e) => { const hon = [...formData.honorees]; hon[i].addition = e.target.value; setFormData({ ...formData, honorees: hon }); }} />
+                 </div>
+              ))}
+           </div>
         </div>
 
         <div className="bg-gray-50 dark:bg-gray-900/40 p-6 rounded-3xl space-y-6">

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { FiCheck } from "react-icons/fi";
 import LoadingSpinner from "../ui/LoadingSpinner";
+import Button from "../ui/Button";
 
 function JoinClubForm({ onSubmit, isLoading }) {
   const [formData, setFormData] = useState({
@@ -149,25 +150,15 @@ function JoinClubForm({ onSubmit, isLoading }) {
         {errors.email && <p className="text-error-500 text-sm mt-1">{errors.email}</p>}
       </div>
       
-      <motion.button
+      <Button
         type="submit"
-        className="w-full btn-primary py-3 mt-6"
+        className="w-full py-3 mt-6"
+        loading={isLoading}
         disabled={isLoading}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
       >
-        {isLoading ? (
-          <div className="flex items-center justify-center">
-            <LoadingSpinner size="sm" color="white" />
-            <span className="ml-2">Submitting...</span>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center">
-            <FiCheck className="mr-2" />
-            <span>Join HITAM AI Club</span>
-          </div>
-        )}
-      </motion.button>
+        {isLoading ? "Joining..." : "Join HITAM AI Club"}
+      </Button>
+
       
       <p className="text-center text-sm text-neutral-500 dark:text-neutral-400 mt-4">
         By joining, you agree to receive updates about AI club activities and events.

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiUpload, FiX } from 'react-icons/fi';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import Button from '../ui/Button';
 
 function EventForm({ 
   initialData = {}, 
@@ -203,22 +204,14 @@ function EventForm({
           Cancel
         </button>
         
-        <motion.button
+        <Button
           type="submit"
-          className="btn-primary"
+          loading={isLoading}
           disabled={isLoading}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
         >
-          {isLoading ? (
-            <div className="flex items-center">
-              <LoadingSpinner size="sm" color="white" />
-              <span className="ml-2">Saving...</span>
-            </div>
-          ) : (
-            <span>{initialData.id ? 'Update' : 'Create'}</span>
-          )}
-        </motion.button>
+          {isLoading ? 'Saving...' : (initialData.id ? 'Update' : 'Create')}
+        </Button>
+
       </div>
     </form>
   );

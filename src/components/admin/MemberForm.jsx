@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import FileUpload from "../ui/FileUpload";
+import Button from "../ui/Button";
 
 function MemberForm({ 
   initialData = {}, 
@@ -172,22 +173,14 @@ function MemberForm({
           Cancel
         </button>
         
-        <motion.button
+        <Button
           type="submit"
-          className="btn-primary"
+          loading={isLoading}
           disabled={isLoading}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
         >
-          {isLoading ? (
-            <div className="flex items-center">
-              <LoadingSpinner size="sm" color="white" />
-              <span className="ml-2">Saving...</span>
-            </div>
-          ) : (
-            <span>{initialData.id ? "Update" : "Add"} Member</span>
-          )}
-        </motion.button>
+          {isLoading ? "Saving..." : (initialData.id ? "Update" : "Add") + " Member"}
+        </Button>
+
       </div>
     </form>
   );
