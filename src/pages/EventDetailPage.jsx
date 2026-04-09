@@ -543,13 +543,6 @@ const EventDetailPage = () => {
                </AnimatedSection>
             )}
 
-            {/* Footer Navigation */}
-            <div className="pt-24 border-t border-black/5 dark:border-white/10 flex flex-col md:flex-row justify-between items-end gap-12 px-12">
-               <Link to="/events" className="group flex items-center gap-6 pb-2 border-b border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white transition-all duration-500">
-                  <FiArrowLeft className="w-4 h-4" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.5em] text-black dark:text-white">Back to Events</span>
-               </Link>
-            </div>
          </div>
 
          <EventEditModal
