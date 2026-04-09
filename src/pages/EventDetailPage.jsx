@@ -56,23 +56,33 @@ const EventDetailPage = () => {
    const { meta } = event;
 
    return (
-      <div className="min-h-screen bg-white dark:bg-gray-950 selection:bg-blue-500 selection:text-white pb-32 relative overflow-hidden font-sans">
+      <div className="min-h-screen bg-white dark:bg-gray-950 selection:bg-blue-500 selection:text-white pb-32 relative overflow-hidden font-sans pt-16">
+
+          {/* Global Back Navigation (Fixed) - Adjusted for Navbar height */}
+          <Link
+             to="/events"
+             className={`fixed top-24 left-6 md:top-28 md:left-8 z-[100] flex items-center justify-center w-12 h-12 ${scrolled ? 'bg-white/80 dark:bg-gray-900/80 text-gray-950 dark:text-white shadow-xl' : 'bg-black/20 text-white'} backdrop-blur-xl border border-white/10 rounded-full transition-all duration-500 hover:scale-110 hover:bg-blue-600 hover:text-white group`}
+             title="Return to Events"
+          >
+             <FiArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+          </Link>
 
          {/* Premium Atmospheric Glows (From Somdesign) */}
          <div className="absolute top-[5%] -right-32 w-[600px] h-[600px] bg-blue-500/10 dark:bg-blue-600/5 blur-[120px] rounded-full pointer-events-none z-0" />
          <div className="absolute top-[35%] -left-32 w-[500px] h-[500px] bg-purple-500/5 dark:bg-purple-600/5 blur-[100px] rounded-full pointer-events-none z-0" />
 
          {/* Clean Banner Section - Smart Engine */}
-         <section className="relative w-full pt-20 overflow-hidden bg-gray-950 border-b border-gray-100 dark:border-gray-900 z-10 flex items-center justify-center group">
-
-            {/* Floating Back Button (Top Left) */}
-            <Link
-               to="/events"
-               className="absolute top-6 left-6 md:top-8 md:left-8 z-50 flex items-center justify-center w-12 h-12 bg-black/40 hover:bg-blue-600 backdrop-blur-md border border-white/10 hover:border-transparent rounded-full text-white transition-all duration-300 hover:scale-110 shadow-2xl"
-               title="Return to Events"
+         <section className="relative w-full overflow-hidden bg-gray-950 border-b border-gray-100 dark:border-gray-900 z-10 flex items-center justify-center group min-h-[40vh]">
+            
+            {/* Event Type Badge (Top Right) - Adjusted for Navbar height */}
+            <motion.div
+               initial={{ opacity: 0, x: 20 }}
+               animate={{ opacity: 1, x: 0 }}
+               className="absolute top-8 right-6 md:top-10 md:right-8 z-50 px-5 py-2 bg-blue-600/20 backdrop-blur-md border border-blue-500/30 text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] rounded-full shadow-2xl flex items-center gap-2"
             >
-               <FiArrowLeft className="w-6 h-6" />
-            </Link>
+               <FiActivity className="w-3 h-3 animate-pulse" />
+               <span>{meta?.type || "Event"}</span>
+            </motion.div>
 
             {meta?.imageUrl ? (
                <>
@@ -98,7 +108,7 @@ const EventDetailPage = () => {
                      initial={{ opacity: 0, scale: 0.9 }}
                      animate={{ opacity: 1, scale: 1 }}
                      className="space-y-6"
-                  >
+                   >
                      <div className="h-[1px] w-24 bg-blue-600 mx-auto" />
                      <h1 className="text-5xl md:text-9xl font-black text-white uppercase tracking-[-0.06em] leading-none">
                         {meta?.title}
@@ -115,14 +125,6 @@ const EventDetailPage = () => {
          <div className="max-w-6xl mx-auto px-6 py-20 relative z-10">
             <div className="flex flex-col items-center text-center space-y-8" id="event-title-section">
 
-               {/* Type Badge */}
-               <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="px-6 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.4em] rounded-xl shadow-xl shadow-blue-500/20"
-               >
-                  {meta?.type || "Event"}
-               </motion.div>
 
                {/* Title Content */}
                <div className="space-y-6 max-w-5xl relative">
