@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
@@ -116,10 +116,28 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState(null);
   const [chargingId, setChargingId] = useState(null);
+  const [activeActivity, setActiveActivity] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
+
+    // Real-time listener for active upcoming activities
+    const unsubscribe = onSnapshot(collection(db, "upcomingActivities"), (snapshot) => {
+      const activities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const now = new Date();
+      
+      const openActivities = activities.filter(activity => {
+        if (activity.isDeleted || !activity.showInHome) return false;
+        const start = new Date(activity.registrationStart);
+        const end = new Date(activity.registrationEnd);
+        return now >= start && now <= end;
+      }).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+      setActiveActivity(openActivities[0] || null);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Handle Member Interaction with Energy Condensation
@@ -241,17 +259,6 @@ const HomePage = () => {
                 </Button>
               </div>
 
-              <div className="flex justify-center lg:justify-start">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium text-lg flex items-center justify-center transition"
-                  onClick={() => navigate("/upcoming")}
-                >
-                  <Calendar className="mr-3 w-5 h-5" />
-                  View Upcoming Activities
-                </Button>
-              </div>
             </motion.div>
 
           </div>
@@ -1028,7 +1035,56 @@ const HomePage = () => {
         )}
       </AnimatePresence>
 
-    </div >
+      {/* Floating Active Activity Pill */}
+      <AnimatePresence>
+        {activeActivity && (
+          <motion.div
+            initial={{ opacity: 0, y: 100, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 100, x: "-50%" }}
+            className="fixed bottom-8 left-1/2 z-50 w-[95%] max-w-2xl px-4"
+          >
+            <div className="relative group overflow-hidden rounded-full p-[1.5px] shadow-[0_20px_50px_rgba(59,130,246,0.3)]">
+               {/* Decorative Animated Gradient Border */}
+               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 opacity-70 group-hover:opacity-100 transition-opacity" 
+                    style={{ backgroundSize: '200% 100%', animation: 'gradient-move 3s linear infinite' }} />
+               
+               <style>{`
+                 @keyframes gradient-move {
+                   0% { background-position: 100% 0%; }
+                   100% { background-position: -100% 0%; }
+                 }
+               `}</style>
+               
+               {/* Glassmorphic Container */}
+               <div className="relative flex items-center justify-between gap-4 px-5 py-3 md:px-8 md:py-4 bg-white/90 dark:bg-gray-950/90 backdrop-blur-2xl rounded-full">
+                  <div className="flex items-center gap-4 min-w-0">
+                     {/* Pulse Indicator */}
+                     <div className="relative flex-shrink-0">
+                        <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-75" />
+                        <div className="relative w-2.5 h-2.5 bg-emerald-500 rounded-full" />
+                     </div>
+                     
+                     <div className="flex flex-col min-w-0">
+                        <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] leading-none mb-1">Form is Open</span>
+                        <h4 className="text-sm md:text-base font-bold text-gray-900 dark:text-white truncate uppercase tracking-tight">
+                           {activeActivity.title}
+                        </h4>
+                     </div>
+                  </div>
+
+                  <button
+                    onClick={() => navigate("/upcoming")}
+                    className="flex-shrink-0 px-5 py-2 md:px-7 md:py-2.5 bg-gray-950 dark:bg-white text-white dark:text-gray-950 text-[10px] font-black uppercase tracking-[0.2em] rounded-full hover:scale-105 transition-all shadow-xl active:scale-95"
+                  >
+                     Register Now
+                  </button>
+               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

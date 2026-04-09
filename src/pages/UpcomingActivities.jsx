@@ -152,6 +152,7 @@ const UpcomingActivities = () => {
     isPaid: false,
     fee: "",
     formSchema: [],
+    showInHome: false,
     paymentDetails: {
       paymentUrl: "",
       instructions: ""
@@ -1019,7 +1020,8 @@ const UpcomingActivities = () => {
       paymentDetails: activity.paymentDetails || {
         paymentUrl: "",
         instructions: ""
-      }
+      },
+      showInHome: activity.showInHome || false
     });
     setShowModal(true);
   };
@@ -1076,7 +1078,8 @@ const UpcomingActivities = () => {
       paymentDetails: {
         paymentUrl: "",
         instructions: ""
-      }
+      },
+      showInHome: false
     });
     setActiveTab("basic");
   };
@@ -2083,6 +2086,19 @@ const UpcomingActivities = () => {
                   onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
                   placeholder="Leave empty for unlimited"
                 />
+
+                <div className="flex items-center space-x-3 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
+                  <input
+                    type="checkbox"
+                    id="showInHome"
+                    checked={formData.showInHome}
+                    onChange={(e) => setFormData({ ...formData, showInHome: e.target.checked })}
+                    className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="showInHome" className="text-sm font-bold text-blue-900 dark:text-blue-100 uppercase tracking-widest">
+                    Show in Home Highlights
+                  </label>
+                </div>
               </div>
 
               {/* Navigation to Form and Payment Pages */}
