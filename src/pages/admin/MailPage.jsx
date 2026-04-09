@@ -55,6 +55,7 @@ const BROADCAST_DEFAULT = `<div>
     <div style="margin-top: 35px; padding-top: 25px; border-top: 1px solid #f1f5f9;">
         <p style="margin: 0; font-weight: 700; color: #111827;">Regards,</p>
         <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;"><strong>The HITAM AI CLUB Team</strong><br>Empowering the Future of Intelligent Systems</p>
+        <p style="margin: 10px 0 0 0; font-size: 12px; color: #64748b;">Connect with us: <a href="https://www.linkedin.com/in/hitam-ai-club-870818401" style="color: #0077b5; text-decoration: none; font-weight: bold;">LinkedIn</a> | <a href="https://www.instagram.com/hitamaiclub?igsh=aTYwcXQyZWh1NXZj" style="color: #e4405f; text-decoration: none; font-weight: bold;">Instagram</a></p>
     </div>
 </div>`;
 
@@ -73,6 +74,7 @@ const ACTIVITY_BROADCAST_DEFAULT = `<div>
     <div style="margin-top: 35px; padding-top: 25px; border-top: 1px solid #f1f5f9;">
         <p style="margin: 0; font-weight: 700;">Best Regards,</p>
         <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;"><strong>The Coordination Team</strong><br>HITAM AI CLUB</p>
+        <p style="margin: 10px 0 0 0; font-size: 12px; color: #6b7280;">Stay updated: <a href="https://www.linkedin.com/in/hitam-ai-club-870818401" style="color: #0077b5; text-decoration: none; font-weight: bold;">LinkedIn</a> | <a href="https://www.instagram.com/hitamaiclub?igsh=aTYwcXQyZWh1NXZj" style="color: #e4405f; text-decoration: none; font-weight: bold;">Instagram</a></p>
     </div>
 </div>`;
 

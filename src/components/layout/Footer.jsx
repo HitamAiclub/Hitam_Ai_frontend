@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import {
   Instagram,
+  Linkedin,
   Mail,
   MapPin,
   ArrowRight
@@ -44,6 +45,14 @@ const Footer = () => {
                 className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-yellow-400 hover:to-purple-600 hover:text-white transition-all duration-300 shadow-md hover:shadow-purple-500/20"
               >
                 <Instagram className="w-5 h-5" />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/hitam-ai-club-870818401"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-700 hover:text-white transition-all duration-300 shadow-md hover:shadow-blue-500/20"
+              >
+                <Linkedin className="w-5 h-5" />
               </a>
               <a
                 href="mailto:hitam.ai.club@gmail.com"
