@@ -55,7 +55,7 @@ const BROADCAST_DEFAULT = `<div>
     <div style="margin-top: 35px; padding-top: 25px; border-top: 1px solid #f1f5f9;">
         <p style="margin: 0; font-weight: 700; color: #111827;">Regards,</p>
         <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;"><strong>The HITAM AI CLUB Team</strong><br>Empowering the Future of Intelligent Systems</p>
-        <p style="margin: 10px 0 0 0; font-size: 12px; color: #64748b;">Connect with us: <a href="https://www.linkedin.com/in/hitam-ai-club-870818401" style="color: #0077b5; text-decoration: none; font-weight: bold;">LinkedIn</a> | <a href="https://www.instagram.com/hitamaiclub?igsh=aTYwcXQyZWh1NXZj" style="color: #e4405f; text-decoration: none; font-weight: bold;">Instagram</a></p>
+        <p style="margin: 10px 0 0 0; font-size: 12px; color: #64748b;"></p>
     </div>
 </div>`;
 
@@ -814,12 +814,11 @@ const MailPage = () => {
                                             return (
                                                 <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
                                                     <div className="flex items-center gap-3 min-w-0">
-                                                        <div className={`p-2 rounded-lg shadow-sm font-bold text-[10px] uppercase ${
-                                                            isPdf ? 'bg-red-100 text-red-600' :
-                                                            isDoc ? 'bg-blue-100 text-blue-600' :
-                                                            isSheet ? 'bg-green-100 text-green-600' :
-                                                            'bg-gray-100 text-gray-600'
-                                                        }`}>
+                                                        <div className={`p-2 rounded-lg shadow-sm font-bold text-[10px] uppercase ${isPdf ? 'bg-red-100 text-red-600' :
+                                                                isDoc ? 'bg-blue-100 text-blue-600' :
+                                                                    isSheet ? 'bg-green-100 text-green-600' :
+                                                                        'bg-gray-100 text-gray-600'
+                                                            }`}>
                                                             {isPdf ? 'PDF' : isDoc ? 'DOC' : isSheet ? 'XLS' : isImage ? 'IMG' : 'FILE'}
                                                         </div>
                                                         <div className="truncate">
@@ -1083,52 +1082,52 @@ const MailPage = () => {
                                 </Button>
                             </div>
 
-                        {/* Sending Overlay */}
-                        <AnimatePresence>
-                        {isSending && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="absolute inset-0 bg-white/90 dark:bg-gray-800/95 z-50 flex flex-col items-center justify-center p-8 backdrop-blur-sm"
-                            >
-                                <div className="relative">
+                            {/* Sending Overlay */}
+                            <AnimatePresence>
+                                {isSending && (
                                     <motion.div
-                                        animate={{ rotate: 360 }}
-                                        transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                                        className="w-24 h-24 border-4 border-blue-100 border-t-blue-600 rounded-full"
-                                    />
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <Mail className="w-8 h-8 text-blue-600" />
-                                    </div>
-                                </div>
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="absolute inset-0 bg-white/90 dark:bg-gray-800/95 z-50 flex flex-col items-center justify-center p-8 backdrop-blur-sm"
+                                    >
+                                        <div className="relative">
+                                            <motion.div
+                                                animate={{ rotate: 360 }}
+                                                transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                                                className="w-24 h-24 border-4 border-blue-100 border-t-blue-600 rounded-full"
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <Mail className="w-8 h-8 text-blue-600" />
+                                            </div>
+                                        </div>
 
-                                <h3 className="text-2xl font-bold mt-8 text-gray-900 dark:text-white">
-                                    Dispatching Envelopes
-                                </h3>
-                                <p className="text-gray-500 text-center mt-2 max-w-xs">
-                                    Hand-delivering your message to {selectedRecipients.length} members. Do not close this tab.
-                                </p>
+                                        <h3 className="text-2xl font-bold mt-8 text-gray-900 dark:text-white">
+                                            Dispatching Envelopes
+                                        </h3>
+                                        <p className="text-gray-500 text-center mt-2 max-w-xs">
+                                            Hand-delivering your message to {selectedRecipients.length} members. Do not close this tab.
+                                        </p>
 
-                                <div className="w-full max-w-md mt-10">
-                                    <div className="flex items-center justify-between text-xs font-semibold uppercase text-gray-400 mb-2 tracking-widest">
-                                        <span>Progress</span>
-                                        <span>{sendProgress.total > 0 ? Math.round((sendProgress.current / sendProgress.total) * 100) : 0}%</span>
-                                    </div>
-                                    <div className="w-full h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${(sendProgress.current / sendProgress.total) * 100}%` }}
-                                            className="h-full bg-gradient-to-r from-blue-500 to-indigo-600"
-                                        />
-                                    </div>
-                                    <p className="text-center mt-4 text-sm font-medium text-blue-600">
-                                        Processed {sendProgress.current} of {sendProgress.total}
-                                    </p>
-                                </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                        <div className="w-full max-w-md mt-10">
+                                            <div className="flex items-center justify-between text-xs font-semibold uppercase text-gray-400 mb-2 tracking-widest">
+                                                <span>Progress</span>
+                                                <span>{sendProgress.total > 0 ? Math.round((sendProgress.current / sendProgress.total) * 100) : 0}%</span>
+                                            </div>
+                                            <div className="w-full h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${(sendProgress.current / sendProgress.total) * 100}%` }}
+                                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-600"
+                                                />
+                                            </div>
+                                            <p className="text-center mt-4 text-sm font-medium text-blue-600">
+                                                Processed {sendProgress.current} of {sendProgress.total}
+                                            </p>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </motion.div>
                     </div>
                 </div>
