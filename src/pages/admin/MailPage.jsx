@@ -74,7 +74,7 @@ const ACTIVITY_BROADCAST_DEFAULT = `<div>
     <div style="margin-top: 35px; padding-top: 25px; border-top: 1px solid #f1f5f9;">
         <p style="margin: 0; font-weight: 700;">Best Regards,</p>
         <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;"><strong>The Coordination Team</strong><br>HITAM AI CLUB</p>
-        <p style="margin: 10px 0 0 0; font-size: 12px; color: #6b7280;">Stay updated: <a href="https://www.linkedin.com/in/hitam-ai-club-870818401" style="color: #0077b5; text-decoration: none; font-weight: bold;">LinkedIn</a> | <a href="https://www.instagram.com/hitamaiclub?igsh=aTYwcXQyZWh1NXZj" style="color: #e4405f; text-decoration: none; font-weight: bold;">Instagram</a></p>
+        <p style="margin: 10px 0 0 0; font-size: 12px; color: #6b7280;">Stay updated: <a href="https://www.linkedin.com/company/hitam-ai-club/" style="color: #0077b5; text-decoration: none; font-weight: bold;">LinkedIn</a> | <a href="https://www.instagram.com/hitamaiclub?igsh=aTYwcXQyZWh1NXZj" style="color: #e4405f; text-decoration: none; font-weight: bold;">Instagram</a></p>
     </div>
 </div>`;
 
@@ -815,9 +815,9 @@ const MailPage = () => {
                                                 <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
                                                     <div className="flex items-center gap-3 min-w-0">
                                                         <div className={`p-2 rounded-lg shadow-sm font-bold text-[10px] uppercase ${isPdf ? 'bg-red-100 text-red-600' :
-                                                                isDoc ? 'bg-blue-100 text-blue-600' :
-                                                                    isSheet ? 'bg-green-100 text-green-600' :
-                                                                        'bg-gray-100 text-gray-600'
+                                                            isDoc ? 'bg-blue-100 text-blue-600' :
+                                                                isSheet ? 'bg-green-100 text-green-600' :
+                                                                    'bg-gray-100 text-gray-600'
                                                             }`}>
                                                             {isPdf ? 'PDF' : isDoc ? 'DOC' : isSheet ? 'XLS' : isImage ? 'IMG' : 'FILE'}
                                                         </div>
