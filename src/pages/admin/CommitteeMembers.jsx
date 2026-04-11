@@ -210,6 +210,7 @@ const CommitteeMembers = () => {
       email: member.email || "",
       phone: member.phone || "",
       bio: member.bio || "",
+      designation: member.designation || "",
       linkedin: member.linkedin || "",
       github: member.github || "",
       portfolio: member.portfolio || "",
@@ -393,6 +394,7 @@ const CommitteeMembers = () => {
                             </div>
                             <div className="flex-1">
                               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{member.name}</h3>
+                              {member.designation && <p className="text-sm text-gray-500 italic dark:text-gray-400">{member.designation}</p>}
                               <p className="text-purple-600 font-medium">{member.role}</p>
                               <p className="text-xs text-gray-400">Priority: {member.priority || '-'}</p>
                             </div>

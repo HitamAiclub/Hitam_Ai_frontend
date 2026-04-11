@@ -86,11 +86,21 @@ export const organizeMembersByRole = (members) => {
     }
   });
 
-  // Sort core team by role priority
-  coreTeam.sort((a, b) => getRolePriority(a.role) - getRolePriority(b.role));
+  // Sort core team: Priority (if set) → Role Priority
+  coreTeam.sort((a, b) => {
+    const priorityA = parseInt(a.priority) || 99;
+    const priorityB = parseInt(b.priority) || 99;
+    if (priorityA !== priorityB) return priorityA - priorityB;
+    return getRolePriority(a.role) - getRolePriority(b.role);
+  });
 
-  // Sort committee members by name (no hierarchy)
-  committeeMembers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  // Sort committee members: Priority (if set) → Name
+  committeeMembers.sort((a, b) => {
+    const priorityA = parseInt(a.priority) || 99;
+    const priorityB = parseInt(b.priority) || 99;
+    if (priorityA !== priorityB) return priorityA - priorityB;
+    return (a.name || '').localeCompare(b.name || '');
+  });
 
   return {
     coreTeam,

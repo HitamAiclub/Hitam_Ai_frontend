@@ -505,6 +505,11 @@ const HomePage = () => {
                                       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                                         {member.name}
                                       </h3>
+                                      {member.designation && (
+                                        <p className="text-sm text-gray-500 italic dark:text-gray-400 mb-1">
+                                          {member.designation}
+                                        </p>
+                                      )}
                                       <p className="text-purple-600 dark:text-purple-400 font-medium whitespace-pre-wrap">
                                         {member.role}
                                       </p>
@@ -927,17 +932,35 @@ const HomePage = () => {
                   {/* Persistent Photo-Source Aura */}
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.3)_0%,_transparent_80%)] dark:bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_transparent_80%)]" />
 
-                  <motion.div
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                    className="absolute w-[180px] sm:w-[240px] md:w-[310px] h-[180px] sm:h-[240px] md:h-[310px] border-2 border-blue-500/20 rounded-full hidden sm:block will-change-transform"
-                  />
+                  {/* Tighter Red & Blue Magical Rings */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    {/* Primary Blue Magical Ring (Fast) */}
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                      className="absolute w-[320px] sm:w-[320px] md:w-[320px] h-[320px] sm:h-[320px] md:h-[320px] border-[2px] border-blue-500/50 border-dotted rounded-full shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                    />
+                    
+                    {/* Secondary Red Magical Ring (Tighter Gap) */}
+                    <motion.div
+                      animate={{ rotate: -360 }}
+                      transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                      className="absolute w-[340px] sm:w-[340px] md:w-[340px] h-[340px] sm:h-[340px] md:h-[340px] border-[3.5px] border-red-500/40 border-dashed rounded-full shadow-[0_0_30px_rgba(239,68,68,0.2)]"
+                    />
+
+                    {/* Faint Nebula Background (Red/Blue Mix) */}
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.2, 0.1] }}
+                      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute w-[380px] h-[380px] bg-gradient-to-tr from-blue-500/10 to-red-500/10 blur-[80px] rounded-full"
+                    />
+                  </div>
 
                   {/* Profile Photo Stage */}
                   <motion.div
                     animate={{ y: [0, -5, 0], scale: [1, 1.02, 1] }}
                     transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                    className="relative w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 z-10 group mt-2 md:mt-0 will-change-transform"
+                    className="relative w-32 h-32 sm:w-64 sm:h-64 md:w-64 md:h-64 z-10 group mt-2 md:mt-0 will-change-transform"
                   >
                     <div className="absolute -inset-4 md:-inset-6 bg-white/40 dark:bg-white/20 blur-xl md:blur-3xl opacity-30 group-hover:opacity-100 transition-opacity" />
                     <div className="w-full h-full rounded-2xl md:rounded-3xl overflow-hidden border-2 border-gray-300 dark:border-white/30 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(255,255,255,0.2)]">
@@ -960,69 +983,69 @@ const HomePage = () => {
                 <div className="w-full md:w-7/12 p-6 sm:p-8 md:p-12 bg-gradient-to-b md:bg-gradient-to-r from-transparent to-gray-100/50 dark:to-white/5 flex flex-col justify-center">
                   <motion.div initial={{ x: 10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
                     
-                    <div className="mb-8 md:mb-10 text-center md:text-left pt-2 md:pt-0">
-                      <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white leading-tight tracking-tight mb-3 md:mb-4 drop-shadow-sm">
+                    <div className="mb-6 md:mb-8 text-center md:text-left pt-2 md:pt-0">
+                      <h2 className="text-2xl sm:text-4xl md:text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight mb-3 md:mb-4 drop-shadow-sm">
                         {selectedMember.name}
                       </h2>
                       <div className="flex items-center justify-center md:justify-start gap-3">
                         <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} className="px-4 md:px-5 py-2 bg-blue-100 dark:bg-blue-400/10 border border-blue-200 dark:border-blue-500/20 rounded-full backdrop-blur-md shadow-sm">
-                          <p className="font-black text-[9px] md:text-xs uppercase tracking-[0.4em] md:tracking-[0.5em] text-blue-700 dark:text-blue-400 leading-none">
+                          <p className="font-black text-[9px] md:text-[10px] uppercase tracking-[0.4em] md:tracking-[0.5em] text-blue-700 dark:text-blue-400 leading-none">
                             {selectedMember.role}
                           </p>
                         </motion.div>
                       </div>
                     </div>
 
-                    {/* High-End Detail Chips */}
+                     {/* High-End Detail Chips */}
                     {selectedMember.category !== 'faculty' && (
-                      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="grid grid-cols-1 gap-3 md:gap-6 md:grid-cols-2 mb-8 md:mb-10">
-                        <div className="group relative px-5 py-4 md:px-6 md:py-6 bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl transition-all hover:border-blue-500/50 flex flex-col justify-center shadow-sm dark:shadow-none">
-                          <span className="block text-[8px] md:text-[10px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-[0.3em] mb-1.5 md:mb-2 opacity-80">Academic Year</span>
-                          <span className="text-lg md:text-2xl font-black text-gray-900 dark:text-white leading-tight">{selectedMember.year || 'N/A'}</span>
+                      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="grid grid-cols-1 gap-3 md:gap-4 md:grid-cols-2 mb-6 md:mb-8">
+                        <div className="group relative px-5 py-4 md:px-4 md:py-4 bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl transition-all hover:border-blue-500/50 flex flex-col justify-center shadow-sm dark:shadow-none">
+                          <span className="block text-[8px] md:text-[9px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-[0.3em] mb-1.5 md:mb-2 opacity-80">Academic Year</span>
+                          <span className="text-lg md:text-base font-black text-gray-900 dark:text-white leading-tight">{selectedMember.year || 'N/A'}</span>
                         </div>
-                        <div className="group relative px-5 py-4 md:px-6 md:py-6 bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl transition-all hover:border-purple-500/50 flex flex-col justify-center shadow-sm dark:shadow-none">
-                          <span className="block text-[8px] md:text-[10px] font-black text-purple-600 dark:text-purple-500 uppercase tracking-[0.3em] mb-1.5 md:mb-2 opacity-80">Branch</span>
-                          <span className="text-lg md:text-2xl font-black text-gray-900 dark:text-white leading-tight whitespace-pre-wrap">{selectedMember.branch || 'N/A'}</span>
+                        <div className="group relative px-5 py-4 md:px-4 md:py-4 bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl transition-all hover:border-purple-500/50 flex flex-col justify-center shadow-sm dark:shadow-none">
+                          <span className="block text-[8px] md:text-[9px] font-black text-purple-600 dark:text-purple-500 uppercase tracking-[0.3em] mb-1.5 md:mb-2 opacity-80">Branch</span>
+                          <span className="text-lg md:text-base font-black text-gray-900 dark:text-white leading-tight whitespace-pre-wrap">{selectedMember.branch || 'N/A'}</span>
                         </div>
                       </motion.div>
                     )}
 
                     {selectedMember.bio && (
-                      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="mb-8 md:mb-12 max-w-2xl">
-                        <h4 className="text-[9px] md:text-xs font-black text-gray-500 dark:text-white/40 uppercase tracking-[0.5em] md:tracking-[0.6em] mb-4 md:mb-6 text-center md:text-left">The Narrative</h4>
-                        <p className="text-gray-800 dark:text-gray-300 leading-relaxed font-medium text-base md:text-xl text-center md:text-left">
-                          <span className="text-4xl md:text-6xl font-black mr-2 text-blue-600 dark:text-blue-400 float-left leading-[0.7] mt-1 pr-1">{selectedMember.bio.charAt(0)}</span>
+                      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="mb-6 md:mb-8 max-w-2xl">
+                        <h4 className="text-[9px] md:text-[10px] font-black text-gray-500 dark:text-white/40 uppercase tracking-[0.5em] md:tracking-[0.6em] mb-4 md:mb-6 text-center md:text-left">The Narrative</h4>
+                        <p className="text-gray-800 dark:text-gray-300 leading-relaxed font-medium text-base md:text-base text-center md:text-left">
+                          <span className="text-4xl md:text-4xl font-black mr-2 text-blue-600 dark:text-blue-400 float-left leading-[0.7] mt-1 pr-1">{selectedMember.bio.charAt(0)}</span>
                           {selectedMember.bio.slice(1)}
                         </p>
                       </motion.div>
                     )}
 
-                    {/* Social Hub */}
+                     {/* Social Hub */}
                     <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }} className="pb-6 md:pb-0">
-                      <h4 className="text-[10px] md:text-[11px] font-black text-gray-500 dark:text-white/40 uppercase tracking-[0.4em] md:tracking-[0.5em] mb-6 text-center md:text-left">Connect in Orbit</h4>
-                      <div className="flex flex-wrap gap-4 md:gap-5 justify-center md:justify-start">
+                      <h4 className="text-[10px] md:text-[10px] font-black text-gray-500 dark:text-white/40 uppercase tracking-[0.4em] md:tracking-[0.5em] mb-4 text-center md:text-left">Connect in Orbit</h4>
+                      <div className="flex flex-wrap gap-3 md:gap-4 justify-center md:justify-start">
                         {selectedMember.linkedin && (
-                          <a href={selectedMember.linkedin.startsWith('http') ? selectedMember.linkedin : `https://${selectedMember.linkedin}`} target="_blank" rel="noopener noreferrer" className="group relative p-4 md:p-5 bg-white border border-gray-200 dark:bg-white/5 dark:backdrop-blur-md rounded-2xl dark:border-white/10 hover:border-blue-500/50 transition-all shadow-sm dark:shadow-none">
+                          <a href={selectedMember.linkedin.startsWith('http') ? selectedMember.linkedin : `https://${selectedMember.linkedin}`} target="_blank" rel="noopener noreferrer" className="group relative p-4 md:p-4 bg-white border border-gray-200 dark:bg-white/5 dark:backdrop-blur-md rounded-2xl dark:border-white/10 hover:border-blue-500/50 transition-all shadow-sm dark:shadow-none">
                             <div className="absolute inset-0 bg-blue-600/10 opacity-0 group-hover:opacity-100 rounded-2xl blur-xl transition-opacity" />
-                            <Linkedin className="relative z-10 w-5 h-5 md:w-6 md:h-6 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+                            <Linkedin className="relative z-10 w-5 h-5 md:w-5 md:h-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                           </a>
                         )}
                         {selectedMember.github && (
-                          <a href={selectedMember.github.startsWith('http') ? selectedMember.github : `https://${selectedMember.github}`} target="_blank" rel="noopener noreferrer" className="group relative p-4 md:p-5 bg-white border border-gray-200 dark:bg-white/5 dark:backdrop-blur-md rounded-2xl dark:border-white/10 hover:border-gray-900 transition-all shadow-sm dark:shadow-none">
+                          <a href={selectedMember.github.startsWith('http') ? selectedMember.github : `https://${selectedMember.github}`} target="_blank" rel="noopener noreferrer" className="group relative p-4 md:p-4 bg-white border border-gray-200 dark:bg-white/5 dark:backdrop-blur-md rounded-2xl dark:border-white/10 hover:border-gray-900 transition-all shadow-sm dark:shadow-none">
                             <div className="absolute inset-0 bg-gray-900/5 dark:bg-white/5 opacity-0 group-hover:opacity-100 rounded-2xl blur-xl transition-opacity" />
-                            <Github className="relative z-10 w-5 h-5 md:w-6 md:h-6 text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" />
+                            <Github className="relative z-10 w-5 h-5 md:w-5 md:h-5 text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" />
                           </a>
                         )}
                         {selectedMember.portfolio && (
-                          <a href={selectedMember.portfolio.startsWith('http') ? selectedMember.portfolio : `https://${selectedMember.portfolio}`} target="_blank" rel="noopener noreferrer" className="group relative p-4 md:p-5 bg-white border border-gray-200 dark:bg-white/5 dark:backdrop-blur-md rounded-2xl dark:border-white/10 hover:border-teal-500/50 transition-all shadow-sm dark:shadow-none">
+                          <a href={selectedMember.portfolio.startsWith('http') ? selectedMember.portfolio : `https://${selectedMember.portfolio}`} target="_blank" rel="noopener noreferrer" className="group relative p-4 md:p-4 bg-white border border-gray-200 dark:bg-white/5 dark:backdrop-blur-md rounded-2xl dark:border-white/10 hover:border-teal-500/50 transition-all shadow-sm dark:shadow-none">
                             <div className="absolute inset-0 bg-teal-600/10 opacity-0 group-hover:opacity-100 rounded-2xl blur-xl transition-opacity" />
-                            <Globe className="relative z-10 w-5 h-5 md:w-6 md:h-6 text-gray-500 dark:text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors" />
+                            <Globe className="relative z-10 w-5 h-5 md:w-5 md:h-5 text-gray-500 dark:text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors" />
                           </a>
                         )}
                         {selectedMember.otherLink && (
-                          <a href={selectedMember.otherLink.startsWith('http') ? selectedMember.otherLink : `https://${selectedMember.otherLink}`} target="_blank" rel="noopener noreferrer" className="group relative p-4 md:p-5 bg-white border border-gray-200 dark:bg-white/5 dark:backdrop-blur-md rounded-2xl dark:border-white/10 hover:border-purple-500/50 transition-all shadow-sm dark:shadow-none">
+                          <a href={selectedMember.otherLink.startsWith('http') ? selectedMember.otherLink : `https://${selectedMember.otherLink}`} target="_blank" rel="noopener noreferrer" className="group relative p-4 md:p-4 bg-white border border-gray-200 dark:bg-white/5 dark:backdrop-blur-md rounded-2xl dark:border-white/10 hover:border-purple-500/50 transition-all shadow-sm dark:shadow-none">
                             <div className="absolute inset-0 bg-purple-600/10 opacity-0 group-hover:opacity-100 rounded-2xl blur-xl transition-opacity" />
-                            <ExternalLink className="relative z-10 w-5 h-5 md:w-6 md:h-6 text-gray-500 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" />
+                            <ExternalLink className="relative z-10 w-5 h-5 md:w-5 md:h-5 text-gray-500 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" />
                           </a>
                         )}
                       </div>
