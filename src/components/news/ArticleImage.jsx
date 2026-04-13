@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const FALLBACK = "https://images.unsplash.com/photo-1620712943543-bcc4628c6733?q=80&w=1200";
+const FALLBACK = "/ai-news-fallback.png";
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 /**
@@ -44,7 +44,7 @@ const ArticleImage = ({ articleUrl, fallback, alt, className, style }) => {
             {/* Fallback — always visible immediately */}
             <img
                 src={displaySrc}
-                alt={alt}
+                alt=""
                 onError={() => setDisplaySrc(FALLBACK)}
                 className={className}
                 style={style}
@@ -53,7 +53,7 @@ const ArticleImage = ({ articleUrl, fallback, alt, className, style }) => {
             {realSrc && (
                 <img
                     src={realSrc}
-                    alt={alt}
+                    alt=""
                     onError={() => setRealSrc(null)}
                     className={`${className} absolute inset-0 animate-[fadeIn_0.8s_ease-in-out_forwards]`}
                     style={style}

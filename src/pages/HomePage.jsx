@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { organizeMembersByRole, groupCoreTeamByLevel, CORE_TEAM_ROLES, shouldUseLevelWiseDisplay } from "../utils/committeeRoles";
 import HighlightsSection from "../components/home/HighlightsSection";
 import LocalEnergyBackground from "../components/home/LocalEnergyBackground";
-import NewsSection from "../components/home/NewsSection";
+import IntelligenceStream from "../components/home/IntelligenceStream";
 
 // Lightning Container Effect (Section-Level Divine Stage Reflection)
 const LightningContainerEffect = ({ isActive }) => {
@@ -269,6 +269,9 @@ const HomePage = () => {
       {/* Weekly Highlights Section */}
       <HighlightsSection />
 
+      {/* Multi-Row Intelligence Stream */}
+      <IntelligenceStream />
+
       {/* About HITAM Section - Feature Layout (Image + Details) */}
       <section className="py-24 px-4 bg-transparent">
         <div className="container mx-auto max-w-7xl">
@@ -427,8 +430,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Latest AI News Section */}
-      <NewsSection />
+
 
       {/* Committee Members Section */}
       <section className="py-20 px-4">
