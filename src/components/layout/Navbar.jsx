@@ -18,7 +18,8 @@ import {
   Link as LinkIcon, 
   Image, 
   Star, 
-  Mail 
+  Mail,
+  Newspaper
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -42,6 +43,7 @@ const Navbar = () => {
     { name: "Home", path: "/", icon: Home },
     { name: "Events & Workshops", path: "/events", icon: Calendar },
     { name: "Upcoming Activities", path: "/upcoming", icon: Activity },
+    { name: "News", path: "/news", icon: Newspaper },
     { name: "Network", path: "/network", icon: Globe },
     { name: "Join the Club", path: "/join", icon: UserPlus },
   ];
@@ -50,6 +52,7 @@ const Navbar = () => {
     { name: "Home", path: "/", icon: Home },
     { name: "Events & Workshops", path: "/events", icon: Calendar },
     { name: "Upcoming Activities", path: "/upcoming", icon: Activity },
+    { name: "News", path: "/news", icon: Newspaper },
     { name: "Network", path: "/network", icon: Globe },
     { name: "Committee Members", path: "/admin/committee", icon: Users },
     { name: "Form Submissions", path: "/admin/submissions", icon: ClipboardList },

@@ -71,6 +71,7 @@ const Footer = () => {
                 { name: "Home", path: "/" },
                 { name: "Events & Workshops", path: "/events" },
                 { name: "Upcoming Activities", path: "/upcoming" },
+                { name: "News", path: "/news" },
                 { name: "Network", path: "/network" },
                 { name: "Join the Club", path: "/join" }
               ].map((link) => (

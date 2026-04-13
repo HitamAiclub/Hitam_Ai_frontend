@@ -28,6 +28,7 @@ import FormEditPage from "./pages/admin/FormEditPage.jsx";
 import MailPage from "./pages/admin/MailPage.jsx";
 import ActivityFormEditPage from "./pages/admin/ActivityFormEditPage.jsx";
 import ActivityRegistrationPage from "./pages/ActivityRegistrationPage.jsx";
+import NewsPage from "./pages/NewsPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 // Simple Error Boundary Component
@@ -228,6 +229,7 @@ function App() {
                   path="/upcoming/activities/:id/register"
                   element={<ActivityRegistrationPage />}
                 />
+                <Route path="/news" element={<NewsPage />} />
               </Routes>
             </SimpleErrorBoundary>
           </main>

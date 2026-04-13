@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { organizeMembersByRole, groupCoreTeamByLevel, CORE_TEAM_ROLES, shouldUseLevelWiseDisplay } from "../utils/committeeRoles";
 import HighlightsSection from "../components/home/HighlightsSection";
 import LocalEnergyBackground from "../components/home/LocalEnergyBackground";
+import NewsSection from "../components/home/NewsSection";
 
 // Lightning Container Effect (Section-Level Divine Stage Reflection)
 const LightningContainerEffect = ({ isActive }) => {
@@ -422,10 +423,12 @@ const HomePage = () => {
                 </Button>
               </div>
             </motion.div>
-
           </div>
         </div>
       </section>
+
+      {/* Latest AI News Section */}
+      <NewsSection />
 
       {/* Committee Members Section */}
       <section className="py-20 px-4">
