@@ -192,10 +192,16 @@ const AILadder = ({ defaultView = "ladder" }) => {
         return m.types.includes(modalityFilter);
     }), [models, searchTerm, modalityFilter]);
 
+    const ladderSorted = useMemo(() => [...filtered], [filtered]);
+
     const perfSorted = useMemo(
         () => [...filtered].sort((a, b) => computePerfScore(b) - computePerfScore(a)),
         [filtered]
     );
+
+    const activeList = useMemo(() => 
+        viewMode === "ladder" ? ladderSorted : perfSorted,
+    [viewMode, ladderSorted, perfSorted]);
 
     if (loading) return (
         <div className="p-4 md:p-8 space-y-3">
@@ -320,7 +326,7 @@ const AILadder = ({ defaultView = "ladder" }) => {
                         <>
                             {/* ── MOBILE LADDER CARDS ── */}
                             <div className="block md:hidden">
-                                {filtered.slice(0, 50).map((model, idx) => (
+                                {activeList.slice(0, 50).map((model, idx) => (
                                     <LadderCard key={model.id} model={model} idx={idx} growth={getGrowth(model.id, model.usage)} />
                                 ))}
                             </div>
@@ -336,7 +342,7 @@ const AILadder = ({ defaultView = "ladder" }) => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filtered.slice(0, 50).map((model, idx) => {
+                                        {activeList.slice(0, 50).map((model, idx) => {
                                             const market = getMarketIntel(model.provider);
                                             const growth = getGrowth(model.id, model.usage);
                                             return (
@@ -409,7 +415,7 @@ const AILadder = ({ defaultView = "ladder" }) => {
                         <>
                             {/* ── MOBILE PERF CARDS ── */}
                             <div className="block md:hidden">
-                                {perfSorted.slice(0, 50).map((model, idx) => (
+                                {activeList.slice(0, 50).map((model, idx) => (
                                     <PerfCard key={model.id} model={model} idx={idx} />
                                 ))}
                             </div>
@@ -425,7 +431,7 @@ const AILadder = ({ defaultView = "ladder" }) => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {perfSorted.slice(0, 50).map((model, idx) => {
+                                        {activeList.slice(0, 50).map((model, idx) => {
                                             const score = computePerfScore(model);
                                             const promptCost = parseFloat(model.pricing?.prompt || 0) * 1_000_000;
                                             const valuePer$  = promptCost > 0 ? (score / promptCost).toFixed(1) : "∞";
