@@ -187,9 +187,22 @@ const AILadder = ({ defaultView = "ladder" }) => {
         const q = searchTerm.toLowerCase();
         if (q && !m?.name?.toLowerCase().includes(q) && !m?.provider?.toLowerCase().includes(q)) return false;
         if (modalityFilter === "All") return true;
-        if (!m?.types) return false;
-        if (modalityFilter === "Music") return m.types.includes("Audio") || m.types.includes("Music");
-        return m.types.includes(modalityFilter);
+        if (!m?.types || !Array.isArray(m.types)) return false;
+        
+        const types = m.types.map(t => t.toLowerCase());
+        const filter = modalityFilter.toLowerCase();
+
+        if (filter === "vision") {
+            return types.includes("vision") || types.includes("image") || types.includes("multimodal");
+        }
+        if (filter === "text") {
+            return types.includes("text") || types.includes("chat") || types.includes("language");
+        }
+        if (filter === "music") {
+            return types.includes("audio") || types.includes("music");
+        }
+        
+        return types.includes(filter);
     }), [models, searchTerm, modalityFilter]);
 
     const ladderSorted = useMemo(() => [...filtered], [filtered]);
