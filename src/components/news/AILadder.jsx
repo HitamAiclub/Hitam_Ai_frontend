@@ -151,7 +151,6 @@ const AILadder = ({ defaultView = "ladder" }) => {
     const [lastUpdated, setLastUpdated]   = useState(null);
     const [countdown, setCountdown]       = useState(LADDER_REFRESH);
     const [refreshing, setRefreshing]     = useState(false);
-    const [isMobile, setIsMobile]         = useState(() => window.innerWidth < 768);
 
     /* Stable growth values — never re-randomise on render */
     const growthRef = useRef({});
@@ -178,12 +177,6 @@ const AILadder = ({ defaultView = "ladder" }) => {
         const i = setInterval(() => fetchModels(true), LADDER_REFRESH_MS);
         return () => clearInterval(i);
     }, [fetchModels]);
-    useEffect(() => {
-        let raf;
-        const onResize = () => { clearTimeout(raf); raf = setTimeout(() => setIsMobile(window.innerWidth < 768), 150); };
-        window.addEventListener('resize', onResize, { passive: true });
-        return () => { window.removeEventListener('resize', onResize); clearTimeout(raf); };
-    }, []);
     useEffect(() => {
         const t = setInterval(() => setCountdown(c => Math.max(0, c - 1)), 1000);
         return () => clearInterval(t);
@@ -324,16 +317,16 @@ const AILadder = ({ defaultView = "ladder" }) => {
             {/* ── TABLE / CARDS ── */}
             <div className="rounded-3xl md:rounded-[2.5rem] border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-xl overflow-hidden mt-2">
                     {viewMode === "ladder" ? (
-                        isMobile ? (
-                            /* ── MOBILE LADDER CARDS ── */
-                            <div>
+                        <>
+                            {/* ── MOBILE LADDER CARDS ── */}
+                            <div className="block md:hidden">
                                 {filtered.slice(0, 50).map((model, idx) => (
                                     <LadderCard key={model.id} model={model} idx={idx} growth={getGrowth(model.id, model.usage)} />
                                 ))}
                             </div>
-                        ) : (
-                            /* ── DESKTOP LADDER TABLE ── */
-                            <div className="overflow-x-auto">
+                            
+                            {/* ── DESKTOP LADDER TABLE ── */}
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left border-collapse min-w-[860px]">
                                     <thead>
                                         <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/40">
@@ -411,18 +404,18 @@ const AILadder = ({ defaultView = "ladder" }) => {
                                     </tbody>
                                 </table>
                             </div>
-                        )
+                        </>
                     ) : (
-                        isMobile ? (
-                            /* ── MOBILE PERF CARDS ── */
-                            <div>
+                        <>
+                            {/* ── MOBILE PERF CARDS ── */}
+                            <div className="block md:hidden">
                                 {perfSorted.slice(0, 50).map((model, idx) => (
                                     <PerfCard key={model.id} model={model} idx={idx} />
                                 ))}
                             </div>
-                        ) : (
-                            /* ── DESKTOP PERF TABLE ── */
-                            <div className="overflow-x-auto">
+                            
+                            {/* ── DESKTOP PERF TABLE ── */}
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full text-left border-collapse min-w-[860px]">
                                     <thead>
                                         <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/40">
@@ -502,7 +495,7 @@ const AILadder = ({ defaultView = "ladder" }) => {
                                     </tbody>
                                 </table>
                             </div>
-                        )
+                        </>
                     )}
             </div>
 
