@@ -127,7 +127,7 @@ const HomePage = () => {
     const unsubscribe = onSnapshot(collection(db, "upcomingActivities"), (snapshot) => {
       const activities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       const now = new Date();
-      
+
       const openActivities = activities.filter(activity => {
         if (activity.isDeleted || !activity.showInHome) return false;
         const start = new Date(activity.registrationStart);
@@ -812,11 +812,11 @@ const HomePage = () => {
                                           </a>
                                         )}
                                       </div>
-                                        </div>
-                                      </Card>
-                                    </motion.div>
-                                  </div>
-                                ))}
+                                    </div>
+                                  </Card>
+                                </motion.div>
+                              </div>
+                            ))}
                           </div>
                         </motion.div>
                       </div>
@@ -919,7 +919,7 @@ const HomePage = () => {
 
               {/* The Inner Scrollable Wrapper */}
               <div className="flex flex-col md:flex-row w-full h-full overflow-y-auto overflow-x-hidden z-10 relative custom-scrollbar">
-                
+
                 {/* Image Section - The "Hero" Stage */}
                 <div className="w-full md:w-5/12 relative bg-[#f8fafc]/80 dark:bg-[#010101]/80 flex items-center justify-center p-6 md:p-12 overflow-hidden min-h-[200px] sm:min-h-[300px] md:min-h-auto flex-shrink-0">
                   {/* Position-Shifting Energy Plasma - Blur reduced for performance */}
@@ -945,7 +945,7 @@ const HomePage = () => {
                       transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
                       className="absolute w-[320px] sm:w-[320px] md:w-[320px] h-[320px] sm:h-[320px] md:h-[320px] border-[2px] border-blue-500/50 border-dotted rounded-full shadow-[0_0_20px_rgba(59,130,246,0.3)]"
                     />
-                    
+
                     {/* Secondary Red Magical Ring (Tighter Gap) */}
                     <motion.div
                       animate={{ rotate: -360 }}
@@ -987,7 +987,7 @@ const HomePage = () => {
                 {/* Details Section - Content Stage */}
                 <div className="w-full md:w-7/12 p-6 sm:p-8 md:p-12 bg-gradient-to-b md:bg-gradient-to-r from-transparent to-gray-100/50 dark:to-white/5 flex flex-col justify-center">
                   <motion.div initial={{ x: 10, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-                    
+
                     <div className="mb-6 md:mb-8 text-center md:text-left pt-2 md:pt-0">
                       <h2 className="text-2xl sm:text-4xl md:text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight mb-3 md:mb-4 drop-shadow-sm">
                         {selectedMember.name}
@@ -1001,7 +1001,7 @@ const HomePage = () => {
                       </div>
                     </div>
 
-                     {/* High-End Detail Chips */}
+                    {/* High-End Detail Chips */}
                     {selectedMember.category !== 'faculty' && (
                       <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="grid grid-cols-1 gap-3 md:gap-4 md:grid-cols-2 mb-6 md:mb-8">
                         <div className="group relative px-5 py-4 md:px-4 md:py-4 bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl transition-all hover:border-blue-500/50 flex flex-col justify-center shadow-sm dark:shadow-none">
@@ -1025,7 +1025,7 @@ const HomePage = () => {
                       </motion.div>
                     )}
 
-                     {/* Social Hub */}
+                    {/* Social Hub */}
                     <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }} className="pb-6 md:pb-0">
                       <h4 className="text-[10px] md:text-[10px] font-black text-gray-500 dark:text-white/40 uppercase tracking-[0.4em] md:tracking-[0.5em] mb-4 text-center md:text-left">Connect in Orbit</h4>
                       <div className="flex flex-wrap gap-3 md:gap-4 justify-center md:justify-start">
@@ -1073,41 +1073,41 @@ const HomePage = () => {
             className="fixed bottom-8 left-1/2 z-50 w-[95%] max-w-2xl px-4"
           >
             <div className="relative group overflow-hidden rounded-full p-[1.5px] shadow-[0_20px_50px_rgba(59,130,246,0.3)]">
-               {/* Decorative Animated Gradient Border */}
-               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 opacity-70 group-hover:opacity-100 transition-opacity" 
-                    style={{ backgroundSize: '200% 100%', animation: 'gradient-move 3s linear infinite' }} />
-               
-               <style>{`
+              {/* Decorative Animated Gradient Border */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 opacity-70 group-hover:opacity-100 transition-opacity"
+                style={{ backgroundSize: '200% 100%', animation: 'gradient-move 3s linear infinite' }} />
+
+              <style>{`
                  @keyframes gradient-move {
                    0% { background-position: 100% 0%; }
                    100% { background-position: -100% 0%; }
                  }
                `}</style>
-               
-               {/* Glassmorphic Container */}
-               <div className="relative flex items-center justify-between gap-4 px-5 py-3 md:px-8 md:py-4 bg-white/90 dark:bg-gray-950/90 backdrop-blur-2xl rounded-full">
-                  <div className="flex items-center gap-4 min-w-0">
-                     {/* Pulse Indicator */}
-                     <div className="relative flex-shrink-0">
-                        <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-75" />
-                        <div className="relative w-2.5 h-2.5 bg-emerald-500 rounded-full" />
-                     </div>
-                     
-                     <div className="flex flex-col min-w-0">
-                        <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] leading-none mb-1">Form is Open</span>
-                        <h4 className="text-sm md:text-base font-bold text-gray-900 dark:text-white truncate uppercase tracking-tight">
-                           {activeActivity.title}
-                        </h4>
-                     </div>
+
+              {/* Glassmorphic Container */}
+              <div className="relative flex items-center justify-between gap-4 px-5 py-3 md:px-8 md:py-4 bg-white/90 dark:bg-gray-950/90 backdrop-blur-2xl rounded-full">
+                <div className="flex items-center gap-4 min-w-0">
+                  {/* Pulse Indicator */}
+                  <div className="relative flex-shrink-0">
+                    <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-75" />
+                    <div className="relative w-2.5 h-2.5 bg-emerald-500 rounded-full" />
                   </div>
 
-                  <button
-                    onClick={() => navigate("/upcoming")}
-                    className="flex-shrink-0 px-5 py-2 md:px-7 md:py-2.5 bg-gray-950 dark:bg-white text-white dark:text-gray-950 text-[10px] font-black uppercase tracking-[0.2em] rounded-full hover:scale-105 transition-all shadow-xl active:scale-95"
-                  >
-                     Register Now
-                  </button>
-               </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] leading-none mb-1">Form is Open</span>
+                    <h4 className="text-sm md:text-base font-bold text-gray-900 dark:text-white truncate uppercase tracking-tight">
+                      {activeActivity.title}
+                    </h4>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => navigate("/upcoming")}
+                  className="flex-shrink-0 px-5 py-2 md:px-7 md:py-2.5 bg-gray-950 dark:bg-white text-white dark:text-gray-950 text-[10px] font-black uppercase tracking-[0.2em] rounded-full hover:scale-105 transition-all shadow-xl active:scale-95"
+                >
+                  Register Now
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

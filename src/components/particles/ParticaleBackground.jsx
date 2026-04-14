@@ -6,7 +6,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 const ParticleBackground = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  
+
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
   }, []);

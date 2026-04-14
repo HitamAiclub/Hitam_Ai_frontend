@@ -1,23 +1,23 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Moon, 
-  Sun, 
-  Menu, 
-  X, 
-  LogOut, 
-  User, 
-  Home, 
-  Calendar, 
-  Activity, 
-  Globe, 
-  UserPlus, 
-  Users, 
-  ClipboardList, 
-  Link as LinkIcon, 
-  Image, 
-  Star, 
+import {
+  Moon,
+  Sun,
+  Menu,
+  X,
+  LogOut,
+  User,
+  Home,
+  Calendar,
+  Activity,
+  Globe,
+  UserPlus,
+  Users,
+  ClipboardList,
+  Link as LinkIcon,
+  Image,
+  Star,
   Mail,
   Newspaper
 } from "lucide-react";

@@ -75,7 +75,7 @@ const IntelligenceStream = () => {
 
     // Define a priority order for categories to show first
     const priority = ["India", "Global", "AI Models", "AI Tools", "Startups", "Visual AI", "Big Tech"];
-    
+
     // Sort keys based on priority, then alphabetical
     const categories = Object.keys(newsGroups).sort((a, b) => {
         const indexA = priority.indexOf(a);
@@ -113,17 +113,17 @@ const IntelligenceStream = () => {
 
     const mixedStream = shuffle([
         ...marketModels,
-        ...liveTools, 
+        ...liveTools,
         ...performanceModels,
         ...Object.values(newsGroups)
             .flat()
-            .filter(n => 
-                n.category !== "AI Tools" && 
+            .filter(n =>
+                n.category !== "AI Tools" &&
                 n.category !== "AI Apps" &&
                 !liveTools.find(tool => tool.link === n.link)
-            ) 
+            )
             .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-            .slice(0, 5) 
+            .slice(0, 5)
             .map(n => ({ ...n, type: "news" }))
     ]);
 
@@ -149,11 +149,11 @@ const IntelligenceStream = () => {
             {/* The One Single Unified Marquee */}
             <div className="relative">
                 {mixedStream.length > 0 && (
-                    <NewsMarquee 
-                        items={mixedStream} 
+                    <NewsMarquee
+                        items={mixedStream}
                         type="mixed" // MarqueeCard will check item.type
                         speed={80} // Slower speed for a long single row
-                        direction="left" 
+                        direction="left"
                     />
                 )}
             </div>
