@@ -114,7 +114,7 @@ const NewsPage = () => {
     };
 
     return (
-        <div className="min-h-screen pt-20 md:pt-28 pb-20 px-4 bg-transparent relative overflow-hidden">
+        <div className="min-h-screen pt-20 md:pt-28 pb-20 px-4 bg-transparent relative overflow-x-hidden">
             {/* Ambient Background */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/5 rounded-full blur-[120px]"></div>
@@ -254,7 +254,7 @@ const NewsPage = () => {
                                     <motion.div
                                         initial={{ opacity: 0, y: 40 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="mb-16 overflow-hidden rounded-[3rem] border border-gray-200/50 dark:border-gray-800/50 bg-white/40 dark:bg-gray-900/40 backdrop-blur-3xl shadow-2xl group"
+                                        className="mb-16 overflow-hidden rounded-[3rem] border border-gray-200/50 dark:border-gray-800/50 bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl shadow-2xl group"
                                     >
                                         <div className="flex flex-col lg:flex-row">
                                             <div className="w-full lg:w-1/2 p-12 md:p-20 flex flex-col justify-center relative z-20">

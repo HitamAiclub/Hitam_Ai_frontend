@@ -6,6 +6,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 const ParticleBackground = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
@@ -16,27 +17,22 @@ const ParticleBackground = () => {
       id="tsparticles"
       init={particlesInit}
       options={{
-        fpsLimit: 60,
+        fpsLimit: isMobile ? 30 : 60,
         interactivity: {
           events: {
             onClick: {
-              enable: true,
+              enable: !isMobile,
               mode: "push",
             },
             onHover: {
-              enable: true,
+              enable: !isMobile,
               mode: "repulse",
             },
             resize: true,
           },
           modes: {
-            push: {
-              quantity: 4,
-            },
-            repulse: {
-              distance: 100,
-              duration: 0.4,
-            },
+            push: { quantity: 4 },
+            repulse: { distance: 100, duration: 0.4 },
           },
         },
         particles: {
@@ -46,18 +42,16 @@ const ParticleBackground = () => {
           links: {
             color: isDark ? "#7209B7" : "#4361EE",
             distance: 150,
-            enable: true,
+            enable: !isMobile, // Disable links on mobile for performance
             opacity: 0.5,
             width: 1,
           },
           move: {
             direction: "none",
             enable: true,
-            outModes: {
-              default: "bounce",
-            },
+            outModes: { default: "bounce" },
             random: false,
-            speed: 1,
+            speed: isMobile ? 0.5 : 1,
             straight: false,
           },
           number: {
@@ -65,19 +59,19 @@ const ParticleBackground = () => {
               enable: true,
               area: 800,
             },
-            value: 40,
+            value: isMobile ? 20 : 40,
           },
           opacity: {
-            value: 0.5,
+            value: isDark ? 0.3 : 0.5,
           },
           shape: {
             type: "circle",
           },
           size: {
-            value: { min: 1, max: 3 },
+            value: { min: 1, max: 2 },
           },
         },
-        detectRetina: true,
+        detectRetina: !isMobile,
       }}
       style={{
         position: "fixed",
@@ -87,7 +81,7 @@ const ParticleBackground = () => {
         height: "100%",
         zIndex: 10,
         pointerEvents: "none",
-        opacity: 0.6,
+        opacity: isMobile ? 0.4 : 0.6,
       }}
     />
   );

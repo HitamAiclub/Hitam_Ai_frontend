@@ -23,6 +23,7 @@ const LADDER_REFRESH_MS = LADDER_REFRESH * 1000;
 const AILadder = () => {
     const [models, setModels] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [error, setError] = useState(null);
     const [modalityFilter, setModalityFilter] = useState("All");
     const [viewMode, setViewMode] = useState("ladder");   // "ladder" | "performance"
@@ -63,6 +64,12 @@ const AILadder = () => {
         const i = setInterval(() => fetchModels(true), LADDER_REFRESH_MS);
         return () => clearInterval(i);
     }, []);
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     useEffect(() => {
         const t = setInterval(() => setCountdown(c => Math.max(0, c - 1)), 1000);
         return () => clearInterval(t);
@@ -219,7 +226,7 @@ const AILadder = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="overflow-x-auto no-scrollbar rounded-[3rem] border border-gray-200 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[50px] shadow-2xl"
+                        className="overflow-x-auto no-scrollbar rounded-[3rem] border border-gray-200 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[16px] shadow-2xl"
                     >
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
@@ -249,7 +256,7 @@ const AILadder = () => {
                                         return (
                                             <motion.tr
                                                 key={model.id}
-                                                layout
+                                                layout={!isMobile}
                                                 initial={{ opacity: 0, x: -16 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 exit={{ opacity: 0 }}
@@ -353,7 +360,7 @@ const AILadder = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="overflow-x-auto no-scrollbar rounded-[3rem] border border-gray-200 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[50px] shadow-2xl"
+                        className="overflow-x-auto no-scrollbar rounded-[3rem] border border-gray-200 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[16px] shadow-2xl"
                     >
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
@@ -377,7 +384,7 @@ const AILadder = () => {
                                         return (
                                             <motion.tr
                                                 key={model.id}
-                                                layout
+                                                layout={!isMobile}
                                                 initial={{ opacity: 0, x: -16 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 exit={{ opacity: 0 }}
