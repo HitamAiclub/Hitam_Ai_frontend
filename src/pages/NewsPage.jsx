@@ -114,7 +114,7 @@ const NewsPage = () => {
     };
 
     return (
-        <div className="min-h-screen pt-20 md:pt-28 pb-20 px-4 bg-transparent relative overflow-x-hidden">
+        <div className="min-h-screen pt-20 md:pt-28 pb-20 px-4 bg-transparent relative overflow-x-hidden touch-pan-y">
             {/* Ambient Background */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/5 rounded-full blur-[120px]"></div>
@@ -204,7 +204,7 @@ const NewsPage = () => {
                     </div>
 
                     {/* Category Tabs */}
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4">
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 touch-pan-y">
                         {categories.map((cat, idx) => (
                             <motion.button
                                 key={cat.name}

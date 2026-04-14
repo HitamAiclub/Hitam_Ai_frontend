@@ -159,7 +159,7 @@ const AILadder = () => {
 
                 <div className="flex flex-col gap-4 w-full xl:w-auto">
                     {/* VIEW MODE TOGGLE */}
-                    <div className="flex items-center gap-1.5 p-1.5 bg-gray-100 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 w-full sm:w-fit overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-1.5 p-1.5 bg-gray-100 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 w-full sm:w-fit overflow-x-auto no-scrollbar touch-pan-y">
                         <button
                             onClick={() => setViewMode("ladder")}
                             className={`flex items-center justify-center gap-2 px-4 sm:px-7 py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none ${
@@ -197,7 +197,7 @@ const AILadder = () => {
                     </div>
 
                     {/* MODALITY FILTER — shared by both views */}
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar touch-pan-y">
                         {modalities.map(cat => (
                             <button
                                 key={cat.name}
