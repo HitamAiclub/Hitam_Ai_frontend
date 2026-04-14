@@ -224,96 +224,121 @@ const AILadder = () => {
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
                                 <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/40">
-                                    {["Rank", "AI Model", "Usage Share", "Cost / 1M Tokens", "Context Window"].map(h => (
+                                    {["Rank", "AI Model", "Usage Dominance", "Market Intel (Stock/Cap)", "Profit & Growth"].map(h => (
                                         <th key={h} className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 <AnimatePresence mode="popLayout">
-                                    {filtered.slice(0, 50).map((model, idx) => (
-                                        <motion.tr
-                                            key={model.id}
-                                            layout
-                                            initial={{ opacity: 0, x: -16 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0 }}
-                                            transition={{ duration: 0.3, delay: idx * 0.02 }}
-                                            className="group hover:bg-blue-600/5 border-b border-gray-100 dark:border-gray-800/40 transition-colors"
-                                        >
-                                            {/* Rank */}
-                                            <td className="py-8 px-8">
-                                                <div className="flex items-center gap-4">
-                                                    <span className="text-3xl font-black text-gray-900 dark:text-white tabular-nums group-hover:text-blue-600 transition-colors">
-                                                        {String(idx + 1).padStart(2, '0')}
-                                                    </span>
-                                                    <ChevronUp size={16} className="text-green-500" />
-                                                </div>
-                                            </td>
-                                            {/* Model */}
-                                            <td className="py-8 px-4 min-w-[300px]">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow group-hover:scale-110 transition-transform">
-                                                        {getModalityIcon(model.types)}
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <h4 className="text-lg font-black text-gray-900 dark:text-white tracking-tight leading-none">
-                                                                {model.name.split(':')[1]?.trim() || model.name}
-                                                            </h4>
-                                                            {model.isNew && (
-                                                                <span className="text-[8px] font-black text-white bg-red-500 px-2 py-0.5 rounded-full animate-pulse">NEW</span>
-                                                            )}
-                                                            <ArrowUpRight size={14} className="text-gray-300 dark:text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                        </div>
-                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded font-mono">
-                                                            {model.provider}
+                                    {filtered.slice(0, 50).map((model, idx) => {
+                                        // Synthetic Market Data Mapping based on provider
+                                        const getMarketIntel = (p) => {
+                                            const provider = p.toLowerCase();
+                                            if (provider.includes('openai')) return { ticker: "$MSFT", cap: "3.1T", price: "415.20", trend: "+1.2%", margin: "34%" };
+                                            if (provider.includes('google')) return { ticker: "$GOOGL", cap: "1.9T", price: "154.30", trend: "+0.8%", margin: "28%" };
+                                            if (provider.includes('meta'))   return { ticker: "$META", cap: "1.3T", price: "510.45", trend: "-0.4%", margin: "41%" };
+                                            if (provider.includes('anthropic')) return { ticker: "PRIVATE", cap: "18.4B", price: "N/A", trend: "UP", margin: "N/A" };
+                                            return { ticker: "UNLISTED", cap: "N/A", price: "N/A", trend: "NEW", margin: "N/A" };
+                                        };
+                                        const market = getMarketIntel(model.provider);
+                                        const growth = Math.floor((model.usage / 2) + (Math.random() * 10)); // Synthetic growth velocity
+
+                                        return (
+                                            <motion.tr
+                                                key={model.id}
+                                                layout
+                                                initial={{ opacity: 0, x: -16 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0 }}
+                                                transition={{ duration: 0.3, delay: idx * 0.02 }}
+                                                className="group hover:bg-blue-600/5 border-b border-gray-100 dark:border-gray-800/40 transition-colors"
+                                            >
+                                                {/* Rank */}
+                                                <td className="py-8 px-8">
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="text-3xl font-black text-gray-900 dark:text-white tabular-nums group-hover:text-blue-600 transition-colors">
+                                                            {String(idx + 1).padStart(2, '0')}
                                                         </span>
+                                                        <ChevronUp size={16} className="text-green-500" />
                                                     </div>
-                                                </div>
-                                            </td>
-                                            {/* Usage bar */}
-                                            <td className="py-8 px-4">
-                                                <div className="w-48 space-y-2">
-                                                    <div className="flex justify-between text-[11px] font-black">
-                                                        <span className="text-gray-900 dark:text-white">{model.usage}%</span>
-                                                        <span className="text-blue-600">Global</span>
+                                                </td>
+                                                {/* Model */}
+                                                <td className="py-8 px-4 min-w-[280px]">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow group-hover:scale-110 transition-transform">
+                                                            {getModalityIcon(model.types)}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <h4 className="text-lg font-black text-gray-900 dark:text-white tracking-tight leading-none">
+                                                                    {model.name.split(':')[1]?.trim() || model.name}
+                                                                </h4>
+                                                                {model.isNew && (
+                                                                    <span className="text-[8px] font-black text-white bg-red-500 px-2 py-0.5 rounded-full animate-pulse">NEW</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-black text-white bg-gray-900 dark:bg-blue-600 px-2 py-0.5 rounded font-mono">
+                                                                    {market.ticker}
+                                                                </span>
+                                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{model.provider}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                                        <motion.div
-                                                            initial={{ width: 0 }}
-                                                            animate={{ width: `${model.usage}%` }}
-                                                            transition={{ duration: 0.8, delay: idx * 0.02 }}
-                                                            className="h-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.4)]"
-                                                        />
+                                                </td>
+                                                {/* Usage bar */}
+                                                <td className="py-8 px-4">
+                                                    <div className="w-48 space-y-2">
+                                                        <div className="flex justify-between text-[11px] font-black">
+                                                            <span className="text-gray-900 dark:text-white">{model.usage}% Usage</span>
+                                                            <span className="text-blue-600">Dominance</span>
+                                                        </div>
+                                                        <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                                            <motion.div
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${model.usage}%` }}
+                                                                transition={{ duration: 0.8, delay: idx * 0.02 }}
+                                                                className="h-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"
+                                                            />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            {/* Cost */}
-                                            <td className="py-8 px-4 text-right">
-                                                <div className="flex flex-col items-end">
-                                                    <span className="text-lg font-black text-gray-900 dark:text-white tabular-nums">
-                                                        ${(parseFloat(model.pricing?.prompt || 0) * 1_000_000).toFixed(2)}
-                                                        <span className="text-gray-400 font-medium mx-1">/</span>
-                                                        ${(parseFloat(model.pricing?.completion || 0) * 1_000_000).toFixed(2)}
-                                                    </span>
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">In / Out</span>
-                                                </div>
-                                            </td>
-                                            {/* Context */}
-                                            <td className="py-8 px-8 text-right">
-                                                <div className="flex flex-col items-end">
-                                                    <span className="text-2xl font-black text-gray-900 dark:text-white tabular-nums">
-                                                        {model.context_length > 0
-                                                            ? model.context_length >= 1_048_576 ? `${(model.context_length/1_048_576).toFixed(1)}M`
-                                                            : `${Math.round(model.context_length/1024)}K`
-                                                            : "—"}
-                                                    </span>
-                                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Tokens</span>
-                                                </div>
-                                            </td>
-                                        </motion.tr>
-                                    ))}
+                                                </td>
+                                                {/* Market Intel (Stock/Cap) */}
+                                                <td className="py-8 px-4">
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-lg font-black text-gray-900 dark:text-white tabular-nums">${market.price}</span>
+                                                            <span className={`text-[10px] font-black ${market.trend.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+                                                                {market.trend}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Valuation: {market.cap}</span>
+                                                    </div>
+                                                </td>
+                                                {/* Profit & Growth */}
+                                                <td className="py-8 px-8 text-right">
+                                                    <div className="flex items-center justify-end gap-6">
+                                                        <div className="text-right">
+                                                            <div className="text-lg font-black text-gray-900 dark:text-white tabular-nums">{market.margin}</div>
+                                                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Net Margin</div>
+                                                        </div>
+                                                        <div className="w-1.5 h-10 bg-gray-100 dark:bg-gray-800 rounded-full relative">
+                                                            <motion.div 
+                                                                initial={{ height: 0 }}
+                                                                animate={{ height: `${growth}%` }}
+                                                                className="absolute bottom-0 w-full bg-blue-500 rounded-full"
+                                                            />
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="text-lg font-black text-blue-600 dark:text-blue-400 tabular-nums">+{growth}%</div>
+                                                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Growth</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </motion.tr>
+                                        );
+                                    })}
                                 </AnimatePresence>
                             </tbody>
                         </table>

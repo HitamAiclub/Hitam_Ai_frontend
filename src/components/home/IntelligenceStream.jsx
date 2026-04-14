@@ -86,15 +86,46 @@ const IntelligenceStream = () => {
         return a.localeCompare(b);
     });
 
-    // Create a curated stream: Top 3 Models and Latest 3 News items, randomized
-    const mixedStream = [
-        ...topModels.slice(0, 3).map(m => ({ ...m, type: "model" })),
+    // Extract the latest tools from the live feed
+    const liveTools = Object.values(newsGroups)
+        .flat()
+        .filter(n => n.category === "AI Tools" || n.category === "AI Apps")
+        .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
+        .slice(0, 3) // Get top 3 latest tools
+        .map(n => ({ ...n, type: "news" }));
+
+    // Create a curated mixed stream
+    const marketModels = topModels.slice(0, 2).map(m => ({ ...m, type: "model", subtype: "market" }));
+    const performanceModels = topModels
+        .filter(m => !marketModels.find(market => market.id === m.id))
+        .sort((a, b) => (b.context_length || 0) - (a.context_length || 0))
+        .slice(0, 2)
+        .map(m => ({ ...m, type: "model", subtype: "performance" }));
+
+    const shuffle = (array) => {
+        const newArr = [...array];
+        for (let i = newArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+        }
+        return newArr;
+    };
+
+    const mixedStream = shuffle([
+        ...marketModels,
+        ...liveTools, 
+        ...performanceModels,
         ...Object.values(newsGroups)
             .flat()
+            .filter(n => 
+                n.category !== "AI Tools" && 
+                n.category !== "AI Apps" &&
+                !liveTools.find(tool => tool.link === n.link)
+            ) 
             .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-            .slice(0, 3) 
+            .slice(0, 5) 
             .map(n => ({ ...n, type: "news" }))
-    ].sort(() => Math.random() - 0.5); // Randomize for fresh feel
+    ]);
 
     return (
         <section className="py-24 relative overflow-hidden bg-white/30 dark:bg-transparent">
