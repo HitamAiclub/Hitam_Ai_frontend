@@ -103,38 +103,55 @@ const PerfCard = React.memo(({ model, idx }) => {
         ? { label: "Pro",   color: "text-blue-500 bg-blue-500/10 border-blue-500/20",       bar: "bg-gradient-to-r from-emerald-500 to-teal-500" }
         : { label: "Base",  color: "text-gray-500 bg-gray-500/10 border-gray-500/20",        bar: "bg-gradient-to-r from-gray-400 to-gray-500" };
 
+    const promptCost = parseFloat(model.pricing?.prompt || 0) * 1_000_000;
+    const valuePer$  = promptCost > 0 ? (score / promptCost).toFixed(1) : "∞";
+
     return (
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 dark:border-gray-800/50">
-            <div className="w-7 shrink-0 flex items-center justify-center">
-                {idx === 0 && <Trophy size={18} className="text-yellow-500" />}
-                {idx === 1 && <Trophy size={16} className="text-gray-400" />}
-                {idx === 2 && <Trophy size={14} className="text-amber-600" />}
-                {idx > 2 && (
-                    <span className="text-lg font-black text-gray-800 dark:text-white tabular-nums leading-none">
-                        {String(idx + 1).padStart(2, '0')}
-                    </span>
-                )}
-            </div>
-            <div className="w-9 h-9 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow shrink-0">
-                <ModalityIcon types={model.types} size={16} />
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-sm font-black text-gray-900 dark:text-white truncate leading-tight">
-                        {model.name.split(':')[1]?.trim() || model.name}
-                    </span>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border shrink-0 ${tier.color}`}>{tier.label}</span>
+        <div className="flex flex-col gap-3 px-5 py-5 border-b border-gray-100 dark:border-gray-800/50 bg-white/30 dark:bg-gray-900/30">
+            <div className="flex items-center gap-3">
+                <div className="w-8 shrink-0 flex items-center justify-center">
+                    {idx === 0 && <Trophy size={20} className="text-yellow-500" />}
+                    {idx === 1 && <Trophy size={18} className="text-gray-400" />}
+                    {idx === 2 && <Trophy size={16} className="text-amber-600" />}
+                    {idx > 2 && <span className="text-lg font-black text-gray-400">{String(idx + 1).padStart(2, '0')}</span>}
                 </div>
-                <span className="text-[9px] font-black text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded font-mono">
-                    {model.provider}
-                </span>
-                <div className="flex items-center gap-2 mt-1.5">
-                    <div className="flex-1">
-                        <Bar pct={score} color={tier.bar} />
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-sm shrink-0">
+                    <ModalityIcon types={model.types} size={18} />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-sm font-black text-gray-900 dark:text-white truncate">
+                            {model.name.split(':')[1]?.trim() || model.name}
+                        </span>
                     </div>
-                    <span className="text-[10px] font-black text-gray-900 dark:text-white shrink-0 tabular-nums">
-                        {score}<span className="text-gray-400 font-bold">/100</span>
-                    </span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{model.provider}</span>
+                </div>
+                <div className={`px-2 py-0.5 rounded-full border text-[8px] font-black uppercase ${tier.color}`}>
+                    {tier.label}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-1 bg-gray-50/50 dark:bg-black/20 p-3 rounded-2xl">
+                <div>
+                     <div className="flex justify-between items-end mb-1">
+                        <span className="text-[10px] font-black text-gray-400 uppercase">Perf Score</span>
+                        <span className="text-xs font-black text-gray-900 dark:text-white">{score}/100</span>
+                    </div>
+                    <Bar pct={score} color={tier.bar} />
+                </div>
+                <div className="flex justify-between items-center px-1">
+                    <div className="text-center flex-1 border-r border-gray-200 dark:border-gray-800">
+                        <div className="text-xs font-black text-gray-900 dark:text-white">
+                             {model.context_length > 0 
+                                ? model.context_length >= 1048576 ? `${(model.context_length/1048576).toFixed(1)}M` : `${Math.round(model.context_length/1024)}K` 
+                                : "N/A"}
+                        </div>
+                        <div className="text-[8px] font-bold text-gray-400 uppercase">Context</div>
+                    </div>
+                    <div className="text-center flex-1">
+                        <div className="text-xs font-black text-emerald-600 dark:text-emerald-400">{valuePer$}</div>
+                        <div className="text-[8px] font-bold text-gray-400 uppercase">Pts/$</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -316,7 +333,7 @@ const AILadder = ({ defaultView = "ladder" }) => {
             </header>
 
             {/* ── TABLE / CARDS ── */}
-            <div className="rounded-3xl md:rounded-[2.5rem] border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-xl overflow-hidden mt-2 min-h-[400px]">
+            <div className="rounded-[2.5rem] border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-xl overflow-hidden mt-2 min-h-[500px] w-full max-w-[100vw]">
                     {viewMode === "ladder" ? (
                         <>
                             {/* ── MOBILE LADDER CARDS ── */}
