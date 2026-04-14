@@ -239,14 +239,10 @@ const NewsPage = () => {
                 ) : (
                     <>
                         {/* Tab: Market Ladder or Performance */}
-                        {activeTab === "Market Ladder" || activeTab === "Performance Board" ? (
-                            <motion.div
-                                initial={{ opacity: 0, y: 40 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="py-6"
-                            >
+                        {(activeTab === "Market Ladder" || activeTab === "Performance Board") ? (
+                            <div className="py-6 min-h-[600px]">
                                 <AILadder defaultView={activeTab === "Performance Board" ? "performance" : "ladder"} />
-                            </motion.div>
+                            </div>
                         ) : (
                             <>
                                 {/* Featured News */}

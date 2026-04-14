@@ -217,9 +217,9 @@ const AILadder = ({ defaultView = "ladder" }) => {
     [viewMode, ladderSorted, perfSorted]);
 
     if (loading) return (
-        <div className="p-4 md:p-8 space-y-3">
+        <div className="p-4 md:p-8 space-y-3 min-h-[400px]">
             {[1,2,3,4,5].map(i => (
-                <div key={i} className="h-14 md:h-20 bg-gray-100 dark:bg-gray-800/30 rounded-2xl animate-pulse" />
+                <div key={i} className="h-14 md:h-20 bg-gray-100 dark:bg-gray-800/20 rounded-2xl" />
             ))}
         </div>
     );
@@ -316,7 +316,7 @@ const AILadder = ({ defaultView = "ladder" }) => {
             </header>
 
             {/* ── TABLE / CARDS ── */}
-            <div className="rounded-3xl md:rounded-[2.5rem] border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-xl overflow-hidden mt-2 touch-pan-y">
+            <div className="rounded-3xl md:rounded-[2.5rem] border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-xl overflow-hidden mt-2 min-h-[400px]">
                     {viewMode === "ladder" ? (
                         <>
                             {/* ── MOBILE LADDER CARDS ── */}
