@@ -11,11 +11,12 @@ const LADDER_REFRESH = 30 * 60;
 const LADDER_REFRESH_MS = LADDER_REFRESH * 1000;
 
 const computePerfScore = (m) => {
-    const contextScore = Math.min(100, (m.context_length / 20000));
-    const promptCost   = parseFloat(m.pricing?.prompt || 0) * 1_000_000;
+    const ctx = Number(m?.context_length) || 0;
+    const contextScore = Math.min(100, (ctx / 20000));
+    const promptCost   = parseFloat(m?.pricing?.prompt || 0) * 1_000_000;
     const valueScore   = promptCost > 0 ? Math.min(100, 10 / promptCost * 50) : 50;
-    const eliteBonus   = m.isExternal ? 20 : 0;
-    return Math.round((contextScore * 0.5) + (valueScore * 0.3) + eliteBonus);
+    const eliteBonus   = m?.isExternal ? 20 : 0;
+    return Math.round((contextScore * 0.5) + (valueScore * 0.3) + eliteBonus) || 0;
 };
 
 const getMarketIntel = (p) => {
@@ -28,9 +29,9 @@ const getMarketIntel = (p) => {
 };
 
 const ModalityIcon = ({ types, size = 18 }) => {
-    if (types.includes('Video'))  return <Video  size={size} className="text-purple-500" />;
-    if (types.includes('Image'))  return <ImageIcon size={size} className="text-indigo-500" />;
-    if (types.includes('Audio') || types.includes('Music')) return <Music size={size} className="text-pink-500" />;
+    if (types?.includes('Video'))  return <Video  size={size} className="text-purple-500" />;
+    if (types?.includes('Image'))  return <ImageIcon size={size} className="text-indigo-500" />;
+    if (types?.includes('Audio') || types?.includes('Music')) return <Music size={size} className="text-pink-500" />;
     return <Cpu size={size} className="text-blue-500" />;
 };
 
@@ -184,8 +185,9 @@ const AILadder = ({ defaultView = "ladder" }) => {
 
     const filtered = useMemo(() => models.filter(m => {
         const q = searchTerm.toLowerCase();
-        if (q && !m.name.toLowerCase().includes(q) && !m.provider.toLowerCase().includes(q)) return false;
+        if (q && !m?.name?.toLowerCase().includes(q) && !m?.provider?.toLowerCase().includes(q)) return false;
         if (modalityFilter === "All") return true;
+        if (!m?.types) return false;
         if (modalityFilter === "Music") return m.types.includes("Audio") || m.types.includes("Music");
         return m.types.includes(modalityFilter);
     }), [models, searchTerm, modalityFilter]);
@@ -289,7 +291,7 @@ const AILadder = ({ defaultView = "ladder" }) => {
                     </div>
 
                     {/* Modality pills */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5" style={{ touchAction: 'pan-x' }}>
                         {MODALITIES.map(({ name, icon: Icon }) => {
                             const active = modalityFilter === name;
                             const activeClass = viewMode === "ladder"
@@ -300,7 +302,6 @@ const AILadder = ({ defaultView = "ladder" }) => {
                                     key={name}
                                     type="button"
                                     onClick={() => setModFilter(name)}
-                                    onTouchEnd={(e) => { e.preventDefault(); setModFilter(name); }}
                                     className={`cursor-pointer flex items-center gap-1.5 px-3 py-2 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-200 border-2 whitespace-nowrap shrink-0 ${
                                         active ? activeClass : 'bg-white/50 dark:bg-gray-900/50 text-gray-500 border-gray-200 dark:border-gray-800'
                                     }`}

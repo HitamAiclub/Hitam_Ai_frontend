@@ -206,13 +206,12 @@ const NewsPage = () => {
                     </div>
 
                     {/* Category Tabs */}
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4">
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4" style={{ touchAction: 'pan-x' }}>
                         {categories.map((cat, idx) => (
                             <button
                                 key={cat.name}
                                 type="button"
                                 onClick={() => setActiveTab(cat.name)}
-                                onTouchEnd={(e) => { e.preventDefault(); setActiveTab(cat.name); }}
                                 className={`cursor-pointer flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm transition-all duration-200 whitespace-nowrap border-2 shrink-0 ${
                                     activeTab === cat.name 
                                     ? "bg-blue-600 text-white border-blue-600 shadow-xl shadow-blue-500/30" 
