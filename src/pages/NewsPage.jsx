@@ -73,15 +73,16 @@ const NewsPage = () => {
     }, []);
 
     const categories = [
-        { name: "All",           icon: Zap },
-        { name: "Market Ladder", icon: TrendingUp, label: "Market Ladder 📈" },
-        { name: "India",         icon: Globe,      label: "India 🇮🇳" },
-        { name: "Global",        icon: Globe,      label: "Global 🌍" },
-        { name: "AI Models",     icon: Cpu,        label: "AI Models 🧪" },
-        { name: "AI Tools",      icon: Wand2,      label: "AI Tools 🧠" },
-        { name: "Visual AI",     icon: Video,      label: "Visual AI 🎥" },
-        { name: "Startups",      icon: Rocket,     label: "Startups 🚀" },
-        { name: "Big Tech",      icon: Building2,  label: "Big Tech 🏢" },
+        { name: "All",               icon: Zap },
+        { name: "Market Ladder",     icon: TrendingUp, label: "Market Ladder 📈" },
+        { name: "Performance Board", icon: BarChart3,  label: "Performance Board 📊" },
+        { name: "India",             icon: Globe,      label: "India 🇮🇳" },
+        { name: "Global",            icon: Globe,      label: "Global 🌍" },
+        { name: "AI Models",         icon: Cpu,        label: "AI Models 🧪" },
+        { name: "AI Tools",          icon: Wand2,      label: "AI Tools 🧠" },
+        { name: "Visual AI",         icon: Video,      label: "Visual AI 🎥" },
+        { name: "Startups",          icon: Rocket,     label: "Startups 🚀" },
+        { name: "Big Tech",          icon: Building2,  label: "Big Tech 🏢" },
     ];
 
     const filteredNews = news.filter(item => {
@@ -204,13 +205,14 @@ const NewsPage = () => {
                     </div>
 
                     {/* Category Tabs */}
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4" style={{ touchAction: 'pan-x' }}>
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4">
                         {categories.map((cat, idx) => (
                             <button
                                 key={cat.name}
+                                type="button"
                                 onClick={() => setActiveTab(cat.name)}
-                                style={{ touchAction: 'manipulation' }}
-                                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm transition-all duration-200 whitespace-nowrap border-2 shrink-0 ${
+                                onTouchEnd={(e) => { e.preventDefault(); setActiveTab(cat.name); }}
+                                className={`cursor-pointer flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm transition-all duration-200 whitespace-nowrap border-2 shrink-0 ${
                                     activeTab === cat.name 
                                     ? "bg-blue-600 text-white border-blue-600 shadow-xl shadow-blue-500/30" 
                                     : "bg-white/40 dark:bg-gray-900/40 text-gray-600 dark:text-gray-400 border-gray-200/50 dark:border-gray-800/50"
@@ -236,14 +238,14 @@ const NewsPage = () => {
                     </div>
                 ) : (
                     <>
-                        {/* Tab: Market Ladder */}
-                        {activeTab === "Market Ladder" ? (
+                        {/* Tab: Market Ladder or Performance */}
+                        {activeTab === "Market Ladder" || activeTab === "Performance Board" ? (
                             <motion.div
                                 initial={{ opacity: 0, y: 40 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="py-6"
                             >
-                                <AILadder />
+                                <AILadder defaultView={activeTab === "Performance Board" ? "performance" : "ladder"} />
                             </motion.div>
                         ) : (
                             <>

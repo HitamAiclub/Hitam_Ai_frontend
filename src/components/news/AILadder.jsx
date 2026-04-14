@@ -141,12 +141,12 @@ const PerfCard = React.memo(({ model, idx }) => {
 });
 
 /* ─── MAIN COMPONENT ─── */
-const AILadder = () => {
+const AILadder = ({ defaultView = "ladder" }) => {
     const [models, setModels]             = useState([]);
     const [loading, setLoading]           = useState(true);
     const [error, setError]               = useState(null);
     const [modalityFilter, setModFilter]  = useState("All");
-    const [viewMode, setViewMode]         = useState("ladder");
+    const [viewMode, setViewMode]         = useState(defaultView);
     const [searchTerm, setSearchTerm]     = useState("");
     const [lastUpdated, setLastUpdated]   = useState(null);
     const [countdown, setCountdown]       = useState(LADDER_REFRESH);
@@ -173,6 +173,7 @@ const AILadder = () => {
     }, []);
 
     useEffect(() => { fetchModels(); }, [fetchModels]);
+    useEffect(() => { setViewMode(defaultView); }, [defaultView]);
     useEffect(() => {
         const i = setInterval(() => fetchModels(true), LADDER_REFRESH_MS);
         return () => clearInterval(i);
@@ -269,9 +270,10 @@ const AILadder = () => {
                         ].map(({ key, label, Icon, active }) => (
                             <button
                                 key={key}
+                                type="button"
                                 onClick={() => setViewMode(key)}
-                                style={{ touchAction: 'manipulation' }}
-                                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none ${
+                                onTouchEnd={(e) => { e.preventDefault(); setViewMode(key); }}
+                                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none cursor-pointer ${
                                     viewMode === key ? `${active} text-white shadow-lg` : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
                                 }`}
                             >
@@ -294,7 +296,7 @@ const AILadder = () => {
                     </div>
 
                     {/* Modality pills */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5" style={{ touchAction: 'pan-x' }}>
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
                         {MODALITIES.map(({ name, icon: Icon }) => {
                             const active = modalityFilter === name;
                             const activeClass = viewMode === "ladder"
@@ -303,9 +305,10 @@ const AILadder = () => {
                             return (
                                 <button
                                     key={name}
+                                    type="button"
                                     onClick={() => setModFilter(name)}
-                                    style={{ touchAction: 'manipulation' }}
-                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-200 border-2 whitespace-nowrap shrink-0 ${
+                                    onTouchEnd={(e) => { e.preventDefault(); setModFilter(name); }}
+                                    className={`cursor-pointer flex items-center gap-1.5 px-3 py-2 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-200 border-2 whitespace-nowrap shrink-0 ${
                                         active ? activeClass : 'bg-white/50 dark:bg-gray-900/50 text-gray-500 border-gray-200 dark:border-gray-800'
                                     }`}
                                 >
