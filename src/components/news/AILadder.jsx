@@ -276,25 +276,7 @@ const AILadder = ({ defaultView = "ladder" }) => {
                 </div>
 
                 <div className="flex flex-col gap-2.5 w-full xl:w-auto">
-                    {/* View toggle */}
-                    <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 w-full sm:w-fit touch-none">
-                        {[
-                            { key: "ladder",      label: "Market Ladder",  Icon: TrendingUp, active: "bg-blue-600 shadow-blue-500/30" },
-                            { key: "performance", label: "Performance",    Icon: BarChart3,  active: "bg-emerald-600 shadow-emerald-500/30" },
-                        ].map(({ key, label, Icon, active }) => (
-                            <button
-                                key={key}
-                                type="button"
-                                onClick={() => setViewMode(key)}
-                                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none cursor-pointer select-none ${
-                                    viewMode === key ? `${active} text-white shadow-lg` : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                                }`}
-                            >
-                                <Icon size={14} />
-                                {label}
-                            </button>
-                        ))}
-                    </div>
+
 
                     {/* Search */}
                     <div className="relative">
