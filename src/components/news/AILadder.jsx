@@ -270,7 +270,8 @@ const AILadder = () => {
                             <button
                                 key={key}
                                 onClick={() => setViewMode(key)}
-                                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none ${
+                                style={{ touchAction: 'manipulation' }}
+                                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex-1 sm:flex-none ${
                                     viewMode === key ? `${active} text-white shadow-lg` : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
                                 }`}
                             >
@@ -303,6 +304,7 @@ const AILadder = () => {
                                 <button
                                     key={name}
                                     onClick={() => setModFilter(name)}
+                                    style={{ touchAction: 'manipulation' }}
                                     className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-200 border-2 whitespace-nowrap shrink-0 ${
                                         active ? activeClass : 'bg-white/50 dark:bg-gray-900/50 text-gray-500 border-gray-200 dark:border-gray-800'
                                     }`}

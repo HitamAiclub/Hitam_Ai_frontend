@@ -204,28 +204,26 @@ const NewsPage = () => {
                     </div>
 
                     {/* Category Tabs */}
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 touch-pan-y">
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4" style={{ touchAction: 'pan-x' }}>
                         {categories.map((cat, idx) => (
-                            <motion.button
+                            <button
                                 key={cat.name}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: idx * 0.05 }}
                                 onClick={() => setActiveTab(cat.name)}
-                                className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm transition-all duration-300 whitespace-nowrap border-2 ${
+                                style={{ touchAction: 'manipulation' }}
+                                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-sm transition-all duration-200 whitespace-nowrap border-2 shrink-0 ${
                                     activeTab === cat.name 
                                     ? "bg-blue-600 text-white border-blue-600 shadow-xl shadow-blue-500/30" 
-                                    : "bg-white/40 dark:bg-gray-900/40 text-gray-600 dark:text-gray-400 border-gray-200/50 dark:border-gray-800/50 hover:border-blue-500/50"
+                                    : "bg-white/40 dark:bg-gray-900/40 text-gray-600 dark:text-gray-400 border-gray-200/50 dark:border-gray-800/50"
                                 }`}
                             >
-                                <cat.icon size={18} />
+                                <cat.icon size={16} />
                                 {cat.label || cat.name}
                                 {cat.name === "All" && news.length > 0 && (
                                     <span className="ml-1 text-[10px] bg-white/20 dark:bg-gray-800/50 px-2 py-0.5 rounded-full">
                                         {news.length}
                                     </span>
                                 )}
-                            </motion.button>
+                            </button>
                         ))}
                     </div>
                 </header>
