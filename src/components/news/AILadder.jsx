@@ -319,15 +319,7 @@ const AILadder = () => {
             </header>
 
             {/* ── TABLE / CARDS ── */}
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={viewMode}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.2 }}
-                    className="rounded-3xl md:rounded-[2.5rem] border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-xl overflow-hidden"
-                >
+            <div className="rounded-3xl md:rounded-[2.5rem] border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md shadow-xl overflow-hidden mt-2">
                     {viewMode === "ladder" ? (
                         isMobile ? (
                             /* ── MOBILE LADDER CARDS ── */
@@ -509,8 +501,7 @@ const AILadder = () => {
                             </div>
                         )
                     )}
-                </motion.div>
-            </AnimatePresence>
+            </div>
 
             {/* Empty state */}
             {filtered.length === 0 && (
