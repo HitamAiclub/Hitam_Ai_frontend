@@ -8,6 +8,7 @@ import {
     Search, 
     RefreshCw,
     TrendingUp,
+    BarChart3,
     Globe,
     Building2,
     Cpu,
