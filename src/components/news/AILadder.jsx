@@ -135,14 +135,14 @@ const AILadder = () => {
                     </div>
 
                     <div>
-                        <h2 className="text-5xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tighter mb-3 leading-none">
+                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white tracking-tighter mb-3 leading-none">
                             {viewMode === "ladder" ? (
                                 <>Market <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600">Ladder</span></>
                             ) : (
                                 <>Performance <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500">Board</span></>
                             )}
                         </h2>
-                        <p className="text-lg text-gray-500 dark:text-gray-400 font-medium">
+                        <p className="text-base md:text-lg text-gray-500 dark:text-gray-400 font-medium">
                             {viewMode === "ladder"
                                 ? "Real-world usage share and pricing across all modalities."
                                 : "Capability score: context window, efficiency, and intelligence rating."}
@@ -152,10 +152,10 @@ const AILadder = () => {
 
                 <div className="flex flex-col gap-4 w-full xl:w-auto">
                     {/* VIEW MODE TOGGLE */}
-                    <div className="flex items-center gap-2 p-1.5 bg-gray-100 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 w-fit">
+                    <div className="flex items-center gap-1.5 p-1.5 bg-gray-100 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 w-full sm:w-fit overflow-x-auto no-scrollbar">
                         <button
                             onClick={() => setViewMode("ladder")}
-                            className={`flex items-center gap-2 px-7 py-3 rounded-xl font-black text-sm transition-all duration-300 ${
+                            className={`flex items-center justify-center gap-2 px-4 sm:px-7 py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none ${
                                 viewMode === "ladder"
                                 ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
                                 : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
@@ -166,7 +166,7 @@ const AILadder = () => {
                         </button>
                         <button
                             onClick={() => setViewMode("performance")}
-                            className={`flex items-center gap-2 px-7 py-3 rounded-xl font-black text-sm transition-all duration-300 ${
+                            className={`flex items-center justify-center gap-2 px-4 sm:px-7 py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 whitespace-nowrap flex-1 sm:flex-none ${
                                 viewMode === "performance"
                                 ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/30"
                                 : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
@@ -224,9 +224,11 @@ const AILadder = () => {
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
                                 <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/40">
-                                    {["Rank", "AI Model", "Usage Dominance", "Market Intel (Stock/Cap)", "Profit & Growth"].map(h => (
-                                        <th key={h} className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">{h}</th>
-                                    ))}
+                                    <th className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">Rank</th>
+                                    <th className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">AI Model</th>
+                                    <th className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">Usage Dominance</th>
+                                    <th className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] hidden md:table-cell">Market Intel (Stock/Cap)</th>
+                                    <th className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] hidden md:table-cell">Profit & Growth</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -305,7 +307,7 @@ const AILadder = () => {
                                                     </div>
                                                 </td>
                                                 {/* Market Intel (Stock/Cap) */}
-                                                <td className="py-8 px-4">
+                                                <td className="py-8 px-4 hidden md:table-cell">
                                                     <div className="flex flex-col">
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-lg font-black text-gray-900 dark:text-white tabular-nums">${market.price}</span>
@@ -317,7 +319,7 @@ const AILadder = () => {
                                                     </div>
                                                 </td>
                                                 {/* Profit & Growth */}
-                                                <td className="py-8 px-8 text-right">
+                                                <td className="py-8 px-8 text-right hidden md:table-cell">
                                                     <div className="flex items-center justify-end gap-6">
                                                         <div className="text-right">
                                                             <div className="text-lg font-black text-gray-900 dark:text-white tabular-nums">{market.margin}</div>
@@ -356,9 +358,11 @@ const AILadder = () => {
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
                                 <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/40">
-                                    {["#", "AI Model", "Perf Score", "Context Window", "Value (Score/$)"].map(h => (
-                                        <th key={h} className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">{h}</th>
-                                    ))}
+                                    <th className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">#</th>
+                                    <th className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">AI Model</th>
+                                    <th className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">Perf Score</th>
+                                    <th className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] hidden sm:table-cell">Context Window</th>
+                                    <th className="py-7 px-8 text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] hidden md:table-cell">Value (Score/$)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -436,7 +440,7 @@ const AILadder = () => {
                                                     </div>
                                                 </td>
                                                 {/* Context Window */}
-                                                <td className="py-8 px-4">
+                                                <td className="py-8 px-4 hidden sm:table-cell">
                                                     <div className="flex items-center gap-3">
                                                         <BookOpen size={18} className="text-gray-400 shrink-0" />
                                                         <div>
@@ -451,7 +455,7 @@ const AILadder = () => {
                                                     </div>
                                                 </td>
                                                 {/* Value Score */}
-                                                <td className="py-8 px-8">
+                                                <td className="py-8 px-8 hidden md:table-cell">
                                                     <div className="flex items-center gap-2">
                                                         <Gauge size={18} className="text-emerald-500 shrink-0" />
                                                         <div>

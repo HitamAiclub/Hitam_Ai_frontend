@@ -114,7 +114,7 @@ const NewsPage = () => {
     };
 
     return (
-        <div className="min-h-screen pt-24 pb-20 px-4 bg-transparent relative overflow-hidden">
+        <div className="min-h-screen pt-20 md:pt-28 pb-20 px-4 bg-transparent relative overflow-hidden">
             {/* Ambient Background */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/5 rounded-full blur-[120px]"></div>
@@ -148,7 +148,7 @@ const NewsPage = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white mb-6 tracking-tighter"
+                                className="text-4xl md:text-6xl lg:text-7xl font-black text-gray-900 dark:text-white mb-6 tracking-tighter"
                             >
                                 AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">Intelligence</span>
                             </motion.h1>
@@ -156,7 +156,7 @@ const NewsPage = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl font-medium leading-relaxed"
+                                className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl font-medium leading-relaxed"
                             >
                                 Live AI & Tech news from the last 24 hours. Auto-refreshes every 5 minutes.
                             </motion.p>
@@ -276,7 +276,7 @@ const NewsPage = () => {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-8 leading-[1.05] tracking-tighter">
+                                                <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-gray-900 dark:text-white mb-8 leading-[1.05] tracking-tighter">
                                                     <a href={featuredNews.link} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                                         {featuredNews.title}
                                                     </a>
@@ -312,13 +312,14 @@ const NewsPage = () => {
                                                     <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">{featuredNews.source}</span>
                                                 </div>
                                             </div>
-                                            <div className="w-full lg:w-1/2 relative min-h-[400px] lg:min-h-auto overflow-hidden bg-gray-900">
+                                            <div className="w-full lg:w-1/2 relative aspect-[16/10] md:aspect-[16/9] lg:aspect-auto lg:min-h-auto overflow-hidden bg-gray-900 shadow-inner">
                                                 <div className="absolute inset-0 bg-gradient-to-r from-white/40 dark:from-gray-900/40 via-transparent to-transparent z-10 hidden lg:block"></div>
                                                 <ArticleImage
+                                                    key={featuredNews.link}
                                                     articleUrl={featuredNews.link}
                                                     fallback={featuredNews.imageUrl}
                                                     alt={featuredNews.title}
-                                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[3000ms] group-hover:scale-110"
+                                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[3000ms] group-hover:scale-110 z-0"
                                                 />
                                             </div>
                                         </div>
@@ -341,10 +342,11 @@ const NewsPage = () => {
                                                     <div className="relative h-56 overflow-hidden bg-gradient-to-br from-gray-900 to-blue-950">
                                                         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 via-transparent to-transparent z-10"></div>
                                                         <ArticleImage
+                                                            key={item.link}
                                                             articleUrl={item.link}
                                                             fallback={item.imageUrl}
                                                             alt={item.title}
-                                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 relative z-0"
                                                         />
                                                         <div className="absolute top-4 left-5 z-20 flex gap-2 flex-wrap">
                                                             <span className="px-3 py-1 rounded-lg bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg">

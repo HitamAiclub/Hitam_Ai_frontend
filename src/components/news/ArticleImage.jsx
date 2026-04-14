@@ -15,11 +15,16 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const ArticleImage = ({ articleUrl, fallback, alt, className, style }) => {
     const [displaySrc, setDisplaySrc] = useState(fallback || FALLBACK);
     const [realSrc, setRealSrc]       = useState(null);
+    const [isLoading, setIsLoading]   = useState(true);
     const cancelled = useRef(false);
 
     useEffect(() => {
-        if (!articleUrl) return;
+        if (!articleUrl) {
+            setIsLoading(false);
+            return;
+        }
         cancelled.current = false;
+        setIsLoading(true);
 
         fetch(`${API}/api/article-image?url=${encodeURIComponent(articleUrl)}`)
             .then(r => r.json())
@@ -27,36 +32,48 @@ const ArticleImage = ({ articleUrl, fallback, alt, className, style }) => {
                 if (cancelled.current) return;
                 const realImg = data?.image;
                 if (realImg && realImg.startsWith("http")) {
-                    // Preload to avoid flash
                     const img = new Image();
-                    img.onload  = () => { if (!cancelled.current) setRealSrc(realImg); };
-                    img.onerror = () => {}; // Keep fallback silently
+                    img.onload  = () => { 
+                        if (!cancelled.current) {
+                            setRealSrc(realImg);
+                            setIsLoading(false);
+                        }
+                    };
+                    img.onerror = () => { if (!cancelled.current) setIsLoading(false); };
                     img.src = realImg;
+                } else {
+                    setIsLoading(false);
                 }
             })
-            .catch(() => {});
+            .catch(() => { if (!cancelled.current) setIsLoading(false); });
 
         return () => { cancelled.current = true; };
     }, [articleUrl]);
 
     return (
-        <div className="relative w-full h-full overflow-hidden">
-            {/* Fallback — always visible immediately */}
+        <div className={`${className} overflow-hidden bg-gray-100 dark:bg-gray-800`} style={style}>
+            {/* Loading Shimmer */}
+            {isLoading && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-gray-200 dark:bg-gray-800 animate-pulse">
+                    <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+                </div>
+            )}
+
+            {/* Fallback Image */}
             <img
                 src={displaySrc}
-                alt=""
-                onError={() => setDisplaySrc(FALLBACK)}
-                className={className}
-                style={style}
+                alt={alt || ""}
+                onError={() => { if (displaySrc !== FALLBACK) setDisplaySrc(FALLBACK); }}
+                className={`w-full h-full object-cover transition-opacity duration-500 ${realSrc ? 'opacity-0' : 'opacity-100'}`}
             />
-            {/* Real article og:image — fades in when ready */}
+
+            {/* Real Article Image */}
             {realSrc && (
                 <img
                     src={realSrc}
-                    alt=""
+                    alt={alt || ""}
                     onError={() => setRealSrc(null)}
-                    className={`${className} absolute inset-0 animate-[fadeIn_0.8s_ease-in-out_forwards]`}
-                    style={style}
+                    className="absolute inset-0 w-full h-full object-cover z-20 animate-[fadeIn_0.8s_ease-in-out_forwards]"
                 />
             )}
         </div>
