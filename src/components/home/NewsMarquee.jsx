@@ -194,7 +194,13 @@ const MarqueeCard = ({ item, type, index }) => {
             </h4>
 
             <div className="flex items-center justify-between mt-auto pt-2">
-                <span className="text-[8px] font-medium text-gray-400">Live • Today</span>
+                <span className="text-[8px] font-black text-blue-600/60 dark:text-blue-400/60 uppercase tracking-widest flex items-center gap-1.5">
+                    <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-600"></span>
+                    </span>
+                    {item.publishedAgo || "Live • Today"}
+                </span>
                 <a
                     href={item.link}
                     target="_blank"

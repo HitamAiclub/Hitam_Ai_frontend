@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, ExternalLink, Calendar, Newspaper } from "lucide-react";
+import { ArrowRight, ExternalLink, Calendar, Newspaper, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
@@ -124,8 +124,12 @@ const NewsSection = () => {
                                 <div className="p-8 flex flex-col h-full relative">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs font-bold">
-                                            <Calendar size={12} className="text-blue-500" />
-                                            {new Date(item.pubDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            {item.publishedAgo ? (
+                                                <Clock size={12} className="text-blue-500" />
+                                            ) : (
+                                                <Calendar size={12} className="text-blue-500" />
+                                            )}
+                                            {item.publishedAgo || new Date(item.pubDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                         </div>
                                         <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{item.source}</span>
                                     </div>
