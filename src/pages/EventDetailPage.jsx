@@ -216,6 +216,32 @@ const EventDetailPage = () => {
                </AnimatedSection>
             )}
 
+            {/* Event Gallery */}
+            {meta?.gallery?.length > 0 && (
+               <AnimatedSection className="space-y-12 py-16 border-b border-black/5 dark:border-white/10">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                     <h3 className="text-3xl md:text-5xl font-light text-gray-950 dark:text-white tracking-[-0.04em] uppercase leading-none">Event <span className="font-serif italic lowercase">Gallery</span></h3>
+                  </div>
+
+                  <div className="flex overflow-x-auto gap-8 px-12 pb-16 snap-x snap-mandatory scrollbar-hide no-scrollbar scroll-smooth">
+                     {meta.gallery.map((img, i) => (
+                        <div key={i} className="flex-none w-[300px] md:w-[600px] aspect-[16/10] bg-gray-50 dark:bg-white/5 border border-black/5 dark:border-white/10 overflow-hidden snap-center transition-all duration-700 group">
+                           <img
+                              src={img}
+                              alt={`Gallery ${i}`}
+                              className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110"
+                           />
+                        </div>
+                     ))}
+                     <div className="flex-none w-12" />
+                  </div>
+
+                  <div className="flex justify-center items-center gap-4 text-black/20 dark:text-white/20">
+                     <span className="text-[8px] font-black uppercase tracking-widest">Scroll to Explore</span>
+                     <div className="w-32 h-px bg-black/5 dark:bg-white/5" />
+                  </div>
+               </AnimatedSection>
+            )}
 
             {/* Section: Honors / Masterminds */}
             {meta?.honorees?.length > 0 && (
@@ -419,7 +445,6 @@ const EventDetailPage = () => {
                </AnimatedSection>
             )}
 
-
             {/* Sponsors */}
             {meta?.sponsors?.length > 0 && (
                <AnimatedSection className="py-16 border-b border-black/5 dark:border-white/10">
@@ -441,33 +466,6 @@ const EventDetailPage = () => {
                            </span>
                         </div>
                      ))}
-                  </div>
-               </AnimatedSection>
-            )}
-
-            {/* Event Gallery */}
-            {meta?.gallery?.length > 0 && (
-               <AnimatedSection className="space-y-12 py-16 border-b border-black/5 dark:border-white/10">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                     <h3 className="text-3xl md:text-5xl font-light text-gray-950 dark:text-white tracking-[-0.04em] uppercase leading-none">Event <span className="font-serif italic lowercase">Gallery</span></h3>
-                  </div>
-
-                  <div className="flex overflow-x-auto gap-8 px-12 pb-16 snap-x snap-mandatory scrollbar-hide no-scrollbar scroll-smooth">
-                     {meta.gallery.map((img, i) => (
-                        <div key={i} className="flex-none w-[300px] md:w-[600px] aspect-[16/10] bg-gray-50 dark:bg-white/5 border border-black/5 dark:border-white/10 overflow-hidden snap-center transition-all duration-700 group">
-                           <img
-                              src={img}
-                              alt={`Gallery ${i}`}
-                              className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110"
-                           />
-                        </div>
-                     ))}
-                     <div className="flex-none w-12" />
-                  </div>
-
-                  <div className="flex justify-center items-center gap-4 text-black/20 dark:text-white/20">
-                     <span className="text-[8px] font-black uppercase tracking-widest">Scroll to Explore</span>
-                     <div className="w-32 h-px bg-black/5 dark:bg-white/5" />
                   </div>
                </AnimatedSection>
             )}
