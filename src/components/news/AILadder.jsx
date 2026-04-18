@@ -25,6 +25,7 @@ const getMarketIntel = (p) => {
     if (provider.includes('google'))    return { ticker: "$GOOGL",  cap: "1.9T",  price: "154.30", trend: "+0.8%", margin: "28%" };
     if (provider.includes('meta'))      return { ticker: "$META",   cap: "1.3T",  price: "510.45", trend: "-0.4%", margin: "41%" };
     if (provider.includes('anthropic')) return { ticker: "PRIVATE", cap: "18.4B", price: "N/A",    trend: "UP",    margin: "N/A" };
+    if (provider.includes('hugging face') || provider.includes('huggingface')) return { ticker: "$HUG", cap: "4.5B", price: "Viral", trend: "NEW", margin: "Open" };
     return { ticker: "UNLISTED", cap: "N/A", price: "N/A", trend: "NEW", margin: "N/A" };
 };
 

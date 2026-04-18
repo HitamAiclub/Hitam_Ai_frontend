@@ -38,4 +38,7 @@ export default defineConfig({
     strictPort: false,
     proxy: proxyConfig,
   },
+  optimizeDeps: {
+    include: ['three', '@react-three/fiber', '@react-three/drei', 'react-is']
+  }
 })

@@ -224,15 +224,57 @@ const EventDetailPage = () => {
                   </div>
 
                   <div className="flex overflow-x-auto gap-8 px-12 pb-16 snap-x snap-mandatory scrollbar-hide no-scrollbar scroll-smooth">
-                     {meta.gallery.map((img, i) => (
-                        <div key={i} className="flex-none w-[300px] md:w-[600px] aspect-[16/10] bg-gray-50 dark:bg-white/5 border border-black/5 dark:border-white/10 overflow-hidden snap-center transition-all duration-700 group">
-                           <img
-                              src={img}
-                              alt={`Gallery ${i}`}
-                              className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110"
-                           />
-                        </div>
-                     ))}
+                     {meta.gallery.map((item, i) => {
+                        const url = typeof item === 'string' ? item : item.url;
+                        const type = typeof item === 'string' ? 'image' : item.type;
+
+                        const getYoutubeId = (url) => {
+                           const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                           const match = url.match(regExp);
+                           return (match && match[2].length === 11) ? match[2] : null;
+                        };
+
+                        const getVimeoId = (url) => {
+                           const match = url.match(/vimeo\.com\/(\d+)/);
+                           return match ? match[1] : null;
+                        };
+
+                        return (
+                           <div key={i} className="flex-none w-[300px] md:w-[600px] aspect-[16/10] bg-gray-50 dark:bg-white/5 border border-black/5 dark:border-white/10 overflow-hidden snap-center transition-all duration-700 group relative">
+                              {type === 'image' ? (
+                                 <img
+                                    src={url}
+                                    alt={`Gallery ${i}`}
+                                    className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110"
+                                 />
+                              ) : type === 'video' ? (
+                                 <video
+                                    src={url}
+                                    controls
+                                    className="w-full h-full object-cover"
+                                    playsInline
+                                    muted
+                                 />
+                              ) : type === 'youtube' ? (
+                                 <iframe
+                                    src={`https://www.youtube.com/embed/${getYoutubeId(url)}`}
+                                    title={`Gallery Video ${i}`}
+                                    className="w-full h-full border-0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                 />
+                              ) : type === 'vimeo' ? (
+                                 <iframe
+                                    src={`https://player.vimeo.com/video/${getVimeoId(url)}`}
+                                    title={`Gallery Video ${i}`}
+                                    className="w-full h-full border-0"
+                                    allow="autoplay; fullscreen; picture-in-picture"
+                                    allowFullScreen
+                                 />
+                              ) : null}
+                           </div>
+                        );
+                     })}
                      <div className="flex-none w-12" />
                   </div>
 

@@ -37,6 +37,7 @@ const EventEditModal = ({ isOpen, onClose, editingEvent, onSuccess }) => {
   const [imageFile, setImageFile] = useState(null);
   const [speakerFiles, setSpeakerFiles] = useState({});
   const [galleryFiles, setGalleryFiles] = useState([]);
+  const [videoUrl, setVideoUrl] = useState("");
   const [sponsorLogos, setSponsorLogos] = useState([]);
   const [uploading, setUploading] = useState(false);
 
@@ -96,6 +97,7 @@ const EventEditModal = ({ isOpen, onClose, editingEvent, onSuccess }) => {
     setImageFile(null);
     setSpeakerFiles({});
     setGalleryFiles([]);
+    setVideoUrl("");
     setSponsorLogos([]);
   }, [editingEvent, isOpen]);
 
@@ -129,12 +131,21 @@ const EventEditModal = ({ isOpen, onClose, editingEvent, onSuccess }) => {
         });
       }
 
-      // 3. Upload Gallery Images
+      // 3. Upload Gallery Files (Images & Videos)
       if (galleryFiles.length > 0) {
         const galleryPromises = galleryFiles.map(file => uploadEventFile(file, `${formData.title}-gallery`));
         const results = await Promise.all(galleryPromises);
-        galleryUrls = [...galleryUrls, ...results.map(r => r.url)];
+        const newGalleryItems = results.map(r => ({
+          url: r.url,
+          type: r.resourceType || (r.url.match(/\.(mp4|webm|ogg|mov)$/i) ? 'video' : 'image')
+        }));
+        galleryUrls = [...galleryUrls, ...newGalleryItems];
       }
+
+      // Convert any legacy string URLs to objects if needed (handled in display, but good to clean up here too)
+      const sanitizedGallery = galleryUrls.map(item => 
+        typeof item === 'string' ? { url: item, type: 'image' } : item
+      );
 
       // 4. Upload Sponsor Logos
       if (sponsorLogos.length > 0) {
@@ -152,7 +163,7 @@ const EventEditModal = ({ isOpen, onClose, editingEvent, onSuccess }) => {
           ...formData,
           imageUrl,
           imageStoragePath,
-          gallery: galleryUrls,
+          gallery: sanitizedGallery,
           sponsors: sponsorData,
           speakers: speakerData,
           updatedAt: new Date().toISOString(),
@@ -333,32 +344,67 @@ const EventEditModal = ({ isOpen, onClose, editingEvent, onSuccess }) => {
              {/* Existing Gallery Preview */}
              {formData.gallery.length > 0 && (
                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                 {formData.gallery.map((url, i) => (
-                   <div key={i} className="relative aspect-square rounded-lg overflow-hidden group border border-gray-100 dark:border-gray-800">
-                     <img src={url} alt="Gallery" className="w-full h-full object-cover" />
-                     <button 
-                       type="button" 
-                       onClick={() => setFormData({ ...formData, gallery: formData.gallery.filter((_, idx) => idx !== i) })}
-                       className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                     >
-                       <X className="w-4 h-4" />
-                     </button>
-                   </div>
-                 ))}
+                 {formData.gallery.map((item, i) => {
+                   const url = typeof item === 'string' ? item : item.url;
+                   const type = typeof item === 'string' ? 'image' : item.type;
+                   
+                   return (
+                     <div key={i} className="relative aspect-square rounded-lg overflow-hidden group border border-gray-100 dark:border-gray-800 bg-gray-50 flex items-center justify-center">
+                       {type === 'image' ? (
+                         <img src={url} alt="Gallery" className="w-full h-full object-cover" />
+                       ) : (
+                         <div className="flex flex-col items-center justify-center gap-1 text-blue-500">
+                            <FiLayout className="w-6 h-6" />
+                            <span className="text-[8px] font-black uppercase">Video</span>
+                         </div>
+                       )}
+                       <button 
+                         type="button" 
+                         onClick={() => setFormData({ ...formData, gallery: formData.gallery.filter((_, idx) => idx !== i) })}
+                         className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                       >
+                         <X className="w-4 h-4" />
+                       </button>
+                     </div>
+                   );
+                 })}
                </div>
              )}
 
-             <div className="relative group">
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*" 
-                  onChange={(e) => setGalleryFiles(Array.from(e.target.files))} 
-                  className="w-full text-xs p-6 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl hover:border-blue-500 transition-colors bg-white dark:bg-gray-800/50" 
-                />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px] font-bold uppercase tracking-widest group-hover:text-blue-500">
-                  {galleryFiles.length > 0 ? `${galleryFiles.length} New Images Selected` : "Drop Multiple Gallery Images Here"}
-                </div>
+             <div className="flex flex-col gap-4">
+               <div className="flex gap-2">
+                 <Input 
+                   placeholder="Paste YouTube or Vimeo URL..." 
+                   value={videoUrl} 
+                   onChange={(e) => setVideoUrl(e.target.value)}
+                 />
+                 <Button type="button" onClick={() => {
+                   if (videoUrl) {
+                     let type = 'video';
+                     if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) type = 'youtube';
+                     else if (videoUrl.includes('vimeo.com')) type = 'vimeo';
+                     
+                     setFormData({ 
+                       ...formData, 
+                       gallery: [...formData.gallery, { url: videoUrl, type }] 
+                     });
+                     setVideoUrl("");
+                   }
+                 }}>Add URL</Button>
+               </div>
+
+               <div className="relative group">
+                 <input 
+                   type="file" 
+                   multiple 
+                   accept="image/*,video/*" 
+                   onChange={(e) => setGalleryFiles(Array.from(e.target.files))} 
+                   className="w-full text-xs p-6 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl hover:border-blue-500 transition-colors bg-white dark:bg-gray-800/50" 
+                 />
+                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px] font-bold uppercase tracking-widest group-hover:text-blue-500">
+                   {galleryFiles.length > 0 ? `${galleryFiles.length} New Items Selected` : "Drop Multiple Gallery Images/Videos Here"}
+                 </div>
+               </div>
              </div>
           </div>
 

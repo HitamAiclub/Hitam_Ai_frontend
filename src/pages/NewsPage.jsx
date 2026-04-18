@@ -26,11 +26,13 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import AILadder from "../components/news/AILadder";
 import ArticleImage from "../components/news/ArticleImage";
+import IntelligenceGrid from "../components/news/IntelligenceGrid";
 
 const REFRESH_INTERVAL = 5 * 60; // 5 minutes in seconds
 
 const NewsPage = () => {
     const [news, setNews] = useState([]);
+    const [models, setModels] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [activeTab, setActiveTab] = useState("All");
@@ -38,18 +40,25 @@ const NewsPage = () => {
     const [lastUpdated, setLastUpdated] = useState(null);
     const [countdown, setCountdown] = useState(REFRESH_INTERVAL);
 
-    const fetchNews = useCallback(async (silent = false) => {
+    const fetchData = useCallback(async (silent = false) => {
         if (!silent) setRefreshing(true);
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/ai-news`);
-            const data = await response.json();
-            if (data.items) {
-                setNews(data.items);
-                setLastUpdated(new Date());
-                setCountdown(REFRESH_INTERVAL);
-            }
+            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const [newsRes, modelsRes] = await Promise.all([
+                fetch(`${API_BASE}/api/ai-news`),
+                fetch(`${API_BASE}/api/ai-models`)
+            ]);
+            
+            const newsData = await newsRes.json();
+            const modelsData = await modelsRes.json();
+
+            if (newsData.items) setNews(newsData.items);
+            if (modelsData.models) setModels(modelsData.models);
+            
+            setLastUpdated(new Date());
+            setCountdown(REFRESH_INTERVAL);
         } catch (error) {
-            console.error("Error fetching news:", error);
+            console.error("Error fetching intelligence data:", error);
         } finally {
             setLoading(false);
             if (!silent) setRefreshing(false);
@@ -58,14 +67,14 @@ const NewsPage = () => {
 
     // Initial fetch
     useEffect(() => {
-        fetchNews();
-    }, [fetchNews]);
+        fetchData();
+    }, [fetchData]);
 
     // Auto-refresh every 5 minutes
     useEffect(() => {
-        const interval = setInterval(() => fetchNews(true), REFRESH_INTERVAL * 1000);
+        const interval = setInterval(() => fetchData(true), REFRESH_INTERVAL * 1000);
         return () => clearInterval(interval);
-    }, [fetchNews]);
+    }, [fetchData]);
 
     // Countdown timer
     useEffect(() => {
@@ -75,13 +84,13 @@ const NewsPage = () => {
 
     const categories = [
         { name: "All",               icon: Zap },
+        { name: "AI Platforms",      icon: Zap,        label: "AI Platforms ⚡" },
         { name: "Market Ladder",     icon: TrendingUp, label: "Market Ladder 📈" },
         { name: "Performance Board", icon: BarChart3,  label: "Performance Board 📊" },
         { name: "India",             icon: Globe,      label: "India 🇮🇳" },
         { name: "Global",            icon: Globe,      label: "Global 🌍" },
         { name: "AI Models",         icon: Cpu,        label: "AI Models 🧪" },
         { name: "AI Tools",          icon: Wand2,      label: "AI Tools 🧠" },
-        { name: "Visual AI",         icon: Video,      label: "Visual AI 🎥" },
         { name: "Startups",          icon: Rocket,     label: "Startups 🚀" },
         { name: "Big Tech",          icon: Building2,  label: "Big Tech 🏢" },
     ];
@@ -93,7 +102,7 @@ const NewsPage = () => {
         if (activeTab === "India") return matchesSearch && item.region === "India";
         if (activeTab === "Global") return matchesSearch && item.region === "Global";
         if (activeTab === "AI Models") return matchesSearch && item.categories?.includes("AI Models");
-        if (activeTab === "Visual AI") return matchesSearch && item.categories?.includes("Visual AI");
+        if (activeTab === "AI Platforms") return matchesSearch && item.categories?.includes("Trending Models");
         if (activeTab === "AI Tools") return matchesSearch && (item.categories?.includes("AI Tools") || item.categories?.includes("AI Apps"));
         if (activeTab === "Startups") return matchesSearch && item.categories?.includes("Startups");
         if (activeTab === "Big Tech") return matchesSearch && item.categories?.includes("Big Tech");
@@ -137,10 +146,10 @@ const NewsPage = () => {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                             </span>
-                            Live 24h Feed
+                            Universal Intelligence
                         </span>
-                        <span className="text-gray-400 font-medium tracking-normal text-xs">
-                            Intelligence Hub v3
+                        <span className="text-gray-400 font-medium tracking-normal text-xs invisible md:visible">
+                            Feeds: Google News & Hugging Face
                         </span>
                     </motion.div>
                     
@@ -160,7 +169,7 @@ const NewsPage = () => {
                                 transition={{ delay: 0.2 }}
                                 className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl font-medium leading-relaxed"
                             >
-                                Live AI & Tech news from the last 24 hours. Auto-refreshes every 5 minutes.
+                                Multi-source live discovery. Now featuring trending open-source tools from Hugging Face.
                             </motion.p>
                         </div>
 
@@ -185,7 +194,7 @@ const NewsPage = () => {
                                 <Button 
                                     variant="ghost" 
                                     size="icon" 
-                                    onClick={() => fetchNews(false)}
+                                    onClick={() => fetchData(false)}
                                     className={refreshing ? "animate-spin" : ""}
                                 >
                                     <RefreshCw size={18} />
@@ -199,7 +208,7 @@ const NewsPage = () => {
                                 </div>
                                 <div className="flex items-center gap-1.5 text-blue-500">
                                     <Signal size={12} className="animate-pulse" />
-                                    Refresh in {formatCountdown(countdown)}
+                                    Next sync in {formatCountdown(countdown)}
                                 </div>
                             </div>
                         </motion.div>
@@ -238,8 +247,10 @@ const NewsPage = () => {
                     </div>
                 ) : (
                     <>
-                        {/* Tab: Market Ladder or Performance */}
-                        {(activeTab === "Market Ladder" || activeTab === "Performance Board") ? (
+                        {/* Tab: AI Platforms (Hyper-Interactive 2.5D Grid) */}
+                        {activeTab === "AI Platforms" ? (
+                            <IntelligenceGrid items={news} models={models} />
+                        ) : (activeTab === "Market Ladder" || activeTab === "Performance Board") ? (
                             <div className="py-6 min-h-[600px]">
                                 <AILadder defaultView={activeTab === "Performance Board" ? "performance" : "ladder"} />
                             </div>
@@ -412,19 +423,6 @@ const NewsPage = () => {
                     </>
                 )}
 
-                {!loading && filteredNews.length === 0 && activeTab !== "Market Ladder" && (
-                    <div className="text-center py-40">
-                        <Newspaper size={80} className="mx-auto text-gray-200 dark:text-gray-800 mb-6" />
-                        <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-2">No Live Signals Detected</h3>
-                        <p className="text-gray-500 font-medium text-lg mb-8">No news in the last 24h matches this filter.</p>
-                        <button 
-                            onClick={() => { setSearchTerm(""); setActiveTab("All"); }}
-                            className="px-8 py-4 rounded-2xl bg-blue-600 text-white font-black hover:bg-blue-700 transition-colors"
-                        >
-                            Reset Intelligence Filters
-                        </button>
-                    </div>
-                )}
             </div>
         </div>
     );

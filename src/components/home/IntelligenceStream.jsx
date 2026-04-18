@@ -74,7 +74,7 @@ const IntelligenceStream = () => {
     if (error) return null;
 
     // Define a priority order for categories to show first
-    const priority = ["India", "Global", "AI Models", "AI Tools", "Startups", "Visual AI", "Big Tech"];
+    const priority = ["India", "Global", "AI Models", "AI Tools", "Startups", "Trending Models", "Big Tech"];
 
     // Sort keys based on priority, then alphabetical
     const categories = Object.keys(newsGroups).sort((a, b) => {
