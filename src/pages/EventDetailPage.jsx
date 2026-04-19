@@ -354,6 +354,16 @@ const EventDetailPage = () => {
                            <div className="absolute inset-x-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-blue-500/10 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out pointer-events-none" />
 
                            <div className="relative z-10 space-y-6">
+                              {speaker.photoUrl && (
+                                 <div className="relative group/photo mb-6">
+                                    <div className="absolute -inset-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-3xl blur-xl opacity-0 group-hover/photo:opacity-100 transition-opacity duration-700" />
+                                    <img 
+                                       src={speaker.photoUrl} 
+                                       alt={speaker.name} 
+                                       className="relative w-24 h-24 md:w-32 md:h-32 object-cover rounded-3xl border border-gray-100 dark:border-white/10 shadow-lg transform transition-transform duration-700 group-hover/photo:scale-105"
+                                    />
+                                 </div>
+                              )}
                               <div className="flex justify-between items-start gap-4">
                                  <h3 className="text-2xl font-black text-gray-950 dark:text-white uppercase tracking-tighter leading-none">{speaker.name}</h3>
                                  <span className={`px-4 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest whitespace-nowrap ${speaker.type === 'guest' ? 'bg-purple-100/50 text-purple-600 dark:bg-purple-600/20 dark:text-purple-400' : 'bg-blue-100/50 text-blue-600 dark:bg-blue-600/20 dark:text-blue-400'}`}>
