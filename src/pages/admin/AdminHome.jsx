@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BarChart3, Users, Calendar, TrendingUp, Mail } from "lucide-react";
+import { BarChart3, Users, Calendar, TrendingUp, Mail, Palette } from "lucide-react";
 import { useEvents, useClubMembers, useCommunityMembers } from "../../hooks/useFirebaseData";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
@@ -180,7 +180,8 @@ const AdminHome = () => {
           {[
             { title: "Create Event", description: "Add a new event to the calendar", color: "from-blue-500 to-purple-500", path: "/events" },
             { title: "Manage Members", description: "View and manage community members", color: "from-purple-500 to-pink-500", path: "/admin/community" },
-            { title: "Mail Center", description: "Send bulk emails to members", color: "from-green-500 to-teal-500", path: "/admin/mail" }
+            { title: "Mail Center", description: "Send bulk emails to members", color: "from-green-500 to-teal-500", path: "/admin/mail" },
+            { title: "Designer", description: "Design posters & content with AI", color: "from-pink-500 to-orange-500", icon: Palette, path: "/admin/designer" }
           ].map((action, index) => (
             <motion.div
               key={action.title}

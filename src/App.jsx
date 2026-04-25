@@ -27,6 +27,7 @@ import FormListPage from "./pages/admin/FormListPage.jsx";
 import FormEditPage from "./pages/admin/FormEditPage.jsx";
 import MailPage from "./pages/admin/MailPage.jsx";
 import ActivityFormEditPage from "./pages/admin/ActivityFormEditPage.jsx";
+import DesignerPage from "./pages/admin/DesignerPage.jsx";
 import ActivityRegistrationPage from "./pages/ActivityRegistrationPage.jsx";
 import NewsPage from "./pages/NewsPage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -182,6 +183,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <MailPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/designer"
+                  element={
+                    <ProtectedRoute>
+                      <DesignerPage />
                     </ProtectedRoute>
                   }
                 />

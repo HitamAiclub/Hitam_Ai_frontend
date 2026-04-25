@@ -19,7 +19,8 @@ import {
   Image,
   Star,
   Mail,
-  Newspaper
+  Newspaper,
+  Palette
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -60,6 +61,7 @@ const Navbar = () => {
     { name: "Media Management", path: "/admin/media", icon: Image },
     { name: "Highlights", path: "/admin/highlights", icon: Star },
     { name: "Mail Center", path: "/admin/mail", icon: Mail },
+    { name: "Creative Designer", path: "/admin/designer", icon: Palette },
   ];
 
   const navItems = user ? adminNavItems : publicNavItems;

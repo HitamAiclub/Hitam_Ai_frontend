@@ -12,3 +12,42 @@
     scrollbar-width: none;
   }
 }
+
+/* Designer Page Styles */
+.pattern-dots {
+  background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark .pattern-dots {
+  background-image: radial-gradient(#374151 1px, transparent 1px);
+}
+
+.text-editor .ql-container {
+  min-height: 400px;
+  border: none !important;
+  font-family: inherit;
+}
+
+.text-editor .ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  background: #f9fafb;
+}
+
+.dark .text-editor .ql-toolbar {
+  background: #1f2937;
+  border-color: #374151 !important;
+}
+
+.dark .ql-snow .ql-stroke {
+  stroke: #d1d5db;
+}
+
+.dark .ql-snow .ql-fill {
+  fill: #d1d5db;
+}
+
+.dark .ql-snow .ql-picker {
+  color: #d1d5db;
+}

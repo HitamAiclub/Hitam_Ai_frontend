@@ -16,17 +16,23 @@ const proxyConfig = {
             res.writeHead && res.writeHead(502, { 'Content-Type': 'application/json' });
             res.end && res.end(JSON.stringify({ error: 'Proxy target unreachable. Is the server running on port ' + apiPort + '?' }));
           }
-        } catch (e) {
-          // swallow to avoid crashing the dev server
-        }
-      });
-      proxy.on('proxyReq', (proxyReq, req, res) => {
-        console.log('Sending Request to the Target:', req.method, req.url);
-      });
-      proxy.on('proxyRes', (proxyRes, req, res) => {
-        console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+        } catch (e) {}
       });
     },
+  },
+  // Proxy HuggingFace API to bypass CORS
+  '/hf-api': {
+    target: 'https://api-inference.huggingface.co',
+    changeOrigin: true,
+    rewrite: (path) => path.replace(/^\/hf-api/, ''),
+    secure: true,
+  },
+  // Proxy OpenRouter API to bypass CORS
+  '/or-api': {
+    target: 'https://openrouter.ai',
+    changeOrigin: true,
+    rewrite: (path) => path.replace(/^\/or-api/, ''),
+    secure: true,
   },
 };
 
