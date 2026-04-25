@@ -17,7 +17,7 @@ import QRCodeStyling from "qr-code-styling";
 const UpcomingActivities = () => {
   console.log("🚀 UpcomingActivities component is loading...");
   const navigate = useNavigate();
-  
+
   // Reusable text formatting utility for bold (**text**) and links ([text](url))
   const renderFormattedText = (text) => {
     if (!text) return "";
@@ -1275,7 +1275,7 @@ const UpcomingActivities = () => {
           width: 300,
           height: 300,
           type: "svg",
-          data: `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`,
+          data: `${window.location.origin}/upcoming/activities/${activityToShare.id}/register`,
           image: qrOptions.includeLogo ? qrOptions.logo : undefined,
           dotsOptions: {
             color: qrOptions.color,
@@ -1305,7 +1305,7 @@ const UpcomingActivities = () => {
         qrCodeInstance.current.append(qrCodeRef.current);
       } else {
         qrCodeInstance.current.update({
-          data: `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`,
+          data: `${window.location.origin}/upcoming/activities/${activityToShare.id}/register`,
           image: qrOptions.includeLogo ? qrOptions.logo : undefined,
           dotsOptions: {
             color: qrOptions.gradient ? undefined : qrOptions.color,
@@ -1347,7 +1347,7 @@ const UpcomingActivities = () => {
 
   const copyToClipboard = () => {
     if (!activityToShare) return;
-    const url = `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`;
+    const url = `${window.location.origin}/upcoming/activities/${activityToShare.id}/register`;
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -1361,7 +1361,7 @@ const UpcomingActivities = () => {
       width: 4000,
       height: 4000,
       type: "svg",
-      data: `${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`,
+      data: `${window.location.origin}/upcoming/activities/${activityToShare.id}/register`,
       image: qrOptions.includeLogo ? qrOptions.logo : undefined,
       dotsOptions: {
         color: qrOptions.color, // Color takes precedence if gradient is null
@@ -1838,7 +1838,7 @@ const UpcomingActivities = () => {
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {activity.title}
                     </h3>
-                    <p 
+                    <p
                       className="text-gray-700 dark:text-gray-200 mb-4 whitespace-pre-wrap text-[15px] leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: renderFormattedText(activity.description) }}
                     />
@@ -2046,7 +2046,7 @@ const UpcomingActivities = () => {
                   {formData.description && (
                     <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
                       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Live Design Preview</p>
-                      <div 
+                      <div
                         className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed"
                         dangerouslySetInnerHTML={{ __html: renderFormattedText(formData.description) }}
                       />
@@ -2164,7 +2164,7 @@ const UpcomingActivities = () => {
                 <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3">
                   Form Filled Successfully!
                 </h3>
-                <p 
+                <p
                   className="text-gray-600 dark:text-gray-400 mb-8 max-w-sm mx-auto whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{ __html: renderFormattedText(selectedActivity?.postRegistration?.joinLinkMessage || "Your form has been submitted successfully.") }}
                 />
@@ -2206,7 +2206,7 @@ const UpcomingActivities = () => {
                     <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
                       About this Activity
                     </h4>
-                    <p 
+                    <p
                       className="text-blue-800 dark:text-blue-100 whitespace-pre-wrap leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: renderFormattedText(selectedActivity.description) }}
                     />
@@ -2562,7 +2562,7 @@ const UpcomingActivities = () => {
                     <input
                       type="text"
                       readOnly
-                      value={`${window.location.origin}/#/upcoming/activities/${activityToShare.id}/register`}
+                      value={`${window.location.origin}/upcoming/activities/${activityToShare.id}/register`}
                       className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-300 text-sm focus:outline-none"
                     />
                     <Button
